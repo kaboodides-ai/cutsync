@@ -23,7 +23,8 @@ import {
   RotateCcw,
   MousePointer,
   HelpCircle,
-  Eye
+  Eye,
+  Link2
 } from 'lucide-react'
 
 export default function LandingPage({ onEnterStudio }) {
