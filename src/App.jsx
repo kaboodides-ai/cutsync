@@ -1340,18 +1340,20 @@ function App() {
           
           {/* Home Button, Dashboard Button & Brand Logo */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentView('home')
-                window.history.pushState({}, '', window.location.pathname)
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1c2234] hover:bg-[#252d45] border border-[#2b344e] text-xs font-semibold text-gray-300 hover:text-white transition-all shadow-sm group"
-              title="חזור לדף הבית של CutSync"
-            >
-              <Home className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">דף הבית</span>
-            </button>
+            {!isDirectClientLink && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentView('home')
+                  window.history.pushState({}, '', window.location.pathname)
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1c2234] hover:bg-[#252d45] border border-[#2b344e] text-xs font-semibold text-gray-300 hover:text-white transition-all shadow-sm group"
+                title="חזור לדף הבית של CutSync"
+              >
+                <Home className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline">דף הבית</span>
+              </button>
+            )}
 
             {mode === 'editor' && (
               <button
@@ -1369,12 +1371,14 @@ function App() {
             )}
 
             <div
-              className="flex items-center gap-2 cursor-pointer select-none"
+              className={`flex items-center gap-2 select-none ${isDirectClientLink ? 'cursor-default' : 'cursor-pointer'}`}
               onClick={() => {
-                if (mode === 'editor') setCurrentView('dashboard')
-                else setCurrentView('home')
+                if (!isDirectClientLink) {
+                  if (mode === 'editor') setCurrentView('dashboard')
+                  else setCurrentView('home')
+                }
               }}
-              title={mode === 'editor' ? "חזור לדשבורד" : "דף הבית"}
+              title={isDirectClientLink ? currentProject.title : (mode === 'editor' ? "חזור לדשבורד" : "דף הבית")}
             >
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30">
                 <Scissors className="w-4 h-4 text-white" />
@@ -1390,43 +1394,16 @@ function App() {
             </div>
           </div>
 
-          {/* Mode Switcher / Role Identity */}
-          {!isDirectClientLink && mode === 'editor' ? (
-            <div className="flex items-center bg-[#1c2132] p-1 rounded-xl border border-[#2b334a]">
-              <button
-                onClick={() => setMode('editor')}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white shadow-md"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>מצב עורך (סטודיו)</span>
-              </button>
-              <button
-                onClick={() => setMode('client')}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-200"
-                title="הצג איך הלקוח רואה את הדף"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>תצוגת לקוח</span>
-              </button>
-            </div>
-          ) : mode === 'client' && !isDirectClientLink ? (
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-xs font-semibold text-purple-200 flex items-center gap-1.5">
-                <Eye className="w-3.5 h-3.5 text-purple-400" />
-                <span>תצוגת לקוח</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setMode('editor')}
-                className="text-xs text-indigo-300 hover:text-indigo-200 hover:underline px-2 py-1"
-              >
-                חזור למצב עורך
-              </button>
+          {/* Role Identity Badge (Strict Separation: No mode switching on the same screen) */}
+          {mode === 'editor' ? (
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-xs font-semibold text-indigo-200 shadow-sm select-none">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
+              <span>סטודיו עורך 🎬</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-xs font-semibold text-purple-200">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-xs font-semibold text-purple-200 shadow-sm select-none">
               <Eye className="w-3.5 h-3.5 text-purple-400" />
-              <span>סקירת לקוח ייעודית</span>
+              <span>סקירת לקוח 👤</span>
             </div>
           )}
 

@@ -238,3 +238,4 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
     </div>
   )
 }
+
