@@ -7,6 +7,8 @@ import {
   Volume2,
   VolumeX,
   Maximize,
+  Minimize,
+  X,
   Scissors,
   CheckCircle2,
   Circle,
@@ -148,6 +150,7 @@ function App() {
   const fileInputRef = useRef(null)
   const fileInputNewVersionRef = useRef(null)
   const canvasRef = useRef(null)
+  const playerContainerRef = useRef(null)
 
   // Voice Recording State
   const [isRecording, setIsRecording] = useState(false)
@@ -236,6 +239,10 @@ function App() {
   // Threaded Replies State
   const [expandedThreads, setExpandedThreads] = useState({ '2': true })
   const [replyInputs, setReplyInputs] = useState({})
+
+  // Interactive Fullscreen State
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showFullscreenDrawer, setShowFullscreenDrawer] = useState(false)
 
   // Save versions and active version to localStorage
   useEffect(() => {
@@ -349,6 +356,61 @@ function App() {
       videoRef.current.play()
     }
   }
+
+  // Fullscreen Handler
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (playerContainerRef.current?.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen().catch((err) => {
+          console.warn('Native fullscreen failed, using CSS fallback:', err)
+          setIsFullscreen(true)
+        })
+      } else {
+        setIsFullscreen(true)
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch((err) => console.warn(err))
+      }
+      setIsFullscreen(false)
+    }
+  }
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const active = !!document.fullscreenElement
+      setIsFullscreen(active)
+      if (!active) {
+        setShowFullscreenDrawer(false)
+      }
+    }
+
+    const handleKeyDown = (e) => {
+      const tag = e.target?.tagName?.toLowerCase()
+      if (tag === 'input' || tag === 'textarea') return
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault()
+        toggleFullscreen()
+      } else if (e.key === 'Escape') {
+        if (showFullscreenDrawer) {
+          e.preventDefault()
+          setShowFullscreenDrawer(false)
+        }
+      } else if (e.key === ' ') {
+        e.preventDefault()
+        handlePlayPause()
+      }
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showFullscreenDrawer, isPlaying])
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -897,21 +959,58 @@ function App() {
             )}
           </div>
 
-          {/* Video Header Card */}
-          <div className="bg-[#151926] rounded-2xl border border-[#23293d] overflow-hidden shadow-2xl shadow-black/60">
+          {/* Video Header Card & Player Container */}
+          <div
+            ref={playerContainerRef}
+            className={`bg-[#151926] transition-all overflow-hidden relative select-none ${
+              isFullscreen
+                ? 'fixed inset-0 z-50 rounded-none border-none flex flex-col justify-between w-screen h-screen bg-[#090b12]'
+                : 'rounded-2xl border border-[#23293d] shadow-2xl shadow-black/60'
+            }`}
+          >
             {/* Title Bar */}
-            <div className="px-4 py-2.5 bg-[#1a1f30] border-b border-[#242b40] flex items-center justify-between text-xs text-gray-300">
+            <div className="px-4 py-2.5 bg-[#1a1f30] border-b border-[#242b40] flex items-center justify-between text-xs text-gray-300 z-10 flex-shrink-0">
               <div className="flex items-center gap-2 font-medium truncate">
                 <Video className="w-4 h-4 text-purple-400 flex-shrink-0" />
                 <span className="truncate">{videoTitle} - <strong className="text-purple-300 font-bold">{currentVersion.name}</strong></span>
               </div>
-              <span className="text-gray-400 font-mono text-[11px] bg-[#111420] px-2 py-0.5 rounded border border-[#2b334a]">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
+              <div className="flex items-center gap-2">
+                {isFullscreen && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullscreenDrawer(!showFullscreenDrawer)}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      showFullscreenDrawer
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-[#232a3f] text-gray-300 hover:text-white hover:bg-[#2e3752]'
+                    }`}
+                    title="רשימת תיקונים והערות במסך מלא"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                    <span>תיקונים ({comments.length})</span>
+                  </button>
+                )}
+                <span className="text-gray-400 font-mono text-[11px] bg-[#111420] px-2 py-0.5 rounded border border-[#2b334a]">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+                {isFullscreen && (
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold transition-colors"
+                    title="צא ממסך מלא (Esc / F)"
+                  >
+                    <Minimize className="w-3.5 h-3.5" />
+                    <span>צא ממסך מלא (Esc)</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Video Canvas Container */}
-            <div className="relative bg-black aspect-video flex items-center justify-center group overflow-hidden select-none">
+            <div className={`relative bg-black flex items-center justify-center group overflow-hidden select-none ${
+              isFullscreen ? 'flex-1 min-h-0 w-full' : 'aspect-video'
+            }`}>
               <video
                 ref={videoRef}
                 src={videoSrc}
@@ -1068,6 +1167,15 @@ function App() {
                   >
                     {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-[#22283a] transition-colors"
+                    title={isFullscreen ? 'צא ממסך מלא (F / Esc)' : 'מסך מלא אינטראקטיבי (F)'}
+                  >
+                    {isFullscreen ? <Minimize className="w-4 h-4 text-purple-400" /> : <Maximize className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -1161,6 +1269,336 @@ function App() {
                 )}
               </div>
             </div>
+
+            {/* Fullscreen Quick Comment Bar (Docked at bottom in Fullscreen) */}
+            {isFullscreen && (
+              <div className="bg-[#121624]/95 backdrop-blur-md border-t border-[#232c42] p-3 flex flex-col gap-2 shadow-2xl flex-shrink-0 z-30">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-purple-300 bg-purple-950/70 px-2.5 py-1 rounded-lg border border-purple-500/30">
+                      ⏱️ פריים: {formatTime(currentTime)}
+                    </span>
+                    <span className="text-xs text-gray-300 font-medium">
+                      {mode === 'client' ? 'הוסף תיקון לפריים זה:' : 'הוסף משימה לפריים זה:'}
+                    </span>
+                  </div>
+
+                  {/* Category picker */}
+                  <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        type="button"
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`text-[11px] px-2 py-0.5 rounded-md border transition-all flex items-center gap-1 ${
+                          selectedCategory === cat.id
+                            ? `${cat.color} font-bold ring-1 ring-white/20 shadow-sm`
+                            : 'bg-[#1b2031] text-gray-400 border-[#2a3248] hover:border-gray-500'
+                        }`}
+                      >
+                        <span>{cat.icon}</span>
+                        <span className="hidden sm:inline">{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Form Input + Shortcuts */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    handleAddComment()
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    placeholder={
+                      hasDrawing
+                        ? 'רשמת סימון על הפריים! הוסף הסבר קצר (למשל: "להחליף את הפונט שמסומן")...'
+                        : 'כתוב מה צריך לתקן ברגע הזה... (Enter לשליחה)'
+                    }
+                    className="flex-1 bg-[#1a1f30] border border-[#2e3752] focus:border-purple-500 rounded-xl px-3 py-2 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+
+                  {/* Voice recording */}
+                  {!isRecording && !recordedAudioData && (
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      className="flex items-center gap-1 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold flex-shrink-0 transition-all hover:scale-105"
+                      title="הקלט הודעה קולית לפריים זה"
+                    >
+                      <Mic className="w-3.5 h-3.5 text-red-400" />
+                      <span className="hidden md:inline">הקלט קולית</span>
+                    </button>
+                  )}
+
+                  {isRecording && (
+                    <div className="flex items-center gap-1.5 bg-red-950/80 text-red-300 border border-red-500/50 px-2.5 py-1.5 rounded-xl text-xs flex-shrink-0 animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      <span className="font-mono font-bold">{formatTime(recordingDuration)}</span>
+                      <button
+                        type="button"
+                        onClick={stopRecording}
+                        className="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded"
+                      >
+                        סיים
+                      </button>
+                    </div>
+                  )}
+
+                  {recordedAudioData && !isRecording && (
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <AudioCommentPlayer
+                        src={recordedAudioData}
+                        duration={recordingDuration}
+                        label="הקלטה"
+                      />
+                      <button
+                        type="button"
+                        onClick={cancelRecording}
+                        className="text-xs text-gray-400 hover:text-red-400 p-1"
+                        title="בטל והקלט שוב"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
+                  )}
+
+                  <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none flex-shrink-0 hidden sm:flex">
+                    <input
+                      type="checkbox"
+                      checked={isUrgent}
+                      onChange={(e) => setIsUrgent(e.target.checked)}
+                      className="rounded border-[#2e3752] bg-[#1b2031] text-purple-600 focus:ring-0"
+                    />
+                    <span>🔥 דחוף</span>
+                  </label>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={!newCommentText.trim() && !recordedAudioData && !hasDrawing}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-purple-900/40 transition-all active:scale-95 flex-shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>הוסף תיקון</span>
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Fullscreen Revisions Side Drawer */}
+            {isFullscreen && showFullscreenDrawer && (
+              <aside className="absolute top-0 right-0 bottom-0 w-80 sm:w-96 bg-[#121624]/95 backdrop-blur-xl border-l border-[#273047] z-40 flex flex-col shadow-2xl select-text">
+                {/* Drawer Header */}
+                <div className="p-3.5 border-b border-[#232b40] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-purple-400" />
+                    <h3 className="text-xs font-bold text-gray-100">
+                      רשימת תיקונים ({comments.length})
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullscreenDrawer(false)}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#1f2537] transition-colors"
+                    title="סגור פאנל (Esc)"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Filter tabs */}
+                <div className="flex items-center gap-1 p-2 bg-[#161a29] border-b border-[#22293e] text-xs">
+                  <button
+                    onClick={() => setActiveFilter('all')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                      activeFilter === 'all'
+                        ? 'bg-purple-600 text-white font-medium'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    הכל ({comments.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter('pending')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                      activeFilter === 'pending'
+                        ? 'bg-purple-600 text-white font-medium'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    ממתין ({comments.length - completedCount})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter('completed')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                      activeFilter === 'completed'
+                        ? 'bg-purple-600 text-white font-medium'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    תוקן ({completedCount})
+                  </button>
+                </div>
+
+                {/* Comments List */}
+                <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5">
+                  {filteredComments.length === 0 ? (
+                    <div className="p-6 text-center text-gray-500 text-xs flex flex-col items-center justify-center gap-2">
+                      <Sparkles className="w-6 h-6 text-purple-400/50" />
+                      <span>אין הערות בקטגוריה זו</span>
+                    </div>
+                  ) : (
+                    filteredComments.map((comment) => {
+                      const cat = CATEGORIES.find((c) => c.id === comment.category)
+                      return (
+                        <div
+                          key={comment.id}
+                          className={`bg-[#181d2c] border rounded-xl p-2.5 text-xs flex flex-col gap-1.5 transition-all shadow-sm ${
+                            comment.completed
+                              ? 'border-[#22293d] opacity-60'
+                              : comment.urgent
+                              ? 'border-red-500/40 bg-red-950/15'
+                              : 'border-[#28324a]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => seekTo(comment.time, comment.drawing)}
+                              className="font-mono text-xs font-bold text-purple-400 hover:text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-500/30 transition-colors"
+                              title="קפוץ לרגע זה בוידאו"
+                            >
+                              ⏱️ {formatTime(comment.time)}
+                            </button>
+
+                            {cat && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${cat.color}`}>
+                                {cat.icon} {cat.label}
+                              </span>
+                            )}
+
+                            {comment.drawing && (
+                              <button
+                                type="button"
+                                onClick={() => seekTo(comment.time, comment.drawing)}
+                                className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 hover:bg-amber-500/30"
+                                title="צפה בסימון על גבי הפריים"
+                              >
+                                <PenTool className="w-2.5 h-2.5" />
+                                <span>סימון</span>
+                              </button>
+                            )}
+
+                            {mode === 'editor' && (
+                              <button
+                                type="button"
+                                onClick={() => toggleCommentComplete(comment.id)}
+                                className="mr-auto text-gray-400 hover:text-emerald-400"
+                                title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע'}
+                              >
+                                {comment.completed ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                ) : (
+                                  <Circle className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+
+                          <p className={`text-xs leading-relaxed ${comment.completed ? 'line-through text-gray-400' : 'text-gray-200'}`}>
+                            {comment.text}
+                          </p>
+
+                          {comment.audio && (
+                            <AudioCommentPlayer src={comment.audio} duration={comment.audioDuration} />
+                          )}
+
+                          {/* Threaded Discussion in Fullscreen Drawer */}
+                          <div className="pt-1 border-t border-[#232b40]">
+                            <button
+                              type="button"
+                              onClick={() => toggleThread(comment.id)}
+                              className="text-[10px] text-gray-400 hover:text-purple-300 flex items-center gap-1"
+                            >
+                              <MessageSquare className="w-3 h-3 text-purple-400" />
+                              <span>
+                                {(comment.replies?.length || 0) > 0
+                                  ? `${comment.replies.length} תגובות בשיחה`
+                                  : '💬 השב...'}
+                              </span>
+                            </button>
+
+                            {expandedThreads[comment.id] && (
+                              <div className="mt-1.5 bg-[#10131f] rounded-lg p-2 border border-[#22293d] flex flex-col gap-1.5">
+                                {Array.isArray(comment.replies) && comment.replies.length > 0 && (
+                                  <div className="flex flex-col gap-1 max-h-28 overflow-y-auto">
+                                    {comment.replies.map((reply) => (
+                                      <div key={reply.id} className="p-1.5 rounded bg-[#161a28] text-[10px]">
+                                        <div className="flex items-center justify-between text-gray-400 mb-0.5">
+                                          <span className="font-bold text-purple-300">{reply.author}</span>
+                                          <span className="font-mono">{formatReplyTime(reply.createdAt)}</span>
+                                        </div>
+                                        <p className="text-gray-200">{reply.text}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <form
+                                  onSubmit={(e) => {
+                                    e.preventDefault()
+                                    handleAddReply(comment.id)
+                                  }}
+                                  className="flex items-center gap-1"
+                                >
+                                  <input
+                                    type="text"
+                                    value={replyInputs[comment.id] || ''}
+                                    onChange={(e) =>
+                                      setReplyInputs((prev) => ({
+                                        ...prev,
+                                        [comment.id]: e.target.value
+                                      }))
+                                    }
+                                    placeholder="השב..."
+                                    className="flex-1 bg-[#181d2c] border border-[#2c354e] rounded px-2 py-1 text-[10px] text-gray-100 focus:outline-none"
+                                  />
+                                  <button
+                                    type="submit"
+                                    disabled={!(replyInputs[comment.id] || '').trim()}
+                                    className="p-1 rounded bg-purple-600 text-white text-[10px]"
+                                  >
+                                    <Send className="w-2.5 h-2.5" />
+                                  </button>
+                                </form>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+
+                {/* Drawer Footer */}
+                <div className="p-2.5 bg-[#10131f] border-t border-[#232b40] flex items-center justify-between text-[11px] text-gray-400">
+                  <span>{completedCount}/{comments.length} בוצעו</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullscreenDrawer(false)}
+                    className="text-xs text-purple-300 hover:text-white"
+                  >
+                    סגור פאנל ✕
+                  </button>
+                </div>
+              </aside>
+            )}
           </div>
 
           {/* Add Revision Box (Focus of Client Mode) */}
