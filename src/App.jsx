@@ -36,13 +36,15 @@ import {
   Download,
   Send,
   FileSpreadsheet,
-  AlertCircle,
   Bell,
+  Home,
+  Link2,
   Mic,
   MicOff,
   Square,
   MessageSquare
 } from 'lucide-react'
+import LandingPage from './LandingPage'
 
 // Demo sample video (Open source Blender video)
 const DEFAULT_VIDEO = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
@@ -240,8 +242,21 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('cut')
   const [isUrgent, setIsUrgent] = useState(false)
 
-  // View & Filter states
-  const [mode, setMode] = useState('client') // 'client' | 'editor'
+  // Routing & View states ('home' | 'studio')
+  const [currentView, setCurrentView] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    const viewParam = params.get('view')
+    if (viewParam === 'studio' || viewParam === 'client' || viewParam === 'editor') {
+      return 'studio'
+    }
+    return 'home'
+  })
+  const isDirectClientLink = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'client'
+
+  const [mode, setMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('view') === 'editor' ? 'editor' : 'client'
+  })
   const [activeFilter, setActiveFilter] = useState('all') // 'all' | 'pending' | 'completed'
   const [copied, setCopied] = useState(false)
   const [hoveredMarker, setHoveredMarker] = useState(null)
@@ -1026,6 +1041,12 @@ function App() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const copyClientShareLink = () => {
+    const url = `${window.location.origin}/?view=client`
+    navigator.clipboard.writeText(url)
+    showToast('הועתק קישור שיתוף ישיר ונקי ללקוח! 🔗', 'success')
+  }
+
   const exportPremiereCSV = () => {
     let csv = "Marker Name,Description,In,Out,Duration,Marker Type\n"
     comments.forEach((c) => {
@@ -1064,57 +1085,134 @@ function App() {
 
   const completedCount = comments.filter((c) => c.completed).length
 
+  // Render Landing Page (HOME) when currentView === 'home'
+  if (currentView === 'home') {
+    return (
+      <>
+        <LandingPage
+          onEnterStudio={(role = 'editor') => {
+            setMode(role)
+            setCurrentView('studio')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+        />
+        {/* Global Toast Notification */}
+        {toast && (
+          <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+            toast.type === 'success'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-950/80'
+              : toast.type === 'warning'
+              ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-amber-950/80'
+              : 'bg-gradient-to-r from-[#1b2336] to-[#25324e] text-white border border-[#3b4b72] shadow-blue-950/80'
+          }`}>
+            <span className="text-lg">
+              {toast.type === 'success' ? '✅' : toast.type === 'warning' ? '⚠️' : '🔔'}
+            </span>
+            <div className="text-xs font-medium">
+              {toast.message}
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="text-white/70 hover:text-white text-xs mr-2"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#0d0f17] text-gray-100 flex flex-col font-sans">
       {/* Top Navigation */}
       <header className="border-b border-[#212638] bg-[#131622]/90 backdrop-blur px-4 lg:px-8 py-3.5 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          {/* Logo & Title */}
+          
+          {/* Home Button & Brand Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30">
-              <Scissors className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-wide text-white">CutSync</h1>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  MVP v1.0
-                </span>
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView('home')
+                window.history.pushState({}, '', window.location.pathname)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1c2234] hover:bg-[#252d45] border border-[#2b344e] text-xs font-semibold text-gray-300 hover:text-white transition-all shadow-sm group"
+              title="חזור לדף הבית של CutSync"
+            >
+              <Home className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+              <span>דף הבית</span>
+            </button>
+
+            <div
+              className="flex items-center gap-2.5 cursor-pointer select-none"
+              onClick={() => {
+                setCurrentView('home')
+                window.history.pushState({}, '', window.location.pathname)
+              }}
+              title="חזור לדף הבית"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30">
+                <Scissors className="w-4 h-4 text-white" />
               </div>
-              <p className="text-xs text-gray-400 hidden sm:block">אישור סרטונים ותיקונים אינטראקטיביים לעורכים ולקוחות</p>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-lg font-bold tracking-wide text-white">CutSync</h1>
+                  <span className="px-1.5 py-0.2 text-[10px] font-semibold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    Studio
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-400 hidden sm:block">סביבת סקירה ועבודה</p>
+              </div>
             </div>
           </div>
 
-          {/* Mode Switcher */}
-          <div className="flex items-center bg-[#1c2132] p-1 rounded-xl border border-[#2b334a]">
-            <button
-              onClick={() => setMode('client')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                mode === 'client'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>מצב לקוח (הוספת הערות)</span>
-            </button>
-            <button
-              onClick={() => setMode('editor')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                mode === 'editor'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>מצב עורך (צ'קליסט וביצוע)</span>
-            </button>
-          </div>
+          {/* Mode Switcher (Hidden if client opened through direct share link) */}
+          {!isDirectClientLink ? (
+            <div className="flex items-center bg-[#1c2132] p-1 rounded-xl border border-[#2b334a]">
+              <button
+                onClick={() => setMode('client')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  mode === 'client'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>מצב לקוח (הוספת הערות)</span>
+              </button>
+              <button
+                onClick={() => setMode('editor')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  mode === 'editor'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>מצב עורך (צ'קליסט וביצוע)</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-xs font-semibold text-purple-200">
+              <Eye className="w-3.5 h-3.5 text-purple-400" />
+              <span>סקירת לקוח (קישור שיתוף ישיר)</span>
+            </div>
+          )}
 
           {/* Video upload & Actions */}
           <div className="flex items-center gap-2">
             {mode === 'editor' && (
               <>
+                <button
+                  onClick={copyClientShareLink}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a2538] hover:bg-[#22324c] border border-emerald-500/40 text-xs text-emerald-300 font-semibold transition-all shadow-md shadow-emerald-950/30"
+                  title="העתק קישור שיתוף ישיר ונקי לשליחה ללקוח"
+                >
+                  <Link2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>העתק קישור ללקוח 🔗</span>
+                </button>
+
                 <input
                   type="file"
                   ref={fileInputRef}
