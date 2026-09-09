@@ -30,7 +30,11 @@ import {
   ArrowUpRight,
   Eraser,
   Undo2,
-  MousePointer
+  MousePointer,
+  Download,
+  Send,
+  FileSpreadsheet,
+  AlertCircle
 } from 'lucide-react'
 
 // Demo sample video (Open source Blender video)
@@ -346,9 +350,33 @@ function App() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const exportPremiereCSV = () => {
+    let csv = "Marker Name,Description,In,Out,Duration,Marker Type\n"
+    comments.forEach((c) => {
+      const cat = CATEGORIES.find(cat => cat.id === c.category)
+      const timecode = `00:${formatTime(c.time)}:00`
+      const name = cat ? `${cat.label} - ${c.urgent ? 'דחוף' : 'תיקון'}` : 'תיקון'
+      const desc = `"${c.text.replace(/"/g, '""')}"`
+      csv += `${name},${desc},${timecode},${timecode},00:00:00:00,Comment\n`
+    })
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `${videoTitle}_markers.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const shareViaWhatsApp = () => {
     const encoded = encodeURIComponent(getWhatsAppMessage())
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank')
+  }
+
+  const notifyClientDone = () => {
+    const msg = `🎉 *היי, סיימתי את כל התיקונים לסרטון!* (${videoTitle})\nהגרסה המעודכנת מוכנה לצפייה. ✨`
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   // Filtered comments
@@ -409,32 +437,81 @@ function App() {
 
           {/* Video upload & Actions */}
           <div className="flex items-center gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept="video/*"
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1e2436] hover:bg-[#283049] border border-[#2e3752] text-xs text-gray-200 transition-colors"
-              title="העלה סרטון מקומי מהמחשב"
-            >
-              <Upload className="w-3.5 h-3.5 text-purple-400" />
-              <span className="hidden md:inline">החלף סרטון</span>
-            </button>
+            {mode === 'editor' && (
+              <>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept="video/*"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1e2436] hover:bg-[#283049] border border-[#2e3752] text-xs text-gray-200 transition-colors"
+                  title="העלה סרטון מקומי מהמחשב"
+                >
+                  <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="hidden md:inline">החלף סרטון</span>
+                </button>
 
-            <button
-              onClick={shareViaWhatsApp}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-md shadow-emerald-950/40 transition-colors"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>שלח לוואטסאפ</span>
-            </button>
+                <button
+                  onClick={exportPremiereCSV}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1e2436] hover:bg-[#283049] border border-[#2e3752] text-xs text-indigo-300 transition-colors"
+                  title="ייצא קובץ מרקרים שנטען ישירות בפרמייר"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="hidden md:inline">מרקרים ל-Premiere</span>
+                </button>
+              </>
+            )}
+
+            {mode === 'client' ? (
+              <button
+                onClick={shareViaWhatsApp}
+                className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 transition-all hover:scale-105 active:scale-95"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>סיימתי להעיר! ({comments.length})</span>
+              </button>
+            ) : (
+              <button
+                onClick={shareViaWhatsApp}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-md shadow-emerald-950/40 transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>שתף סיכום בוואטסאפ</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
+
+      {/* Mode Guidance Banner */}
+      <div className={`px-4 py-2 text-xs border-b transition-colors select-none ${
+        mode === 'client'
+          ? 'bg-purple-950/40 border-purple-900/50 text-purple-200'
+          : 'bg-indigo-950/40 border-indigo-900/50 text-indigo-200'
+      }`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {mode === 'client' ? (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+                <span><strong>מצב לקוח:</strong> צפה בסרטון, עצור בכל נקודה שתרצה לתקן, סמן על המסך או כתוב הערה. בסיום לחץ על הכפתור הירוק למעלה או למטה.</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 flex-shrink-0"></span>
+                <span><strong>מצב עורך:</strong> לחץ על כל הערה לקפיצה מיידית לפריים. סמן [V] למשימות שתיקנת בפרמייר, וייצא קובץ מרקרים CSV לציר הזמן שלך.</span>
+              </>
+            )}
+          </div>
+          <span className="font-mono text-[11px] opacity-75 hidden sm:inline whitespace-nowrap">
+            {mode === 'client' ? `נרשמו ${comments.length} הערות` : `בוצעו ${completedCount} מתוך ${comments.length}`}
+          </span>
+        </div>
+      </div>
 
       {/* Main Workspace */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -793,13 +870,19 @@ function App() {
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="text-base font-bold text-gray-100 flex items-center gap-2">
-                  <span>צ'קליסט תיקונים</span>
-                  <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
+                  <span>{mode === 'client' ? 'ההערות שלך לסרטון' : 'צ\'קליסט משימות לביצוע'}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                    mode === 'client'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                      : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                  }`}>
                     {comments.length}
                   </span>
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  לחץ על שעת התיקון לקפיצה ישירה בנגן
+                  {mode === 'client'
+                    ? 'לחץ על שעת ההערה לקפיצה לפריים ולצפייה בסימונים'
+                    : `נשארו עוד ${comments.length - completedCount} משימות פתוחות בפרמייר`}
                 </p>
               </div>
 
@@ -808,7 +891,9 @@ function App() {
                 <button
                   onClick={() => setActiveFilter('all')}
                   className={`px-2.5 py-1 rounded-md transition-colors ${
-                    activeFilter === 'all' ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:text-gray-200'
+                    activeFilter === 'all'
+                      ? mode === 'client' ? 'bg-purple-600 text-white font-medium' : 'bg-indigo-600 text-white font-medium'
+                      : 'text-gray-400 hover:text-gray-200'
                   }`}
                 >
                   הכל ({comments.length})
@@ -816,18 +901,22 @@ function App() {
                 <button
                   onClick={() => setActiveFilter('pending')}
                   className={`px-2.5 py-1 rounded-md transition-colors ${
-                    activeFilter === 'pending' ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:text-gray-200'
+                    activeFilter === 'pending'
+                      ? mode === 'client' ? 'bg-purple-600 text-white font-medium' : 'bg-indigo-600 text-white font-medium'
+                      : 'text-gray-400 hover:text-gray-200'
                   }`}
                 >
-                  ממתין ({comments.length - completedCount})
+                  {mode === 'client' ? 'ממתין' : 'פתוח'} ({comments.length - completedCount})
                 </button>
                 <button
                   onClick={() => setActiveFilter('completed')}
                   className={`px-2.5 py-1 rounded-md transition-colors ${
-                    activeFilter === 'completed' ? 'bg-purple-600 text-white font-medium' : 'text-gray-400 hover:text-gray-200'
+                    activeFilter === 'completed'
+                      ? mode === 'client' ? 'bg-purple-600 text-white font-medium' : 'bg-indigo-600 text-white font-medium'
+                      : 'text-gray-400 hover:text-gray-200'
                   }`}
                 >
-                  בוצע ({completedCount})
+                  {mode === 'client' ? 'תוקן' : 'בוצע'} ({completedCount})
                 </button>
               </div>
             </div>
@@ -836,12 +925,16 @@ function App() {
             {comments.length > 0 && (
               <div className="mt-2">
                 <div className="flex justify-between text-[11px] text-gray-400 mb-1">
-                  <span>התקדמות תיקונים</span>
+                  <span>{mode === 'client' ? 'סטטוס ביצוע התיקונים על ידי העורך' : 'קצב התקדמות בפרמייר'}</span>
                   <span className="font-mono">{Math.round((completedCount / comments.length) * 100)}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-[#23293d] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-purple-500 to-emerald-400 transition-all duration-300"
+                    className={`h-full transition-all duration-300 ${
+                      mode === 'client'
+                        ? 'bg-gradient-to-r from-purple-500 to-emerald-400'
+                        : 'bg-gradient-to-r from-indigo-500 to-emerald-400'
+                    }`}
                     style={{ width: `${(completedCount / comments.length) * 100}%` }}
                   />
                 </div>
@@ -850,12 +943,12 @@ function App() {
           </div>
 
           {/* List of Revisions */}
-          <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[500px] pr-1">
+          <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[480px] pr-1">
             {filteredComments.length === 0 ? (
               <div className="bg-[#151926]/50 border border-dashed border-[#262c3f] rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-3 text-gray-400">
                 <Sparkles className="w-8 h-8 text-purple-400/60" />
                 <p className="text-sm">אין כרגע הערות בקטגוריה זו</p>
-                <p className="text-xs text-gray-500">עצור את הסרטון והוסף הערה בטופס למטה</p>
+                <p className="text-xs text-gray-500">עצור את הסרטון והוסף הערה בטופס</p>
               </div>
             ) : (
               filteredComments.map((comment) => {
@@ -871,22 +964,32 @@ function App() {
                         : 'border-[#232a3f]'
                     }`}
                   >
-                    {/* Completion checkbox */}
-                    <button
-                      onClick={() => toggleCommentComplete(comment.id)}
-                      className="mt-0.5 text-gray-400 hover:text-emerald-400 transition-colors flex-shrink-0"
-                      title={comment.completed ? 'סמן כממתין' : 'סמן כבוצע'}
-                    >
-                      {comment.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950" />
-                      ) : (
-                        <Circle className="w-5 h-5" />
-                      )}
-                    </button>
+                    {/* Status: Interactive Checkbox for Editor, Status Badge for Client */}
+                    {mode === 'editor' ? (
+                      <button
+                        onClick={() => toggleCommentComplete(comment.id)}
+                        className="mt-0.5 text-gray-400 hover:text-emerald-400 transition-colors flex-shrink-0"
+                        title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע בפרמייר'}
+                      >
+                        {comment.completed ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950" />
+                        ) : (
+                          <Circle className="w-5 h-5" />
+                        )}
+                      </button>
+                    ) : (
+                      <div className="mt-0.5 flex-shrink-0">
+                        {comment.completed ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400" title="העורך סימן שזה תוקן" />
+                        ) : (
+                          <Clock className="w-5 h-5 text-amber-400" title="ממתין לטיפול העורך" />
+                        )}
+                      </div>
+                    )}
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         {/* Timecode click jumps video */}
                         <button
                           onClick={() => seekTo(comment.time, comment.drawing)}
@@ -920,6 +1023,16 @@ function App() {
                             דחוף 🔥
                           </span>
                         )}
+
+                        {mode === 'client' && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium mr-auto ${
+                            comment.completed
+                              ? 'text-emerald-300 bg-emerald-500/10'
+                              : 'text-amber-300 bg-amber-500/10'
+                          }`}>
+                            {comment.completed ? 'תוקן ע"י העורך ✅' : 'בטיפול העורך ⏳'}
+                          </span>
+                        )}
                       </div>
 
                       <p className={`text-sm leading-relaxed ${comment.completed ? 'line-through text-gray-400' : 'text-gray-200'}`}>
@@ -927,7 +1040,7 @@ function App() {
                       </p>
                     </div>
 
-                    {/* Delete button */}
+                    {/* Delete button (Client can delete their notes, Editor can clean) */}
                     <button
                       onClick={() => deleteComment(comment.id)}
                       className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all p-1"
@@ -941,31 +1054,61 @@ function App() {
             )}
           </div>
 
-          {/* Export / Share Actions Card */}
-          <div className="bg-[#151926] p-4 rounded-2xl border border-[#23293d] flex flex-col gap-2.5 shadow-xl mt-auto">
-            <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
-              <Share2 className="w-3.5 h-3.5 text-purple-400" />
-              <span>ייצוא ושיתוף תיקונים</span>
-            </h3>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={copyToClipboard}
-                className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#1d2235] hover:bg-[#272e47] border border-[#2c354e] text-xs font-semibold text-gray-200 transition-all"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'הועתק!' : 'העתק רשימה'}</span>
-              </button>
-
+          {/* Role-tailored Action Footer */}
+          {mode === 'client' ? (
+            <div className="bg-gradient-to-br from-[#151926] via-[#12221e] to-[#0c1f19] p-4 rounded-2xl border border-emerald-500/30 shadow-2xl mt-auto flex flex-col gap-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-white">סיימת לעבור על הסרטון?</span>
+                <span className="font-mono text-emerald-400 font-bold">{comments.length} תיקונים רשומים</span>
+              </div>
               <button
                 onClick={shareViaWhatsApp}
-                className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-950/40 transition-all"
+                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-95"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>פתח ב-WhatsApp</span>
+                <Send className="w-4 h-4" />
+                <span>שלח את כל התיקונים לעורך ב-WhatsApp</span>
               </button>
             </div>
-          </div>
+          ) : (
+            <div className="bg-[#151926] p-4 rounded-2xl border border-[#23293d] flex flex-col gap-2.5 shadow-xl mt-auto">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>פעולות עורך וסנכרון</span>
+                </h3>
+                <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                  {completedCount}/{comments.length} בוצעו
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={exportPremiereCSV}
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#1d2235] hover:bg-[#272e47] border border-[#2c354e] text-xs font-semibold text-indigo-200 transition-all"
+                  title="הורד קובץ מרקרים CSV לפרמייר"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>ייצא CSV לפרמייר</span>
+                </button>
+
+                <button
+                  onClick={copyToClipboard}
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#1d2235] hover:bg-[#272e47] border border-[#2c354e] text-xs font-semibold text-gray-200 transition-all"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'הועתק!' : 'העתק רשימה'}</span>
+                </button>
+              </div>
+
+              <button
+                onClick={notifyClientDone}
+                className="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-950/40 flex items-center justify-center gap-2 transition-all"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>עדכן לקוח בוואטסאפ: "התיקונים בוצעו!" 🎉</span>
+              </button>
+            </div>
+          )}
 
         </section>
       </main>
