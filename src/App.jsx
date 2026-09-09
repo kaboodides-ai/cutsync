@@ -195,7 +195,11 @@ function App() {
         videoSrc: DEFAULT_VIDEO,
         videoTitle: 'פרויקט לדוגמה: סרטון תדמית v1',
         createdAt: new Date().toISOString(),
-        comments: initialComments
+        comments: initialComments,
+        approved: false,
+        approvedAt: null,
+        approvedBy: null,
+        approvalNote: null
       }
     ]
   })
@@ -244,6 +248,12 @@ function App() {
   // Interactive Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showFullscreenDrawer, setShowFullscreenDrawer] = useState(false)
+
+  // Version Approval State
+  const [showApprovalModal, setShowApprovalModal] = useState(false)
+  const [approverName, setApproverName] = useState('הלקוח')
+  const [approvalNote, setApprovalNote] = useState('')
+  const [showCelebration, setShowCelebration] = useState(false)
 
   // Save versions and active version to localStorage
   useEffect(() => {
@@ -607,7 +617,11 @@ function App() {
       videoSrc: url,
       videoTitle: title,
       createdAt: new Date().toISOString(),
-      comments: []
+      comments: [],
+      approved: false,
+      approvedAt: null,
+      approvedBy: null,
+      approvalNote: null
     }
 
     if (videoRef.current && !videoRef.current.paused) {
@@ -624,6 +638,54 @@ function App() {
     if (fileInputNewVersionRef.current) {
       fileInputNewVersionRef.current.value = ''
     }
+  }
+
+  // Version Approval Handlers
+  const handleApproveVersion = (versionId, approver = 'הלקוח', note = '') => {
+    const timestamp = new Date().toISOString()
+    setVersions((prev) =>
+      prev.map((v) => {
+        if (v.id === versionId) {
+          return {
+            ...v,
+            approved: true,
+            approvedAt: timestamp,
+            approvedBy: approver,
+            approvalNote: note
+          }
+        }
+        return v
+      })
+    )
+  }
+
+  const handleReopenVersion = (versionId) => {
+    if (window.confirm('האם אתה בטוח שברצונך לבטל את האישור ולפתוח את הגרסה מחדש לתיקונים?')) {
+      setVersions((prev) =>
+        prev.map((v) => {
+          if (v.id === versionId) {
+            return {
+              ...v,
+              approved: false,
+              approvedAt: null,
+              approvedBy: null,
+              approvalNote: null
+            }
+          }
+          return v
+        })
+      )
+    }
+  }
+
+  const notifyClientApprovedViaWhatsApp = () => {
+    let msg = `🎉 *היי, צפיתי בסרטון (${videoTitle} - ${currentVersion.name}) והכל מושלם!* \n`
+    msg += `✅ הגרסה מאושרת סופית לסגירה ורנדור ע"י ${currentVersion.approvedBy || 'הלקוח'}.\n`
+    if (currentVersion.approvalNote) {
+      msg += `💬 הערה: "${currentVersion.approvalNote}"\n`
+    }
+    msg += `\nתודה רבה! 🚀✨\nנשלח דרך CutSync`
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   // Voice Recording Handlers
@@ -780,6 +842,12 @@ function App() {
   // Generate WhatsApp Message
   const getWhatsAppMessage = () => {
     let msg = `🎬 *סיכום תיקונים - ${videoTitle} (${currentVersion.name})*\n`
+    if (currentVersion.approved) {
+      msg += `✅ *סטטוס: הגרסה אושרה סופית ע"י ${currentVersion.approvedBy || 'הלקוח'}!* (${formatReplyTime(currentVersion.approvedAt)})\n`
+      if (currentVersion.approvalNote) {
+        msg += `💬 הערת אישור: "${currentVersion.approvalNote}"\n`
+      }
+    }
     msg += `סה"כ תיקונים: ${comments.length} | בוצעו: ${comments.filter(c => c.completed).length}\n\n`
 
     if (comments.length === 0) {
@@ -1002,11 +1070,17 @@ function App() {
                       }`}
                     >
                       <span>{ver.name}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
-                        isActive ? 'bg-purple-950/70 text-purple-200' : 'bg-[#121520] text-gray-400'
-                      }`}>
-                        {verTotal} {verTotal === 1 ? 'הערה' : 'הערות'}
-                      </span>
+                      {ver.approved ? (
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+                          ✓ אושר
+                        </span>
+                      ) : (
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                          isActive ? 'bg-purple-950/70 text-purple-200' : 'bg-[#121520] text-gray-400'
+                        }`}>
+                          {verTotal} {verTotal === 1 ? 'הערה' : 'הערות'}
+                        </span>
+                      )}
                       {isActive && (
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="גרסה נוכחית מוצגת"></span>
                       )}
@@ -1052,6 +1126,12 @@ function App() {
               <div className="flex items-center gap-2 font-medium truncate">
                 <Video className="w-4 h-4 text-purple-400 flex-shrink-0" />
                 <span className="truncate">{videoTitle} - <strong className="text-purple-300 font-bold">{currentVersion.name}</strong></span>
+                {currentVersion.approved && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 flex-shrink-0">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>אושר ע"י {currentVersion.approvedBy || 'הלקוח'}</span>
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {isFullscreen && (
@@ -2161,21 +2241,109 @@ function App() {
 
           {/* Role-tailored Action Footer */}
           {mode === 'client' ? (
-            <div className="bg-gradient-to-br from-[#151926] via-[#12221e] to-[#0c1f19] p-4 rounded-2xl border border-emerald-500/30 shadow-2xl mt-auto flex flex-col gap-2.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-white">סיימת לעבור על הסרטון?</span>
-                <span className="font-mono text-emerald-400 font-bold">{comments.length} תיקונים רשומים</span>
+            currentVersion.approved ? (
+              <div className="bg-gradient-to-br from-[#12231b] via-[#152e23] to-[#0f2119] p-4 rounded-2xl border border-emerald-500/40 shadow-2xl mt-auto flex flex-col gap-3 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>{currentVersion.name} אושרה סופית! 🎉</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-emerald-400">
+                    {formatReplyTime(currentVersion.approvedAt)}
+                  </span>
+                </div>
+
+                <p className="text-xs text-emerald-200/90 leading-relaxed">
+                  אושר ע"י <strong>{currentVersion.approvedBy || 'הלקוח'}</strong>. הגרסה מאושרת לפרסום ולסגירה סופית!
+                  {currentVersion.approvalNote && (
+                    <span className="block italic text-gray-300 mt-1">"{currentVersion.approvalNote}"</span>
+                  )}
+                </p>
+
+                <div className="flex flex-col gap-2 pt-1">
+                  <button
+                    onClick={notifyClientApprovedViaWhatsApp}
+                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-95"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>שלח הודעת "אושר סופית" לעורך ב-WhatsApp 🚀</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleReopenVersion(currentVersion.id)}
+                    className="text-xs text-gray-400 hover:text-amber-300 flex items-center justify-center gap-1.5 py-1 transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>התחרטת? פתח מחדש להערות נוספות</span>
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={shareViaWhatsApp}
-                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-95"
-              >
-                <Send className="w-4 h-4" />
-                <span>שלח את כל התיקונים לעורך ב-WhatsApp</span>
-              </button>
-            </div>
+            ) : (
+              <div className="bg-gradient-to-br from-[#151926] via-[#12221e] to-[#0c1f19] p-4 rounded-2xl border border-emerald-500/30 shadow-2xl mt-auto flex flex-col gap-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white">סיימת לעבור על הסרטון?</span>
+                  <span className="font-mono text-emerald-400 font-bold">{comments.length} תיקונים רשומים</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    onClick={shareViaWhatsApp}
+                    className="py-2.5 px-3 rounded-xl bg-[#1c2438] hover:bg-[#25304a] text-gray-200 border border-[#2d3852] font-semibold text-xs flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    <Send className="w-3.5 h-3.5 text-purple-400" />
+                    <span>שלח תיקונים לוואטסאפ</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowApprovalModal(true)}
+                    className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-95"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>אשר גרסה זו סופית! ✅</span>
+                  </button>
+                </div>
+              </div>
+            )
           ) : (
             <div className="bg-[#151926] p-4 rounded-2xl border border-[#23293d] flex flex-col gap-2.5 shadow-xl mt-auto">
+              {/* Approval status banner for Editor */}
+              {currentVersion.approved ? (
+                <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-between text-xs mb-1">
+                  <div className="flex items-center gap-2 text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <div>
+                      <span className="font-bold">הלקוח אישר את {currentVersion.name}! 🎉</span>
+                      <div className="text-[10px] text-gray-300">
+                        אושר ע"י {currentVersion.approvedBy || 'הלקוח'} ({formatReplyTime(currentVersion.approvedAt)})
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleReopenVersion(currentVersion.id)}
+                    className="text-[10px] text-gray-400 hover:text-amber-300 border border-[#2d3752] px-2 py-1 rounded bg-[#151926] transition-colors flex-shrink-0"
+                    title="פתח מחדש להערות"
+                  >
+                    פתח מחדש
+                  </button>
+                </div>
+              ) : (
+                <div className="p-2 rounded-xl bg-[#191f31] border border-[#273147] flex items-center justify-between text-xs text-gray-400 mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>ממתין לאישור סופי מהלקוח ⏳</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleApproveVersion(currentVersion.id, 'עורך (ידני)')}
+                    className="text-[10px] text-emerald-400 hover:text-emerald-300 hover:underline"
+                  >
+                    סמן כאושר ידנית
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
@@ -2217,6 +2385,101 @@ function App() {
 
         </section>
       </main>
+
+      {/* Version Approval Confirmation Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#151a28] border border-[#2a344e] rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-150 text-right">
+            <div className="flex items-center justify-between border-b border-[#242c42] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-white">
+                  אישור סופי של {currentVersion.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowApprovalModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-300 leading-relaxed">
+              האם אתה מרוצה מהגרסה ורוצה לאשר אותה סופית לעורך? לאחר האישור יירשם שהגרסה מאושרת לפרסום ולסגירה סופית.
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-gray-300 font-semibold">
+                שם המאשר:
+              </label>
+              <input
+                type="text"
+                value={approverName}
+                onChange={(e) => setApproverName(e.target.value)}
+                placeholder="למשל: דניאל (הלקוח)"
+                className="bg-[#1c2234] border border-[#2d3752] focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-gray-300 font-semibold">
+                מילה טובה או הערת סיכום (אופציונלי):
+              </label>
+              <textarea
+                rows="2"
+                value={approvalNote}
+                onChange={(e) => setApprovalNote(e.target.value)}
+                placeholder="למשל: 'יצא מושלם, תודה רבה על העבודה המהירה!'"
+                className="bg-[#1c2234] border border-[#2d3752] focus:border-emerald-500 rounded-xl p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#242c42]">
+              <button
+                type="button"
+                onClick={() => setShowApprovalModal(false)}
+                className="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-[#1e2538] transition-colors"
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleApproveVersion(currentVersion.id, approverName.trim() || 'הלקוח', approvalNote.trim())
+                  setShowApprovalModal(false)
+                  setShowCelebration(true)
+                  setTimeout(() => setShowCelebration(false), 5000)
+                }}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+              >
+                <Check className="w-4 h-4" />
+                <span>אשר סופית! 🎉</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Celebration Toast */}
+      {showCelebration && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-2xl shadow-2xl shadow-emerald-950/80 flex items-center gap-3 animate-bounce">
+          <span className="text-xl">🎉</span>
+          <div>
+            <h4 className="text-sm font-bold">איזה כיף! הגרסה אושרה בהצלחה!</h4>
+            <p className="text-xs text-emerald-100">הסטטוס עודכן לעורך ולכל הצוות.</p>
+          </div>
+          <button
+            onClick={() => setShowCelebration(false)}
+            className="text-white/80 hover:text-white mr-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   )
 }
