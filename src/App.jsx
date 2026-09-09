@@ -2078,6 +2078,9 @@ function App() {
                   <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
                     Studio
                   </span>
+                  <span className="hidden xl:inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
+                    by kaboodi
+                  </span>
                 </div>
               </div>
             </div>
@@ -3938,6 +3941,24 @@ function App() {
 
         </section>
       </main>
+
+      {/* Studio / App Footer with Creator Credit */}
+      <footer className="mt-auto py-5 border-t border-white/[0.06] bg-[#0a0d16]/80 backdrop-blur-md text-xs text-gray-400">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-mono font-bold text-white text-xs">CutSync</span>
+            <span className="text-gray-500">|</span>
+            <span className="text-gray-400 text-[11px]">פלטפורמת התיקונים והביקורת המדויקת לווידאו</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-gray-300">
+            <span>נוצר ופותח על ידי</span>
+            <span className="text-purple-300 font-black tracking-wide px-2.5 py-0.5 rounded-lg bg-purple-500/15 border border-purple-500/30 shadow-inner">
+              kaboodi
+            </span>
+            <span>✨</span>
+          </div>
+        </div>
+      </footer>
 
       {/* Version Approval Confirmation Modal */}
       {showApprovalModal && (

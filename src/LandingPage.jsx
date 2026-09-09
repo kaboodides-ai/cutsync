@@ -80,12 +80,15 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-black tracking-tight text-white font-mono">CutSync</span>
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                  by kaboodi
+                </span>
                 <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                   v1.0 בעברית
                 </span>
               </div>
               <span className="text-[11px] text-gray-400 font-medium block">
-                פלטפורמת התיקונים לווידאו
+                פלטפורמת התיקונים לווידאו • נוצר ע״י kaboodi
               </span>
             </div>
           </div>
@@ -696,8 +699,17 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
             <a href="#faq" className="hover:text-white transition-colors">שאלות נפוצות</a>
           </div>
 
-          <div className="text-center sm:text-left text-gray-500 text-[11px]">
-            נבנה באהבה עבור עורכי הווידאו ויוצרי התוכן בישראל 🇮🇱
+          <div className="text-center sm:text-left text-gray-300 text-xs flex flex-col sm:items-end gap-1.5">
+            <div className="flex items-center gap-1.5 font-medium">
+              <span>נוצר ופותח על ידי</span>
+              <span className="text-purple-300 font-black tracking-wide px-2.5 py-0.5 rounded-lg bg-purple-500/15 border border-purple-500/30 shadow-inner">
+                kaboodi
+              </span>
+              <span>✨</span>
+            </div>
+            <span className="text-[11px] text-gray-500">
+              נבנה באהבה עבור עורכי הווידאו ויוצרי התוכן בישראל 🇮🇱
+            </span>
           </div>
 
         </div>
