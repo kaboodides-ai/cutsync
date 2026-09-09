@@ -284,14 +284,51 @@ function App() {
     ctx.fill()
   }
 
+  // Precise coordinate calculation accounting for letterboxing/pillarboxing caused by object-contain
+  const getCanvasCoordinates = (e, canvas) => {
+    if (!canvas) return { x: 0, y: 0 }
+    const rect = canvas.getBoundingClientRect()
+    const containerWidth = rect.width
+    const containerHeight = rect.height
+    if (containerWidth === 0 || containerHeight === 0) return { x: 0, y: 0 }
+
+    const containerAspect = containerWidth / containerHeight
+    const canvasAspect = canvas.width / canvas.height
+
+    let drawWidth, drawHeight, offsetX, offsetY
+
+    if (containerAspect > canvasAspect) {
+      // Container is wider than the 16:9 canvas -> pillarbox (bars on left & right)
+      drawHeight = containerHeight
+      drawWidth = containerHeight * canvasAspect
+      offsetX = (containerWidth - drawWidth) / 2
+      offsetY = 0
+    } else {
+      // Container is taller than the 16:9 canvas -> letterbox (bars on top & bottom)
+      drawWidth = containerWidth
+      drawHeight = containerWidth / canvasAspect
+      offsetX = 0
+      offsetY = (containerHeight - drawHeight) / 2
+    }
+
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+
+    const clampedX = Math.max(0, Math.min(mouseX - offsetX, drawWidth))
+    const clampedY = Math.max(0, Math.min(mouseY - offsetY, drawHeight))
+
+    const x = (clampedX / drawWidth) * canvas.width
+    const y = (clampedY / drawHeight) * canvas.height
+
+    return { x, y }
+  }
+
   // Handle canvas mouse events
   const handleMouseDown = (e) => {
     if (!isDrawingMode) return
     const canvas = canvasRef.current
     if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * canvas.width
-    const y = ((e.clientY - rect.top) / rect.height) * canvas.height
+    const { x, y } = getCanvasCoordinates(e, canvas)
 
     setIsDrawing(true)
     setStartPos({ x, y })
@@ -299,10 +336,15 @@ function App() {
     if (drawTool === 'pen') {
       const ctx = canvas.getContext('2d')
       ctx.strokeStyle = drawColor
+      ctx.fillStyle = drawColor
       ctx.lineWidth = 3
       ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
       ctx.beginPath()
       ctx.moveTo(x, y)
+      ctx.lineTo(x, y)
+      ctx.stroke()
+      setHasDrawing(true)
     }
   }
 
@@ -311,9 +353,7 @@ function App() {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    const rect = canvas.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * canvas.width
-    const y = ((e.clientY - rect.top) / rect.height) * canvas.height
+    const { x, y } = getCanvasCoordinates(e, canvas)
 
     if (drawTool === 'pen') {
       ctx.lineTo(x, y)
@@ -327,9 +367,7 @@ function App() {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    const rect = canvas.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * canvas.width
-    const y = ((e.clientY - rect.top) / rect.height) * canvas.height
+    const { x, y } = getCanvasCoordinates(e, canvas)
 
     if (drawTool === 'circle') {
       const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
