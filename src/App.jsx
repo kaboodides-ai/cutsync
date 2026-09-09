@@ -43,7 +43,8 @@ import {
   Mic,
   MicOff,
   Square,
-  MessageSquare
+  MessageSquare,
+  Type
 } from 'lucide-react'
 import LandingPage from './LandingPage'
 import ProjectsDashboard from './ProjectsDashboard'
@@ -315,12 +316,13 @@ function App() {
 
   // Drawing Markup State
   const [isDrawingMode, setIsDrawingMode] = useState(false)
-  const [drawTool, setDrawTool] = useState('pen') // 'pen' | 'circle' | 'arrow'
+  const [drawTool, setDrawTool] = useState('pen') // 'pen' | 'circle' | 'arrow' | 'text'
   const [drawColor, setDrawColor] = useState('#eab308') // yellow default
   const [hasDrawing, setHasDrawing] = useState(false)
   const [isDrawing, setIsDrawing] = useState(false)
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
   const [activeDrawingImage, setActiveDrawingImage] = useState(null)
+  const [textInputState, setTextInputState] = useState(null)
 
   // Input states
   const [newCommentText, setNewCommentText] = useState('')
@@ -480,6 +482,7 @@ function App() {
     canvasSnapshotRef.current = null
     setHasDrawing(false)
     setActiveDrawingImage(null)
+    setTextInputState(null)
   }, [])
 
   // Draw arrow helper
@@ -501,6 +504,74 @@ function App() {
     ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6))
     ctx.closePath()
     ctx.fill()
+  }
+
+  // Draw text badge helper
+  const drawTextBadge = (ctx, text, x, y, color) => {
+    ctx.save()
+    const fontSize = 18
+    ctx.font = `bold ${fontSize}px Heebo, Rubik, sans-serif`
+    const metrics = ctx.measureText(text)
+    const textWidth = metrics.width
+    const paddingX = 14
+    const paddingY = 8
+    const boxWidth = textWidth + paddingX * 2
+    const boxHeight = fontSize + paddingY * 2
+    const radius = 8
+
+    // Clamp within 960x540 canvas bounds
+    let boxX = x - boxWidth / 2
+    let boxY = y - boxHeight / 2
+    if (boxX < 10) boxX = 10
+    if (boxX + boxWidth > 950) boxX = 950 - boxWidth
+    if (boxY < 10) boxY = 10
+    if (boxY + boxHeight > 530) boxY = 530 - boxHeight
+
+    // Draw rounded dark glass pill background
+    ctx.fillStyle = 'rgba(10, 14, 24, 0.94)'
+    ctx.strokeStyle = color
+    ctx.lineWidth = 2.5
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'
+    ctx.shadowBlur = 12
+    ctx.shadowOffsetX = 0
+    ctx.shadowOffsetY = 4
+
+    ctx.beginPath()
+    if (ctx.roundRect) {
+      ctx.roundRect(boxX, boxY, boxWidth, boxHeight, radius)
+    } else {
+      ctx.rect(boxX, boxY, boxWidth, boxHeight)
+    }
+    ctx.fill()
+    ctx.stroke()
+
+    // Reset shadow
+    ctx.shadowColor = 'transparent'
+    ctx.shadowBlur = 0
+
+    // Draw text in crisp white centered inside pill
+    ctx.fillStyle = '#ffffff'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.fillText(text, boxX + boxWidth / 2, boxY + boxHeight / 2)
+
+    ctx.restore()
+  }
+
+  // Commit text input to canvas
+  const commitTextOverlay = () => {
+    if (!textInputState || !textInputState.text.trim()) {
+      setTextInputState(null)
+      return
+    }
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+
+    drawTextBadge(ctx, textInputState.text.trim(), textInputState.x, textInputState.y, drawColor)
+    setHasDrawing(true)
+    setTextInputState(null)
   }
 
   // Precise coordinate calculation accounting for letterboxing/pillarboxing caused by object-contain
@@ -550,6 +621,25 @@ function App() {
     const ctx = canvas.getContext('2d')
     const { x, y } = getCanvasCoordinates(e, canvas)
 
+    if (drawTool === 'text') {
+      if (textInputState && textInputState.text.trim()) {
+        commitTextOverlay()
+      }
+      const rect = canvas.getBoundingClientRect()
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+      const pctX = (mouseX / rect.width) * 100
+      const pctY = (mouseY / rect.height) * 100
+      setTextInputState({
+        x,
+        y,
+        pctX: Math.min(Math.max(5, pctX), 75),
+        pctY: Math.min(Math.max(5, pctY), 85),
+        text: ''
+      })
+      return
+    }
+
     // Save snapshot of canvas so we can do smooth real-time preview of shapes
     try {
       canvasSnapshotRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height)
@@ -576,7 +666,7 @@ function App() {
   }
 
   const handleMouseMove = (e) => {
-    if (!isDrawing || !isDrawingMode) return
+    if (!isDrawing || !isDrawingMode || drawTool === 'text') return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -609,7 +699,7 @@ function App() {
   }
 
   const handleMouseUp = (e) => {
-    if (!isDrawing || !isDrawingMode) return
+    if (!isDrawing || !isDrawingMode || drawTool === 'text') return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -1678,12 +1768,70 @@ function App() {
                 onMouseLeave={handleMouseUp}
                 className={`absolute inset-0 w-full h-full object-contain ${
                   isDrawingMode
-                    ? 'cursor-crosshair z-30 pointer-events-auto bg-black/10'
+                    ? drawTool === 'text'
+                      ? 'cursor-text z-30 pointer-events-auto bg-black/10'
+                      : 'cursor-crosshair z-30 pointer-events-auto bg-black/10'
                     : hasDrawing
                     ? 'z-20 pointer-events-none'
                     : 'pointer-events-none'
                 }`}
               />
+
+              {/* Floating interactive text input overlay when using Text Tool */}
+              {textInputState && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: `${textInputState.pctX}%`,
+                    top: `${textInputState.pctY}%`,
+                    borderColor: drawColor,
+                    transform: 'translate(-10%, -50%)',
+                    zIndex: 40
+                  }}
+                  className="bg-[#0f1422]/95 backdrop-blur-md border-2 rounded-xl p-2 shadow-2xl flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">
+                      טקסט
+                    </span>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={textInputState.text}
+                      onChange={(e) => setTextInputState((prev) => ({ ...prev, text: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          commitTextOverlay()
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault()
+                          setTextInputState(null)
+                        }
+                      }}
+                      placeholder="כתוב הערה על הפריים..."
+                      className="bg-[#090c15] text-white text-xs px-2.5 py-1.5 rounded-lg border border-[#2b354e] focus:outline-none focus:ring-1 focus:ring-purple-500 min-w-[190px]"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={commitTextOverlay}
+                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1"
+                    title="אשר והוסף לפריים (Enter)"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>הוסף</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTextInputState(null)}
+                    className="p-1.5 rounded-lg bg-[#1c2234] hover:bg-[#252e46] text-gray-400 hover:text-white text-xs transition-colors"
+                    title="ביטול (Esc)"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
 
               {/* Big overlay play button when paused and not drawing */}
               {!isPlaying && !isDrawingMode && !hasDrawing && (
@@ -1826,9 +1974,12 @@ function App() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (videoRef.current && !videoRef.current.paused) {
+                      if (!isDrawingMode && videoRef.current && !videoRef.current.paused) {
                         videoRef.current.pause()
                         setIsPlaying(false)
+                      }
+                      if (isDrawingMode) {
+                        setTextInputState(null)
                       }
                       setIsDrawingMode(!isDrawingMode)
                     }}
@@ -1847,7 +1998,10 @@ function App() {
                       {/* Tool selection */}
                       <button
                         type="button"
-                        onClick={() => setDrawTool('pen')}
+                        onClick={() => {
+                          setDrawTool('pen')
+                          setTextInputState(null)
+                        }}
                         className={`p-1 rounded ${drawTool === 'pen' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
                         title="עט חופשי"
                       >
@@ -1855,19 +2009,36 @@ function App() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDrawTool('circle')}
+                        onClick={() => {
+                          setDrawTool('circle')
+                          setTextInputState(null)
+                        }}
                         className={`p-1 rounded ${drawTool === 'circle' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
-                        title="עיגול"
+                        title="עיגול נמתח"
                       >
                         <Circle className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDrawTool('arrow')}
+                        onClick={() => {
+                          setDrawTool('arrow')
+                          setTextInputState(null)
+                        }}
                         className={`p-1 rounded ${drawTool === 'arrow' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
-                        title="חץ"
+                        title="חץ נמתח"
                       >
                         <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDrawTool('text')
+                          setTextInputState(null)
+                        }}
+                        className={`p-1 rounded ${drawTool === 'text' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        title="טקסט על גבי הפריים"
+                      >
+                        <Type className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Color palette */}
