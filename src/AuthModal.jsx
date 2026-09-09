@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import {
   X,
   Mail,
@@ -7,15 +7,20 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  ArrowRight,
   Sparkles,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  PlusCircle,
+  ShieldCheck,
+  Check
 } from 'lucide-react'
 import {
   loginWithEmail,
   registerWithEmail,
   loginWithGoogle,
-  loginWithDiscord
+  loginWithDiscord,
+  getUsersDb
 } from './authService'
 
 // Official Google "G" Icon SVG
@@ -52,7 +57,11 @@ function DiscordIcon({ className = "w-5 h-5" }) {
 }
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab = 'login' }) {
+  // Main view modes: 'main' | 'google_oauth' | 'discord_oauth'
+  const [viewMode, setViewMode] = useState('main')
   const [tab, setTab] = useState(initialTab) // 'login' | 'register'
+
+  // Standard form fields
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -61,24 +70,34 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // Custom Social Input dialogs state
-  const [socialPrompt, setSocialPrompt] = useState(null) // null | 'google' | 'discord'
-  const [customSocialInput, setCustomSocialInput] = useState('')
+  // Google OAuth specific fields
+  const [googleEmail, setGoogleEmail] = useState('')
+  const [googleName, setGoogleName] = useState('')
+  const [isNewGoogleAccount, setIsNewGoogleAccount] = useState(false)
+
+  // Discord OAuth specific fields
+  const [discordUsername, setDiscordUsername] = useState('')
+  const [discordEmail, setDiscordEmail] = useState('')
+  const [isNewDiscordAccount, setIsNewDiscordAccount] = useState(false)
+
+  // Available saved accounts from db
+  const [savedUsers, setSavedUsers] = useState([])
+
+  useEffect(() => {
+    if (isOpen) {
+      const users = getUsersDb()
+      setSavedUsers(users)
+      setViewMode('main')
+      setError(null)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
-  const handleResetForm = () => {
-    setError(null)
-    setSocialPrompt(null)
-    setCustomSocialInput('')
-  }
+  const googleUsers = savedUsers.filter(u => u.provider === 'google')
+  const discordUsers = savedUsers.filter(u => u.provider === 'discord')
 
-  const switchTab = (newTab) => {
-    setTab(newTab)
-    handleResetForm()
-  }
-
-  // Handle Standard Email/Password Submit
+  // Standard Email/Password Submit
   const handleSubmit = (e) => {
     e.preventDefault()
     setError(null)
@@ -105,31 +124,63 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
     }
   }
 
-  // Quick One-Click Social Logins
-  const handleQuickGoogle = (customEmailVal, customNameVal) => {
-    try {
-      const user = loginWithGoogle(customEmailVal, customNameVal)
-      onAuthSuccess(user)
-      onClose()
-    } catch (err) {
-      setError(err.message)
+  // Handle Google OAuth Connect
+  const handleGoogleConnect = (e) => {
+    if (e) e.preventDefault()
+    setError(null)
+
+    const cleanEmail = googleEmail.trim().toLowerCase()
+    const cleanName = googleName.trim()
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setError('נא להזין כתובת Gmail תקינה')
+      return
     }
+
+    setLoading(true)
+    setTimeout(() => {
+      try {
+        const derivedName = cleanName || cleanEmail.split('@')[0]
+        const user = loginWithGoogle(cleanEmail, derivedName)
+        setLoading(false)
+        onAuthSuccess(user)
+        onClose()
+      } catch (err) {
+        setLoading(false)
+        setError(err.message)
+      }
+    }, 400)
   }
 
-  const handleQuickDiscord = (customUserVal) => {
-    try {
-      const user = loginWithDiscord(customUserVal)
-      onAuthSuccess(user)
-      onClose()
-    } catch (err) {
-      setError(err.message)
+  // Handle Discord OAuth Connect
+  const handleDiscordConnect = (e) => {
+    if (e) e.preventDefault()
+    setError(null)
+
+    const cleanUser = discordUsername.trim()
+    if (!cleanUser) {
+      setError('נא להזין כינוי או שם משתמש ב-Discord')
+      return
     }
+
+    setLoading(true)
+    setTimeout(() => {
+      try {
+        const user = loginWithDiscord(cleanUser)
+        setLoading(false)
+        onAuthSuccess(user)
+        onClose()
+      } catch (err) {
+        setLoading(false)
+        setError(err.message)
+      }
+    }, 400)
   }
 
   return (
     <div
       dir="rtl"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -149,110 +200,358 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
           <X className="w-4 h-4" />
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>סביבת עבודה אישית לעורכים</span>
-          </div>
-          <h2 className="text-2xl font-black text-white">
-            {tab === 'login' ? 'התחברות ל-CutSync' : 'הרשמה לחשבון חדש'}
-          </h2>
-          <p className="text-xs text-gray-400 mt-1">
-            {tab === 'login'
-              ? 'התחבר כדי לגשת לדשבורד הפרויקטים האישי שלך'
-              : 'פתח חשבון וקבל דשבורד ייעודי לניהול גרסאות וסרטונים'}
-          </p>
-        </div>
+        {/* ======================================================== */}
+        {/* VIEW 1: GOOGLE OAUTH INTERACTIVE SCREEN                  */}
+        {/* ======================================================== */}
+        {viewMode === 'google_oauth' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <button
+              onClick={() => {
+                setViewMode('main')
+                setError(null)
+              }}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white mb-4 cursor-pointer"
+            >
+              <ArrowRight className="w-3.5 h-3.5" />
+              <span>חזרה לאפשרויות התחברות</span>
+            </button>
 
-        {/* Tab Switcher */}
-        <div className="grid grid-cols-2 p-1 bg-[#0b0e17] rounded-2xl border border-gray-800/80 mb-5">
-          <button
-            type="button"
-            onClick={() => switchTab('login')}
-            className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              tab === 'login'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            התחברות
-          </button>
-          <button
-            type="button"
-            onClick={() => switchTab('register')}
-            className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-              tab === 'register'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            הרשמה מלאה
-          </button>
-        </div>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto mb-3 shadow-md">
+                <GoogleIcon className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-black text-white">התחברות באמצעות Google</h3>
+              <p className="text-xs text-gray-400 mt-1">מעבר מאובטח אל CutSync Studio</p>
+            </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-            <span>{error}</span>
+            {error && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* List of existing Google accounts if any */}
+            {googleUsers.length > 0 && !isNewGoogleAccount && (
+              <div className="mb-4 space-y-2">
+                <div className="text-[11px] text-gray-400 font-semibold mb-1">
+                  בחר חשבון Google מחובר:
+                </div>
+                {googleUsers.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => {
+                      const user = loginWithGoogle(u.email, u.name)
+                      onAuthSuccess(user)
+                      onClose()
+                    }}
+                    className="w-full p-3 rounded-2xl bg-[#151c2e] hover:bg-[#1c263e] border border-[#273552] flex items-center justify-between text-right transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        className="w-9 h-9 rounded-full object-cover border border-purple-500/30"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">
+                          {u.name}
+                        </div>
+                        <div className="text-[11px] text-gray-400">{u.email}</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
+                      התחבר
+                    </span>
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setIsNewGoogleAccount(true)}
+                  className="w-full py-2.5 px-3 rounded-xl border border-dashed border-gray-700 hover:border-purple-500/50 text-xs text-gray-300 hover:text-white flex items-center justify-center gap-2 transition-all cursor-pointer mt-2"
+                >
+                  <PlusCircle className="w-4 h-4 text-purple-400" />
+                  <span>השתמש בחשבון Gmail אישי אחר</span>
+                </button>
+              </div>
+            )}
+
+            {/* Form to enter real custom Google / Gmail account */}
+            {(googleUsers.length === 0 || isNewGoogleAccount) && (
+              <form onSubmit={handleGoogleConnect} className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">
+                    כתובת ה-Gmail שלך
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      autoFocus
+                      value={googleEmail}
+                      onChange={(e) => setGoogleEmail(e.target.value)}
+                      placeholder="your.email@gmail.com"
+                      className="w-full pr-9 pl-3 py-2.5 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                    <Mail className="w-4 h-4 text-gray-500 absolute right-3 top-3" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">
+                    שמך המלא בחשבון גוגל
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={googleName}
+                      onChange={(e) => setGoogleName(e.target.value)}
+                      placeholder="לדוגמה: ישראל ישראלי"
+                      className="w-full pr-9 pl-3 py-2.5 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                    <User className="w-4 h-4 text-gray-500 absolute right-3 top-3" />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <GoogleIcon className="w-4 h-4" />
+                    <span>{loading ? 'מתחבר ל-Google...' : 'אישור וכניסה עם חשבון Google זה'}</span>
+                  </button>
+                </div>
+
+                {googleUsers.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsNewGoogleAccount(false)}
+                    className="w-full py-2 text-center text-[11px] text-gray-400 hover:text-white"
+                  >
+                    חזרה לרשימת החשבונות השמורים
+                  </button>
+                )}
+              </form>
+            )}
+
+            <div className="mt-4 p-2.5 rounded-xl bg-[#090d16] border border-gray-800 text-[10px] text-gray-400 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>חיבור מאובטח: פרטי הפרויקטים יישמרו בסביבה מבודדת תחת חשבון ה-Gmail שלך.</span>
+            </div>
           </div>
         )}
 
-        {/* Social Prompt View (Optional custom account input) */}
-        {socialPrompt ? (
-          <div className="p-4 rounded-2xl bg-[#161c2e] border border-indigo-500/30 mb-5 text-right animate-in fade-in">
-            <h4 className="text-xs font-bold text-white mb-1">
-              {socialPrompt === 'google' ? 'התחברות דרך Google / Gmail' : 'התחברות דרך Discord'}
-            </h4>
-            <p className="text-[11px] text-gray-400 mb-3">
-              {socialPrompt === 'google'
-                ? 'הזן את כתובת ה-Gmail שלך או אשר להתחברות מיידית:'
-                : 'הזן את כינוי הדיסקורד שלך (לדוגמה: Editor#1234):'}
-            </p>
-            <input
-              type="text"
-              autoFocus
-              value={customSocialInput}
-              onChange={(e) => setCustomSocialInput(e.target.value)}
-              placeholder={socialPrompt === 'google' ? 'yourname@gmail.com' : 'YourName#0000'}
-              className="w-full px-3 py-2 text-xs bg-[#0b0e17] border border-gray-700 rounded-xl text-white focus:outline-none focus:border-indigo-500 mb-3"
-            />
-            <div className="flex gap-2">
+        {/* ======================================================== */}
+        {/* VIEW 2: DISCORD OAUTH INTERACTIVE SCREEN                 */}
+        {/* ======================================================== */}
+        {viewMode === 'discord_oauth' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <button
+              onClick={() => {
+                setViewMode('main')
+                setError(null)
+              }}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white mb-4 cursor-pointer"
+            >
+              <ArrowRight className="w-3.5 h-3.5" />
+              <span>חזרה לאפשרויות התחברות</span>
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-[#5865F2] flex items-center justify-center mx-auto mb-3 shadow-md shadow-[#5865F2]/40">
+                <DiscordIcon className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-black text-white">התחברות באמצעות Discord</h3>
+              <p className="text-xs text-gray-400 mt-1">CutSync מבקשת גישה לחשבון הדיסקורד שלך</p>
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* List of existing Discord accounts if any */}
+            {discordUsers.length > 0 && !isNewDiscordAccount && (
+              <div className="mb-4 space-y-2">
+                <div className="text-[11px] text-gray-400 font-semibold mb-1">
+                  בחר חשבון Discord מחובר:
+                </div>
+                {discordUsers.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => {
+                      const user = loginWithDiscord(u.name)
+                      onAuthSuccess(user)
+                      onClose()
+                    }}
+                    className="w-full p-3 rounded-2xl bg-[#151c2e] hover:bg-[#1c263e] border border-[#273552] flex items-center justify-between text-right transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        className="w-9 h-9 rounded-full object-cover border border-[#5865F2]/40"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-white group-hover:text-[#8a96f8] transition-colors">
+                          {u.name}
+                        </div>
+                        <div className="text-[11px] text-gray-400">{u.email}</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#5865F2]/20 text-[#8a96f8] border border-[#5865F2]/30">
+                      התחבר
+                    </span>
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setIsNewDiscordAccount(true)}
+                  className="w-full py-2.5 px-3 rounded-xl border border-dashed border-gray-700 hover:border-[#5865F2]/50 text-xs text-gray-300 hover:text-white flex items-center justify-center gap-2 transition-all cursor-pointer mt-2"
+                >
+                  <PlusCircle className="w-4 h-4 text-[#8a96f8]" />
+                  <span>התחבר עם חשבון Discord אישי אחר</span>
+                </button>
+              </div>
+            )}
+
+            {/* Form to enter real custom Discord user */}
+            {(discordUsers.length === 0 || isNewDiscordAccount) && (
+              <form onSubmit={handleDiscordConnect} className="space-y-3">
+                <div className="p-3 rounded-2xl bg-[#141b2c] border border-[#293654] text-xs text-gray-300 space-y-1.5 mb-3">
+                  <div className="text-[11px] font-bold text-white mb-1">הרשאות מבוקשות:</div>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>גישה לשם המשתמש והאווטאר שלך</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>שיוך סביבת עבודה ופרויקטים ייעודיים</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">
+                    כינוי / שם משתמש ב-Discord
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      autoFocus
+                      value={discordUsername}
+                      onChange={(e) => setDiscordUsername(e.target.value)}
+                      placeholder="לדוגמה: VideoCreator#1234 או myusername"
+                      className="w-full pr-9 pl-3 py-2.5 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-[#5865F2] transition-colors"
+                    />
+                    <User className="w-4 h-4 text-gray-500 absolute right-3 top-3" />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs shadow-lg shadow-[#5865F2]/40 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <DiscordIcon className="w-4 h-4 text-white" />
+                    <span>{loading ? 'מאמת מול Discord...' : 'אשר והתחבר (Authorize)'}</span>
+                  </button>
+                </div>
+
+                {discordUsers.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsNewDiscordAccount(false)}
+                    className="w-full py-2 text-center text-[11px] text-gray-400 hover:text-white"
+                  >
+                    חזרה לרשימת החשבונות השמורים
+                  </button>
+                )}
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* VIEW 3: MAIN AUTH SCREEN (GOOGLE, DISCORD, EMAIL TABS)   */}
+        {/* ======================================================== */}
+        {viewMode === 'main' && (
+          <>
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-semibold mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>סביבת עבודה אישית לעורכים</span>
+              </div>
+              <h2 className="text-2xl font-black text-white">
+                {tab === 'login' ? 'התחברות ל-CutSync' : 'הרשמה לחשבון חדש'}
+              </h2>
+              <p className="text-xs text-gray-400 mt-1">
+                {tab === 'login'
+                  ? 'התחבר כדי לגשת לדשבורד הפרויקטים האישי שלך'
+                  : 'פתח חשבון וקבל דשבורד ייעודי לניהול גרסאות וסרטונים'}
+              </p>
+            </div>
+
+            {/* Tab Switcher */}
+            <div className="grid grid-cols-2 p-1 bg-[#0b0e17] rounded-2xl border border-gray-800/80 mb-5">
               <button
                 type="button"
                 onClick={() => {
-                  if (socialPrompt === 'google') {
-                    const mail = customSocialInput || 'omer.cohen@gmail.com'
-                    const parsedName = mail.split('@')[0]
-                    handleQuickGoogle(mail, parsedName)
-                  } else {
-                    handleQuickDiscord(customSocialInput || 'YossiEditor#4420')
-                  }
+                  setTab('login')
+                  setError(null)
                 }}
-                className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+                className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  tab === 'login'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950'
+                    : 'text-gray-400 hover:text-white'
+                }`}
               >
-                המשך והתחבר 🚀
+                התחברות
               </button>
               <button
                 type="button"
-                onClick={() => setSocialPrompt(null)}
-                className="px-3 py-2 rounded-xl bg-gray-800 text-gray-300 hover:text-white text-xs"
+                onClick={() => {
+                  setTab('register')
+                  setError(null)
+                }}
+                className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  tab === 'register'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950'
+                    : 'text-gray-400 hover:text-white'
+                }`}
               >
-                ביטול
+                הרשמה מלאה
               </button>
             </div>
-          </div>
-        ) : (
-          <>
-            {/* Social Logins */}
+
+            {/* Error Alert */}
+            {error && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Social Logins - Now opens interactive OAuth flow! */}
             <div className="space-y-2.5 mb-5">
               {/* Google Button */}
               <button
                 type="button"
                 onClick={() => {
-                  // Direct 1-click Google authentication
-                  handleQuickGoogle('omer.cohen@gmail.com', 'עומר כהן')
+                  setViewMode('google_oauth')
+                  setError(null)
+                  setIsNewGoogleAccount(false)
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 shadow-md cursor-pointer"
               >
@@ -264,8 +563,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
               <button
                 type="button"
                 onClick={() => {
-                  // Direct 1-click Discord authentication
-                  handleQuickDiscord('YossiEditor#4420')
+                  setViewMode('discord_oauth')
+                  setError(null)
+                  setIsNewDiscordAccount(false)
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 shadow-md shadow-[#5865F2]/20 cursor-pointer"
               >
@@ -278,131 +578,94 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
             <div className="relative flex items-center justify-center my-4">
               <div className="w-full border-t border-gray-800"></div>
               <span className="absolute px-3 bg-[#101422] text-[11px] text-gray-500 font-medium">
-                או באמצעות אימייל
+                או באמצעות אימייל וסיסמה
               </span>
             </div>
+
+            {/* Standard Email/Password Form */}
+            <form onSubmit={handleSubmit} className="space-y-3">
+              {tab === 'register' && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">שם מלא</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="לדוגמה: דניאל כהן"
+                      className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                    <User className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-300 mb-1">כתובת אימייל</label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="editor@studio.com"
+                    className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <Mail className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-300 mb-1">סיסמה</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="לפחות 6 תווים"
+                    className="w-full pr-9 pl-9 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <Lock className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3 top-2.5 text-gray-500 hover:text-gray-300"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {tab === 'register' && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">אימות סיסמה</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="הקלד שוב את אותה הסיסמה"
+                      className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                    <Lock className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-950/60 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>{tab === 'login' ? 'התחבר לדשבורד' : 'סיום הרשמה ויצירת חשבון'}</span>
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            </form>
           </>
         )}
-
-        {/* Standard Email/Password Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {tab === 'register' && (
-            <div>
-              <label className="block text-[11px] font-semibold text-gray-300 mb-1">שם מלא</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="לדוגמה: דניאל כהן"
-                  className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <User className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-[11px] font-semibold text-gray-300 mb-1">כתובת אימייל</label>
-            <div className="relative">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="editor@studio.com"
-                className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
-              />
-              <Mail className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold text-gray-300 mb-1">סיסמה</label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="לפחות 6 תווים"
-                className="w-full pr-9 pl-9 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
-              />
-              <Lock className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-2.5 text-gray-500 hover:text-gray-300"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {tab === 'register' && (
-            <div>
-              <label className="block text-[11px] font-semibold text-gray-300 mb-1">אימות סיסמה</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="הקלד שוב את אותה הסיסמה"
-                  className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <Lock className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
-              </div>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-950/60 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <span>{tab === 'login' ? 'התחבר לדשבורד' : 'סיום הרשמה ויצירת חשבון'}</span>
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        </form>
-
-        {/* Quick Demo Switcher Bar for instant testing */}
-        <div className="mt-5 pt-4 border-t border-[#1d253b] text-center">
-          <div className="text-[10px] text-gray-400 font-semibold mb-2">
-            ⚡ בדיקה מהירה: התחבר בלחיצה לחשבונות דמו:
-          </div>
-          <div className="flex items-center justify-center gap-2 text-[10px]">
-            <button
-              type="button"
-              onClick={() => handleQuickGoogle('omer.cohen@gmail.com', 'עומר כהן')}
-              className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 font-medium transition-all"
-              title="פרויקטים: סרטון תדמית אלפא, קמפיין טיקטוק"
-            >
-              Google: עומר
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDiscord('YossiEditor#4420')}
-              className="px-2.5 py-1 rounded-lg bg-[#5865F2]/10 hover:bg-[#5865F2]/20 text-[#8a96f8] border border-[#5865F2]/20 font-medium transition-all"
-              title="פרויקטים: קליפ מוזיקלי"
-            >
-              Discord: Yossi
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const user = loginWithEmail('michal@studio.co.il', 'password123')
-                onAuthSuccess(user)
-                onClose()
-              }}
-              className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 font-medium transition-all"
-              title="פרויקטים: סרטון הדרכה למשתמשים"
-            >
-              Email: מיכל
-            </button>
-          </div>
-        </div>
 
       </div>
     </div>
