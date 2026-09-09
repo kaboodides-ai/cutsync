@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- CutSync — Supabase Schema + RLS Policies
 -- Run this in Supabase Dashboard → SQL Editor → New Query
 -- ============================================================
@@ -16,7 +16,7 @@ create policy "Users can view own profile" on public.profiles for select using (
 create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
 
--- Auto-create profile trigger
+-- Auto-create profile trigger (safe with ON CONFLICT and exception fallback)
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -25,9 +25,16 @@ begin
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
-    coalesce(new.raw_user_meta_data->>'provider', new.app_metadata->>'provider', 'email')
-  );
+    coalesce(new.raw_user_meta_data->>'provider', new.raw_app_meta_data->>'provider', 'email')
+  )
+  on conflict (id) do update set
+    name = excluded.name,
+    avatar_url = coalesce(excluded.avatar_url, profiles.avatar_url),
+    provider = excluded.provider;
   return new;
+exception
+  when others then
+    return new;
 end;
 $$;
 drop trigger if exists on_auth_user_created on auth.users;
