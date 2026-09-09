@@ -37,7 +37,8 @@ import {
   AlertCircle,
   Mic,
   MicOff,
-  Square
+  Square,
+  MessageSquare
 } from 'lucide-react'
 
 // Demo sample video (Open source Blender video)
@@ -57,6 +58,25 @@ function formatTime(seconds) {
   const secs = Math.floor(seconds % 60)
   const pad = (n) => (n < 10 ? '0' + n : n)
   return `${pad(mins)}:${pad(secs)}`
+}
+
+function formatReplyTime(isoString) {
+  if (!isoString) return ''
+  try {
+    const d = new Date(isoString)
+    const now = new Date()
+    const isToday = d.toDateString() === now.toDateString()
+    const hours = d.getHours().toString().padStart(2, '0')
+    const minutes = d.getMinutes().toString().padStart(2, '0')
+    if (isToday) {
+      return `היום ${hours}:${minutes}`
+    }
+    const day = d.getDate().toString().padStart(2, '0')
+    const month = (d.getMonth() + 1).toString().padStart(2, '0')
+    return `${day}/${month} ${hours}:${minutes}`
+  } catch (e) {
+    return ''
+  }
 }
 
 function AudioCommentPlayer({ src, duration, label = "הערה קולית" }) {
@@ -150,9 +170,11 @@ function App() {
     // Backward compatibility: migrate legacy single comments to V1
     const oldComments = localStorage.getItem('cutsync_comments')
     let initialComments = [
-      { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח', drawing: null },
-      { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח', drawing: null },
-      { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח', drawing: null },
+      { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח', drawing: null, replies: [] },
+      { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח', drawing: null, replies: [
+        { id: 'r1', author: 'עורך', text: 'הגברתי ב-3dB ואיזנתי עם הדיבור, נשמע מעולה עכשיו!', createdAt: new Date(Date.now() - 3600000).toISOString() }
+      ] },
+      { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח', drawing: null, replies: [] },
     ]
     if (oldComments) {
       try {
@@ -210,6 +232,10 @@ function App() {
   const [activeFilter, setActiveFilter] = useState('all') // 'all' | 'pending' | 'completed'
   const [copied, setCopied] = useState(false)
   const [hoveredMarker, setHoveredMarker] = useState(null)
+
+  // Threaded Replies State
+  const [expandedThreads, setExpandedThreads] = useState({ '2': true })
+  const [replyInputs, setReplyInputs] = useState({})
 
   // Save versions and active version to localStorage
   useEffect(() => {
@@ -534,6 +560,7 @@ function App() {
       audioDuration: recordingDuration,
       completed: false,
       author: mode === 'client' ? 'לקוח' : 'עורך',
+      replies: [],
       createdAt: new Date().toISOString()
     }
 
@@ -558,6 +585,57 @@ function App() {
     updateActiveVersionComments((prev) => prev.filter((c) => c.id !== id))
   }
 
+  // Threaded Replies Handlers
+  const toggleThread = (commentId) => {
+    setExpandedThreads((prev) => ({
+      ...prev,
+      [commentId]: !prev[commentId]
+    }))
+  }
+
+  const handleAddReply = (commentId, customText = null) => {
+    const textToSend = (customText || replyInputs[commentId] || '').trim()
+    if (!textToSend) return
+
+    const newReply = {
+      id: Date.now().toString(),
+      author: mode === 'client' ? 'לקוח' : 'עורך',
+      text: textToSend,
+      createdAt: new Date().toISOString()
+    }
+
+    updateActiveVersionComments((prev) =>
+      prev.map((c) => {
+        if (c.id === commentId) {
+          const existing = Array.isArray(c.replies) ? c.replies : []
+          return {
+            ...c,
+            replies: [...existing, newReply]
+          }
+        }
+        return c
+      })
+    )
+
+    setReplyInputs((prev) => ({ ...prev, [commentId]: '' }))
+    setExpandedThreads((prev) => ({ ...prev, [commentId]: true }))
+  }
+
+  const handleDeleteReply = (commentId, replyId) => {
+    updateActiveVersionComments((prev) =>
+      prev.map((c) => {
+        if (c.id === commentId) {
+          const existing = Array.isArray(c.replies) ? c.replies : []
+          return {
+            ...c,
+            replies: existing.filter((r) => r.id !== replyId)
+          }
+        }
+        return c
+      })
+    )
+  }
+
   // Generate WhatsApp Message
   const getWhatsAppMessage = () => {
     let msg = `🎬 *סיכום תיקונים - ${videoTitle} (${currentVersion.name})*\n`
@@ -572,6 +650,13 @@ function App() {
         const tag = cat ? `[${cat.label}]` : ''
         const audioTag = c.audio ? ' 🎙️ (הודעה קולית)' : ''
         msg += `${status} *${formatTime(c.time)}* ${tag}: ${c.text}${audioTag}\n`
+
+        if (Array.isArray(c.replies) && c.replies.length > 0) {
+          c.replies.forEach((r) => {
+            const authorTag = r.author === 'עורך' ? '🎬 עורך' : '👤 לקוח'
+            msg += `   ↳ _${authorTag}:_ ${r.text}\n`
+          })
+        }
       })
     }
 
@@ -1399,6 +1484,147 @@ function App() {
                           duration={comment.audioDuration}
                         />
                       )}
+
+                      {/* Threaded Discussion Section */}
+                      <div className="mt-2.5 pt-2 border-t border-[#22283a]">
+                        {/* Toggle Button */}
+                        <div className="flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => toggleThread(comment.id)}
+                            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-300 font-medium transition-colors group/btn"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-purple-400 group-hover/btn:scale-110 transition-transform" />
+                            <span>
+                              {(comment.replies?.length || 0) > 0
+                                ? `${comment.replies.length} תגובות בשיחה`
+                                : '💬 תגובות / שיחה על התיקון'}
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-mono">
+                              {expandedThreads[comment.id] ? '▲ סגור' : '▼ פתח'}
+                            </span>
+                          </button>
+
+                          {(comment.replies?.length || 0) > 0 && !expandedThreads[comment.id] && (
+                            <span className="text-[10px] bg-purple-500/10 text-purple-300 px-1.5 py-0.5 rounded-full border border-purple-500/20">
+                              פעיל ({comment.replies.length})
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Expanded Thread Drawer */}
+                        {expandedThreads[comment.id] && (
+                          <div className="mt-2.5 bg-[#10131f] rounded-xl p-3 border border-[#232b40] flex flex-col gap-2.5 shadow-inner">
+                            {/* Existing Replies */}
+                            {Array.isArray(comment.replies) && comment.replies.length > 0 ? (
+                              <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+                                {comment.replies.map((reply) => {
+                                  const isEditor = reply.author === 'עורך'
+                                  return (
+                                    <div
+                                      key={reply.id}
+                                      className={`p-2 rounded-lg border text-xs flex flex-col gap-1 transition-all ${
+                                        isEditor
+                                          ? 'bg-[#151928] border-indigo-500/30 text-indigo-100'
+                                          : 'bg-[#181528] border-purple-500/30 text-purple-100'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                          <span
+                                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                                              isEditor
+                                                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+                                                : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                                            }`}
+                                          >
+                                            {isEditor ? '🎬 עורך' : '👤 לקוח'}
+                                          </span>
+                                          <span className="text-[10px] text-gray-400 font-mono">
+                                            {formatReplyTime(reply.createdAt)}
+                                          </span>
+                                        </div>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteReply(comment.id, reply.id)}
+                                          className="text-gray-500 hover:text-red-400 transition-colors p-0.5"
+                                          title="מחק תגובה"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </button>
+                                      </div>
+
+                                      <p className="text-gray-200 text-xs whitespace-pre-wrap leading-relaxed">
+                                        {reply.text}
+                                      </p>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-gray-400 italic">
+                                אין עדיין תגובות לתיקון זה. אפשר לשאול שאלה או להשאיר עדכון ישירות כאן במקום בוואטסאפ:
+                              </p>
+                            )}
+
+                            {/* Quick suggested responses */}
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {(mode === 'client'
+                                ? ['מעולה, תודה!', 'עדיף קצר יותר', 'סומך על הטעם שלך', 'אפשר עוד אופציה?']
+                                : ['תוקן, תבדוק עכשיו ✓', 'לאיזה צבע להחליף?', 'צריך עוד פירוט', 'בוצע בגרסה הבאה']
+                              ).map((suggestion, sIdx) => (
+                                <button
+                                  key={sIdx}
+                                  type="button"
+                                  onClick={() => handleAddReply(comment.id, suggestion)}
+                                  className="text-[10px] px-2 py-0.5 rounded-full bg-[#1b2133] hover:bg-[#252c42] text-gray-300 hover:text-white border border-[#2d364f] transition-all"
+                                >
+                                  + {suggestion}
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Reply Input Form */}
+                            <form
+                              onSubmit={(e) => {
+                                e.preventDefault()
+                                handleAddReply(comment.id)
+                              }}
+                              className="flex items-center gap-1.5 pt-1"
+                            >
+                              <input
+                                type="text"
+                                value={replyInputs[comment.id] || ''}
+                                onChange={(e) =>
+                                  setReplyInputs((prev) => ({
+                                    ...prev,
+                                    [comment.id]: e.target.value
+                                  }))
+                                }
+                                placeholder={
+                                  mode === 'client'
+                                    ? 'השב כלקוח (למשל: "התכוונתי לצבע צהוב זוהר")...'
+                                    : 'השב כעורך (למשל: "תוקן, תבדוק עכשיו ב-00:04")...'
+                                }
+                                className="flex-1 bg-[#161a29] border border-[#2c354e] focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                              />
+                              <button
+                                type="submit"
+                                disabled={!(replyInputs[comment.id] || '').trim()}
+                                className={`p-2 rounded-lg text-white text-xs font-semibold flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                                  mode === 'client'
+                                    ? 'bg-purple-600 hover:bg-purple-500 shadow-sm shadow-purple-950/50'
+                                    : 'bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-950/50'
+                                }`}
+                                title="שלח תגובה (Enter)"
+                              >
+                                <Send className="w-3 h-3" />
+                              </button>
+                            </form>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Delete button (Client can delete their notes, Editor can clean) */}
