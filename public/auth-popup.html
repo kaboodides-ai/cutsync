@@ -1,0 +1,440 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CutSync Auth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Heebo', system-ui, -apple-system, sans-serif;
+    }
+    body {
+      background-color: #0b0f19;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      border-radius: 1.5rem;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    /* Google Theme */
+    .google-theme {
+      background-color: #1f1f1f;
+      border-color: #383838;
+      color: #e3e3e3;
+    }
+    .google-btn {
+      background-color: #ffffff;
+      color: #1f1f1f;
+      font-weight: 700;
+      border: none;
+      padding: 0.8rem 1.25rem;
+      border-radius: 0.75rem;
+      width: 100%;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .google-btn:hover {
+      background-color: #f1f1f1;
+      transform: scale(1.01);
+    }
+    /* Discord Theme */
+    .discord-theme {
+      background-color: #2b2d31;
+      border-color: #3e4047;
+      color: #dbdee1;
+    }
+    .discord-btn {
+      background-color: #5865F2;
+      color: #ffffff;
+      font-weight: 700;
+      border: none;
+      padding: 0.8rem 1.25rem;
+      border-radius: 0.75rem;
+      width: 100%;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .discord-btn:hover {
+      background-color: #4752c4;
+      transform: scale(1.01);
+    }
+    .input-field {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid #444851;
+      background-color: #18191c;
+      color: #fff;
+      font-size: 0.875rem;
+      margin-top: 0.35rem;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      border-color: #7289da;
+    }
+    .google-theme .input-field {
+      background-color: #141414;
+      border-color: #474747;
+    }
+    .google-theme .input-field:focus {
+      border-color: #8ab4f8;
+    }
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #9aa0a6;
+    }
+    .account-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 0.6rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .account-item:hover {
+      background: rgba(255, 255, 255, 0.09);
+    }
+    .avatar-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-cover: cover;
+      margin-left: 0.75rem;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+    }
+    .footer-note {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.75rem;
+      color: #71767b;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .spinner {
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="content" class="auth-card">
+    <!-- Populated via JavaScript based on URL params -->
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const provider = urlParams.get('provider') || 'google';
+    const container = document.getElementById('content');
+
+    // Get existing users from localStorage
+    function getStoredUsers() {
+      try {
+        const raw = localStorage.getItem('cutsync_users_db');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) { console.error(e); }
+      return [];
+    }
+
+    const allUsers = getStoredUsers();
+    const matchingUsers = allUsers.filter(u => u.provider === provider);
+
+    if (provider === 'google') {
+      container.classList.add('google-theme');
+      document.title = 'התחברות באמצעות חשבונות Google';
+      renderGoogleScreen();
+    } else {
+      container.classList.add('discord-theme');
+      document.title = 'התחברות באמצעות Discord';
+      renderDiscordScreen();
+    }
+
+    function renderGoogleScreen(showCustom = false) {
+      if (matchingUsers.length > 0 && !showCustom) {
+        let accountsHtml = matchingUsers.map(u => `
+          <div class="account-item" onclick="selectUser('${u.id}')">
+            <div style="display: flex; align-items: center;">
+              <img src="${u.avatar}" class="avatar-img" alt="${u.name}">
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem; color: #fff;">${u.name}</div>
+                <div style="font-size: 0.75rem; color: #9aa0a6;">${u.email}</div>
+              </div>
+            </div>
+            <span class="badge">התחבר</span>
+          </div>
+        `).join('');
+
+        container.innerHTML = `
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <svg style="width: 44px; height: 44px; margin: 0 auto 0.75rem;" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff;">בחר חשבון Google</h2>
+            <p style="font-size: 0.8rem; color: #9aa0a6; margin-top: 0.25rem;">כדי להמשיך אל CutSync Studio</p>
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            ${accountsHtml}
+          </div>
+
+          <button class="google-btn" style="background: transparent; color: #8ab4f8; border: 1px dashed #555;" onclick="renderGoogleScreen(true)">
+            <span>+ השתמש בחשבון Gmail אישי אחר</span>
+          </button>
+
+          <div class="footer-note">
+            לפני שתמשיך, Google תשתף את שמך, כתובת האימייל ותמונת הפרופיל שלך עם CutSync.
+          </div>
+        `;
+      } else {
+        // Custom Gmail Input Screen
+        container.innerHTML = `
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <svg style="width: 44px; height: 44px; margin: 0 auto 0.75rem;" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff;">התחברות עם Google</h2>
+            <p style="font-size: 0.8rem; color: #9aa0a6; margin-top: 0.25rem;">הזן את פרטי ה-Gmail שלך להמשך</p>
+          </div>
+
+          <form onsubmit="handleGoogleSubmit(event)">
+            <div>
+              <label>כתובת האימייל ב-Gmail</label>
+              <input type="email" id="gEmail" required autofocus class="input-field" placeholder="your.name@gmail.com">
+            </div>
+
+            <div>
+              <label>שמך המלא בגוגל</label>
+              <input type="text" id="gName" required class="input-field" placeholder="לדוגמה: ישראל ישראלי">
+            </div>
+
+            <button type="submit" id="submitBtn" class="google-btn">
+              <span>התחבר עם Google</span>
+            </button>
+          </form>
+
+          ${matchingUsers.length > 0 ? `
+            <div style="text-align: center; margin-top: 1rem;">
+              <a href="javascript:void(0)" onclick="renderGoogleScreen(false)" style="color: #8ab4f8; font-size: 0.75rem; text-decoration: none;">
+                ← חזרה לרשימת החשבונות
+              </a>
+            </div>
+          ` : ''}
+
+          <div class="footer-note">
+            חיבור מאובטח ומבודד עבור CutSync Studio.
+          </div>
+        `;
+      }
+    }
+
+    function renderDiscordScreen(showCustom = false) {
+      if (matchingUsers.length > 0 && !showCustom) {
+        let accountsHtml = matchingUsers.map(u => `
+          <div class="account-item" onclick="selectUser('${u.id}')">
+            <div style="display: flex; align-items: center;">
+              <img src="${u.avatar}" class="avatar-img" alt="${u.name}">
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem; color: #fff;">${u.name}</div>
+                <div style="font-size: 0.75rem; color: #9aa0a6;">${u.email}</div>
+              </div>
+            </div>
+            <span class="badge" style="background: rgba(88, 101, 242, 0.2); color: #8a96f8; border-color: #5865F2;">אשר</span>
+          </div>
+        `).join('');
+
+        container.innerHTML = `
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 50px; height: 50px; border-radius: 1rem; background: #5865F2; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;">
+              <svg style="width: 32px; height: 32px; fill: white;" viewBox="0 0 24 24">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+              </svg>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff;">התחברות באמצעות Discord</h2>
+            <p style="font-size: 0.8rem; color: #9aa0a6; margin-top: 0.25rem;">CutSync מבקשת הרשאה לגשת לחשבון שלך</p>
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            ${accountsHtml}
+          </div>
+
+          <button class="discord-btn" style="background: transparent; color: #8a96f8; border: 1px dashed #5865F2;" onclick="renderDiscordScreen(true)">
+            <span>+ התחבר עם כינוי Discord אישי אחר</span>
+          </button>
+
+          <div class="footer-note">
+            בלחיצה על אישור, תתחבר ישירות לדשבורד הפרויקטים שלך ב-CutSync.
+          </div>
+        `;
+      } else {
+        // Custom Discord Input Screen
+        container.innerHTML = `
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 50px; height: 50px; border-radius: 1rem; background: #5865F2; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;">
+              <svg style="width: 32px; height: 32px; fill: white;" viewBox="0 0 24 24">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+              </svg>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff;">חיבור חשבון Discord</h2>
+            <p style="font-size: 0.8rem; color: #9aa0a6; margin-top: 0.25rem;">הזן את כינוי הדיסקורד שלך להמשך</p>
+          </div>
+
+          <form onsubmit="handleDiscordSubmit(event)">
+            <div>
+              <label>כינוי ב-Discord (Username / Tag)</label>
+              <input type="text" id="dUser" required autofocus class="input-field" placeholder="לדוגמה: VideoPro#1234 או myname">
+            </div>
+
+            <button type="submit" id="submitBtn" class="discord-btn">
+              <span>אשר והתחבר (Authorize)</span>
+            </button>
+          </form>
+
+          ${matchingUsers.length > 0 ? `
+            <div style="text-align: center; margin-top: 1rem;">
+              <a href="javascript:void(0)" onclick="renderDiscordScreen(false)" style="color: #8a96f8; font-size: 0.75rem; text-decoration: none;">
+                ← חזרה לרשימת החשבונות
+              </a>
+            </div>
+          ` : ''}
+
+          <div class="footer-note">
+            CutSync מקבלת גישה לכינוי ולאוואטר שלך בלבד לצורך ניהול הפרויקטים.
+          </div>
+        `;
+      }
+    }
+
+    function selectUser(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (user) {
+        completeAuth(user);
+      }
+    }
+
+    function handleGoogleSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('gEmail').value.trim().toLowerCase();
+      const name = document.getElementById('gName').value.trim();
+      const btn = document.getElementById('submitBtn');
+      btn.innerHTML = '<div class="spinner"></div><span>מתחבר...</span>';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        let user = allUsers.find(u => u.email === email && u.provider === 'google');
+        if (!user) {
+          user = {
+            id: 'usr-google-' + Date.now(),
+            name: name,
+            email: email,
+            provider: 'google',
+            avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(name) + '&backgroundColor=ea4335,fbbc05,34a853',
+            createdAt: new Date().toISOString()
+          };
+          allUsers.push(user);
+          localStorage.setItem('cutsync_users_db', JSON.stringify(allUsers));
+        }
+        completeAuth(user);
+      }, 500);
+    }
+
+    function handleDiscordSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('dUser').value.trim();
+      const btn = document.getElementById('submitBtn');
+      btn.innerHTML = '<div class="spinner"></div><span>מאמת מול Discord...</span>';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        let user = allUsers.find(u => u.name === username && u.provider === 'discord');
+        if (!user) {
+          user = {
+            id: 'usr-discord-' + Date.now(),
+            name: username,
+            email: username.toLowerCase().replace(/[^a-z0-9]/g, '') + '@discord.gg',
+            provider: 'discord',
+            avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(username) + '&backgroundColor=5865F2',
+            createdAt: new Date().toISOString()
+          };
+          allUsers.push(user);
+          localStorage.setItem('cutsync_users_db', JSON.stringify(allUsers));
+        }
+        completeAuth(user);
+      }, 500);
+    }
+
+    function completeAuth(user) {
+      localStorage.setItem('cutsync_current_user', JSON.stringify(user));
+      
+      // Notify parent window
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'CUTSYNC_AUTH_SUCCESS', user: user }, '*');
+      }
+      
+      // Close this popup window automatically
+      setTimeout(() => {
+        window.close();
+      }, 200);
+    }
+  </script>
+</body>
+</html>

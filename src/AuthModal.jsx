@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   X,
   Mail,
@@ -92,10 +92,43 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
     }
   }, [isOpen])
 
+  // Listen for real browser popup completion
+  useEffect(() => {
+    const handleAuthMessage = (event) => {
+      if (event.data?.type === 'CUTSYNC_AUTH_SUCCESS' && event.data?.user) {
+        onAuthSuccess(event.data.user)
+        onClose()
+      }
+    }
+    window.addEventListener('message', handleAuthMessage)
+    return () => window.removeEventListener('message', handleAuthMessage)
+  }, [onAuthSuccess, onClose])
+
   if (!isOpen) return null
 
   const googleUsers = savedUsers.filter(u => u.provider === 'google')
   const discordUsers = savedUsers.filter(u => u.provider === 'discord')
+
+  // Real Browser Popup Launcher
+  const openOAuthPopup = (provider) => {
+    const width = 480
+    const height = 640
+    const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2))
+    const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2))
+
+    const popup = window.open(
+      `/auth-popup.html?provider=${provider}`,
+      'CutSyncOAuthPopup',
+      `width=${width},height=${height},left=${left},top=${top},status=0,menubar=0,toolbar=0,location=0,resizable=yes,scrollbars=yes`
+    )
+
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      // Browser popup blocked: fall back seamlessly to in-modal view
+      setViewMode(provider === 'google' ? 'google_oauth' : 'discord_oauth')
+    } else {
+      popup.focus()
+    }
+  }
 
   // Standard Email/Password Submit
   const handleSubmit = (e) => {
@@ -543,16 +576,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
               </div>
             )}
 
-            {/* Social Logins - Now opens interactive OAuth flow! */}
+            {/* Social Logins - Real Browser Popup Window */}
             <div className="space-y-2.5 mb-5">
               {/* Google Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setViewMode('google_oauth')
-                  setError(null)
-                  setIsNewGoogleAccount(false)
-                }}
+                onClick={() => openOAuthPopup('google')}
                 className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 shadow-md cursor-pointer"
               >
                 <GoogleIcon className="w-4 h-4" />
@@ -562,11 +591,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
               {/* Discord Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setViewMode('discord_oauth')
-                  setError(null)
-                  setIsNewDiscordAccount(false)
-                }}
+                onClick={() => openOAuthPopup('discord')}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 shadow-md shadow-[#5865F2]/20 cursor-pointer"
               >
                 <DiscordIcon className="w-4 h-4 text-white" />

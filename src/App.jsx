@@ -234,6 +234,18 @@ function App() {
     showToast('התנתקת בהצלחה מהמערכת', 'info')
   }
 
+  // Global listener for OAuth popup completion
+  useEffect(() => {
+    const handleAuthMessage = (event) => {
+      if (event.data?.type === 'CUTSYNC_AUTH_SUCCESS' && event.data?.user) {
+        handleAuthSuccess(event.data.user)
+        setShowAuthModal(false)
+      }
+    }
+    window.addEventListener('message', handleAuthMessage)
+    return () => window.removeEventListener('message', handleAuthMessage)
+  }, [])
+
   // Current active project
   const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0] || {
     id: 'proj-demo-1',
