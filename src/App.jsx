@@ -312,8 +312,9 @@ function App() {
     setVersions((prev) =>
       prev.map((v) => {
         if (v.id === activeVersionId) {
-          const updated = typeof updater === 'function' ? updater(v.comments || []) : updater
-          return { ...v, comments: updated }
+          const currentList = Array.isArray(v.comments) ? v.comments : []
+          const updated = typeof updater === 'function' ? updater(currentList) : updater
+          return { ...v, comments: Array.isArray(updated) ? updated : [] }
         }
         return v
       })
