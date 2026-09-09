@@ -34,7 +34,10 @@ import {
   Download,
   Send,
   FileSpreadsheet,
-  AlertCircle
+  AlertCircle,
+  Mic,
+  MicOff,
+  Square
 } from 'lucide-react'
 
 // Demo sample video (Open source Blender video)
@@ -56,11 +59,59 @@ function formatTime(seconds) {
   return `${pad(mins)}:${pad(secs)}`
 }
 
+function AudioCommentPlayer({ src, duration }) {
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef(null)
+
+  const toggle = (e) => {
+    e.stopPropagation()
+    if (!audioRef.current) return
+    if (playing) {
+      audioRef.current.pause()
+    } else {
+      audioRef.current.play()
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 bg-[#1a1f30] border border-[#2b334a] rounded-xl px-2.5 py-1 text-xs text-purple-200 mt-1.5 w-fit select-none shadow-sm">
+      <audio
+        ref={audioRef}
+        src={src}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+        className="hidden"
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        className="w-5 h-5 rounded-full bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center transition-transform active:scale-95 flex-shrink-0"
+        title={playing ? 'עצור' : 'נגן הקלטה קולית'}
+      >
+        {playing ? <Pause className="w-2.5 h-2.5" /> : <Play className="w-2.5 h-2.5 ml-0.5 fill-current" />}
+      </button>
+      <div className="flex items-center gap-1 font-mono text-[11px] text-gray-300">
+        <Mic className="w-3 h-3 text-purple-400" />
+        <span>הערה קולית {duration ? `(${duration}s)` : ''}</span>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const videoRef = useRef(null)
   const fileInputRef = useRef(null)
   const fileInputNewVersionRef = useRef(null)
   const canvasRef = useRef(null)
+
+  // Voice Recording State
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingDuration, setRecordingDuration] = useState(0)
+  const [recordedAudioData, setRecordedAudioData] = useState(null)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+  const recordingTimerRef = useRef(null)
 
   // Version Stacking State (V1, V2, V3...)
   const [versions, setVersions] = useState(() => {
@@ -384,10 +435,64 @@ function App() {
     }
   }
 
+  // Voice Recording Handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaRecorderRef.current = new MediaRecorder(stream)
+      audioChunksRef.current = []
+
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data)
+        }
+      }
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const reader = new FileReader()
+        reader.readAsDataURL(audioBlob)
+        reader.onloadend = () => {
+          setRecordedAudioData(reader.result)
+        }
+        stream.getTracks().forEach((track) => track.stop())
+      }
+
+      mediaRecorderRef.current.start()
+      setIsRecording(true)
+      setRecordingDuration(0)
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1)
+      }, 1000)
+    } catch (err) {
+      console.error('Microphone access denied:', err)
+      alert('נא לאשר גישה למיקרופון כדי להקליט הערה קולית.')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      clearInterval(recordingTimerRef.current)
+    }
+  }
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stream?.getTracks().forEach((track) => track.stop())
+      setIsRecording(false)
+      clearInterval(recordingTimerRef.current)
+    }
+    setRecordedAudioData(null)
+    setRecordingDuration(0)
+  }
+
   // Add Comment to active version
   const handleAddComment = (e) => {
     e?.preventDefault()
-    if (!newCommentText.trim()) return
+    if (!newCommentText.trim() && !recordedAudioData) return
 
     let drawingData = null
     if (hasDrawing && canvasRef.current) {
@@ -398,9 +503,11 @@ function App() {
       id: Date.now().toString(),
       time: Math.floor(currentTime),
       category: selectedCategory,
-      text: newCommentText.trim(),
+      text: newCommentText.trim() || 'הודעה קולית',
       urgent: isUrgent,
       drawing: drawingData,
+      audio: recordedAudioData,
+      audioDuration: recordingDuration,
       completed: false,
       author: mode === 'client' ? 'לקוח' : 'עורך',
       createdAt: new Date().toISOString()
@@ -409,6 +516,8 @@ function App() {
     updateActiveVersionComments((prev) => [...prev, newComment].sort((a, b) => a.time - b.time))
     setNewCommentText('')
     setIsUrgent(false)
+    setRecordedAudioData(null)
+    setRecordingDuration(0)
     clearCanvas()
     setIsDrawingMode(false)
   }
@@ -437,7 +546,8 @@ function App() {
         const cat = CATEGORIES.find(cat => cat.id === c.category)
         const status = c.completed ? '✅' : '⏳'
         const tag = cat ? `[${cat.label}]` : ''
-        msg += `${status} *${formatTime(c.time)}* ${tag}: ${c.text}\n`
+        const audioTag = c.audio ? ' 🎙️ (הודעה קולית)' : ''
+        msg += `${status} *${formatTime(c.time)}* ${tag}: ${c.text}${audioTag}\n`
       })
     }
 
@@ -780,6 +890,7 @@ function App() {
                               {formatTime(comment.time)}
                             </span>
                             {comment.drawing && '🎨 '}
+                            {comment.audio && '🎙️ '}
                             {comment.text}
                           </div>
                         )}
@@ -995,8 +1106,62 @@ function App() {
                 />
               </div>
 
-              {/* Submit & Status Bar */}
-              <div className="flex items-center justify-between">
+              {/* Voice Note Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-[#171b29] p-2.5 rounded-xl border border-[#262f45]">
+                <div className="flex items-center gap-2">
+                  {!isRecording && !recordedAudioData && (
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                    >
+                      <Mic className="w-3.5 h-3.5 text-red-400" />
+                      <span>הקלט הודעה קולית</span>
+                    </button>
+                  )}
+
+                  {isRecording && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 bg-red-950/70 text-red-300 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs font-mono font-bold animate-pulse">
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                        <span>מקליט... {formatTime(recordingDuration)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={stopRecording}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-md shadow-red-950/40"
+                      >
+                        <Square className="w-3 h-3 fill-current" />
+                        <span>סיים</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelRecording}
+                        className="text-xs text-gray-400 hover:text-gray-200 px-2 py-1"
+                      >
+                        בטל
+                      </button>
+                    </div>
+                  )}
+
+                  {recordedAudioData && !isRecording && (
+                    <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 rounded-lg">
+                      <Mic className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-xs text-emerald-300 font-medium font-mono">
+                        הוקלטה הערה ({recordingDuration}s)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={cancelRecording}
+                        className="text-gray-400 hover:text-red-400 p-0.5 ml-1 transition-colors"
+                        title="מחק הקלטה זו"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -1006,11 +1171,14 @@ function App() {
                   />
                   <span>סמן כתיקון דחוף 🔥</span>
                 </label>
+              </div>
 
+              {/* Submit Button */}
+              <div className="flex items-center justify-end">
                 <button
                   type="submit"
-                  disabled={!newCommentText.trim()}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-purple-900/40 transition-all active:scale-95"
+                  disabled={!newCommentText.trim() && !recordedAudioData}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-purple-900/40 transition-all active:scale-95"
                 >
                   <Plus className="w-4 h-4" />
                   <span>הוסף תיקון (Enter)</span>
@@ -1197,6 +1365,14 @@ function App() {
                       <p className={`text-sm leading-relaxed ${comment.completed ? 'line-through text-gray-400' : 'text-gray-200'}`}>
                         {comment.text}
                       </p>
+
+                      {/* Attached Audio Voice Note */}
+                      {comment.audio && (
+                        <AudioCommentPlayer
+                          src={comment.audio}
+                          duration={comment.audioDuration}
+                        />
+                      )}
                     </div>
 
                     {/* Delete button (Client can delete their notes, Editor can clean) */}
