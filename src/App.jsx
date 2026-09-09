@@ -59,8 +59,9 @@ function formatTime(seconds) {
   return `${pad(mins)}:${pad(secs)}`
 }
 
-function AudioCommentPlayer({ src, duration }) {
+function AudioCommentPlayer({ src, duration, label = "הערה קולית" }) {
   const [playing, setPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
   const audioRef = useRef(null)
 
   const toggle = (e) => {
@@ -73,27 +74,50 @@ function AudioCommentPlayer({ src, duration }) {
     }
   }
 
+  const handleTimeUpdate = () => {
+    if (audioRef.current && audioRef.current.duration) {
+      setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100)
+    }
+  }
+
   return (
-    <div className="flex items-center gap-2 bg-[#1a1f30] border border-[#2b334a] rounded-xl px-2.5 py-1 text-xs text-purple-200 mt-1.5 w-fit select-none shadow-sm">
+    <div className="flex items-center gap-2.5 bg-[#171c2b] border border-[#2d364e] rounded-xl px-3 py-1.5 text-xs text-purple-200 select-none shadow-sm">
       <audio
         ref={audioRef}
         src={src}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false)
+          setProgress(0)
+        }}
+        onTimeUpdate={handleTimeUpdate}
         className="hidden"
       />
       <button
         type="button"
         onClick={toggle}
-        className="w-5 h-5 rounded-full bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center transition-transform active:scale-95 flex-shrink-0"
-        title={playing ? 'עצור' : 'נגן הקלטה קולית'}
+        className="w-6 h-6 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-950/50 transition-transform active:scale-95 flex-shrink-0"
+        title={playing ? 'עצור השמעה' : 'האזן להקלטה'}
       >
-        {playing ? <Pause className="w-2.5 h-2.5" /> : <Play className="w-2.5 h-2.5 ml-0.5 fill-current" />}
+        {playing ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 ml-0.5 fill-current" />}
       </button>
-      <div className="flex items-center gap-1 font-mono text-[11px] text-gray-300">
-        <Mic className="w-3 h-3 text-purple-400" />
-        <span>הערה קולית {duration ? `(${duration}s)` : ''}</span>
+
+      <div className="flex flex-col gap-0.5 min-w-[120px]">
+        <div className="flex items-center justify-between text-[10px] font-mono text-gray-300">
+          <span className="flex items-center gap-1 text-emerald-400">
+            <Mic className="w-3 h-3" />
+            <span>{label}</span>
+          </span>
+          <span>{duration ? `${duration}s` : ''}</span>
+        </div>
+        {/* Progress bar */}
+        <div className="w-full h-1 bg-[#232a3d] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-400 transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>
   )
@@ -1145,18 +1169,20 @@ function App() {
                   )}
 
                   {recordedAudioData && !isRecording && (
-                    <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 rounded-lg">
-                      <Mic className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-xs text-emerald-300 font-medium font-mono">
-                        הוקלטה הערה ({recordingDuration}s)
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <AudioCommentPlayer
+                        src={recordedAudioData}
+                        duration={recordingDuration}
+                        label="האזן להקלטה שלך"
+                      />
                       <button
                         type="button"
                         onClick={cancelRecording}
-                        className="text-gray-400 hover:text-red-400 p-0.5 ml-1 transition-colors"
-                        title="מחק הקלטה זו"
+                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-400 bg-[#1e2436] hover:bg-red-950/40 px-2.5 py-1.5 rounded-xl border border-[#2c354e] transition-colors"
+                        title="מחק והקלט שוב"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <RotateCcw className="w-3.5 h-3.5 text-red-400" />
+                        <span>הקלט שוב</span>
                       </button>
                     </div>
                   )}
