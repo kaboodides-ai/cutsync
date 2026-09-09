@@ -94,11 +94,17 @@ function AudioCommentPlayer({ src, duration, label = "הערה קולית" }) {
 
   const toggle = (e) => {
     e.stopPropagation()
-    if (!audioRef.current) return
+    if (!audioRef.current || !src) return
     if (playing) {
       audioRef.current.pause()
     } else {
-      audioRef.current.play()
+      const playPromise = audioRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('Audio play error:', err)
+          setPlaying(false)
+        })
+      }
     }
   }
 
@@ -643,7 +649,13 @@ function App() {
     if (isPlaying) {
       videoRef.current.pause()
     } else {
-      videoRef.current.play()
+      const playPromise = videoRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('Video play prevented or source issue:', err)
+          setIsPlaying(false)
+        })
+      }
     }
   }
 
