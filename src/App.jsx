@@ -38,6 +38,7 @@ import {
   FileSpreadsheet,
   Bell,
   Home,
+  LayoutDashboard,
   Link2,
   Mic,
   MicOff,
@@ -45,6 +46,8 @@ import {
   MessageSquare
 } from 'lucide-react'
 import LandingPage from './LandingPage'
+import ProjectsDashboard from './ProjectsDashboard'
+import NewProjectModal from './NewProjectModal'
 
 // Demo sample video (Open source Blender video)
 const DEFAULT_VIDEO = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
@@ -164,9 +167,9 @@ function App() {
   const audioChunksRef = useRef([])
   const recordingTimerRef = useRef(null)
 
-  // Version Stacking State (V1, V2, V3...)
-  const [versions, setVersions] = useState(() => {
-    const saved = localStorage.getItem('cutsync_versions')
+  // Multi-Project Architecture State
+  const [projects, setProjects] = useState(() => {
+    const saved = localStorage.getItem('cutsync_projects')
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
@@ -174,8 +177,7 @@ function App() {
       } catch (e) { console.error(e) }
     }
 
-    // Backward compatibility: migrate legacy single comments to V1
-    const oldComments = localStorage.getItem('cutsync_comments')
+    // Backward compatibility: migrate existing versions or create default demo
     let initialComments = [
       { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח', drawing: null, replies: [] },
       { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח', drawing: null, replies: [
@@ -183,6 +185,7 @@ function App() {
       ] },
       { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח', drawing: null, replies: [] },
     ]
+    const oldComments = localStorage.getItem('cutsync_comments')
     if (oldComments) {
       try {
         const parsed = JSON.parse(oldComments)
@@ -190,13 +193,13 @@ function App() {
       } catch (e) { console.error(e) }
     }
 
-    return [
+    let defaultVersions = [
       {
         id: 'v1',
         number: 1,
         name: 'גרסה 1 (V1)',
         videoSrc: DEFAULT_VIDEO,
-        videoTitle: 'פרויקט לדוגמה: סרטון תדמית v1',
+        videoTitle: 'סרטון תדמית מוצר - חברת אלפא',
         createdAt: new Date().toISOString(),
         comments: initialComments,
         approved: false,
@@ -209,17 +212,93 @@ function App() {
         reopenRequestReason: null
       }
     ]
+
+    const savedVersions = localStorage.getItem('cutsync_versions')
+    if (savedVersions) {
+      try {
+        const parsed = JSON.parse(savedVersions)
+        if (Array.isArray(parsed) && parsed.length > 0) defaultVersions = parsed
+      } catch (e) { console.error(e) }
+    }
+
+    return [
+      {
+        id: 'proj-demo-1',
+        title: 'סרטון תדמית מוצר - חברת אלפא',
+        clientName: 'דניאל כהן',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        versions: defaultVersions,
+        activeVersionId: 'v1'
+      }
+    ]
   })
 
-  const [activeVersionId, setActiveVersionId] = useState(() => {
-    return localStorage.getItem('cutsync_active_version') || 'v1'
+  // Active Project ID & Modal State
+  const [activeProjectId, setActiveProjectId] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    const projParam = params.get('project')
+    if (projParam) return projParam
+    return localStorage.getItem('cutsync_active_project_id') || 'proj-demo-1'
   })
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
 
-  // Derive current active version & its data
-  const currentVersion = versions.find((v) => v.id === activeVersionId) || versions[0]
+  // Current active project
+  const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0] || {
+    id: 'proj-demo-1',
+    title: 'פרויקט ברירת מחדל',
+    clientName: 'הלקוח',
+    versions: [],
+    activeVersionId: 'v1'
+  }
+
+  // Derive current active version & its data for current project
+  const versions = currentProject.versions || []
+  const activeVersionId = currentProject.activeVersionId || versions[0]?.id || 'v1'
+  const currentVersion = versions.find((v) => v.id === activeVersionId) || versions[0] || {
+    id: 'v1',
+    name: 'גרסה 1 (V1)',
+    videoSrc: DEFAULT_VIDEO,
+    videoTitle: currentProject.title,
+    comments: [],
+    approved: false
+  }
   const videoSrc = currentVersion.videoSrc
-  const videoTitle = currentVersion.videoTitle
+  const videoTitle = currentProject.title
   const comments = currentVersion.comments || []
+
+  // Compatibility adapters for setVersions & setActiveVersionId
+  const setVersions = useCallback((updater) => {
+    setProjects((prevProjects) =>
+      prevProjects.map((p) => {
+        if (p.id === currentProject.id) {
+          const currentVers = p.versions || []
+          const nextVers = typeof updater === 'function' ? updater(currentVers) : updater
+          return {
+            ...p,
+            updatedAt: new Date().toISOString(),
+            versions: nextVers
+          }
+        }
+        return p
+      })
+    )
+  }, [currentProject.id])
+
+  const setActiveVersionId = useCallback((updater) => {
+    setProjects((prevProjects) =>
+      prevProjects.map((p) => {
+        if (p.id === currentProject.id) {
+          const nextVerId = typeof updater === 'function' ? updater(p.activeVersionId) : updater
+          return {
+            ...p,
+            activeVersionId: nextVerId
+          }
+        }
+        return p
+      })
+    )
+  }, [currentProject.id])
 
   // Video playback State
   const [isPlaying, setIsPlaying] = useState(false)
@@ -242,12 +321,15 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('cut')
   const [isUrgent, setIsUrgent] = useState(false)
 
-  // Routing & View states ('home' | 'studio')
+  // Routing & View states ('home' | 'dashboard' | 'studio')
   const [currentView, setCurrentView] = useState(() => {
     const params = new URLSearchParams(window.location.search)
     const viewParam = params.get('view')
-    if (viewParam === 'studio' || viewParam === 'client' || viewParam === 'editor') {
+    if (viewParam === 'client' || viewParam === 'editor' || viewParam === 'studio') {
       return 'studio'
+    }
+    if (viewParam === 'dashboard') {
+      return 'dashboard'
     }
     return 'home'
   })
@@ -288,26 +370,94 @@ function App() {
     }, 4500)
   }, [])
 
-  // Save versions and active version to localStorage
+  // Project Creation & Management Handlers
+  const handleCreateProject = ({ title, clientName, videoSrc }) => {
+    const newId = 'proj-' + Date.now()
+    const newProject = {
+      id: newId,
+      title,
+      clientName: clientName || 'הלקוח',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      activeVersionId: 'v1',
+      versions: [
+        {
+          id: 'v1',
+          number: 1,
+          name: 'גרסה 1 (V1)',
+          videoSrc,
+          videoTitle: title,
+          createdAt: new Date().toISOString(),
+          comments: [],
+          approved: false,
+          approvedAt: null,
+          approvedBy: null,
+          approvalNote: null,
+          reopenRequested: false,
+          reopenRequestedAt: null,
+          reopenRequestedBy: null,
+          reopenRequestReason: null
+        }
+      ]
+    }
+    setProjects(prev => [newProject, ...prev])
+    setActiveProjectId(newId)
+    setCurrentView('studio')
+    setMode('editor')
+    showToast(`הפרויקט "${title}" נוצר בהצלחה! 🚀`, 'success')
+  }
+
+  const handleDeleteProject = (projectId) => {
+    const projToDelete = projects.find(p => p.id === projectId)
+    if (!projToDelete) return
+    if (projects.length === 1) {
+      alert('לא ניתן למחוק את הפרויקט היחיד במערכת.')
+      return
+    }
+    if (window.confirm(`האם אתה בטוח שברצונך למחוק את הפרויקט "${projToDelete.title}"?`)) {
+      setProjects(prev => {
+        const remaining = prev.filter(p => p.id !== projectId)
+        if (activeProjectId === projectId && remaining.length > 0) {
+          setActiveProjectId(remaining[0].id)
+        }
+        return remaining
+      })
+      showToast('הפרויקט נמחק בהצלחה.', 'info')
+    }
+  }
+
+  const copySpecificClientLink = (projectId) => {
+    const url = `${window.location.origin}/?project=${projectId}&view=client`
+    navigator.clipboard.writeText(url)
+    showToast('הועתק קישור סקירה ישיר ללקוח! שלח אותו בוואטסאפ 🔗', 'success')
+  }
+
+  // Save projects and active IDs to localStorage
   useEffect(() => {
-    localStorage.setItem('cutsync_versions', JSON.stringify(versions))
-  }, [versions])
+    localStorage.setItem('cutsync_projects', JSON.stringify(projects))
+    if (currentProject?.versions) {
+      localStorage.setItem('cutsync_versions', JSON.stringify(currentProject.versions))
+    }
+  }, [projects, currentProject])
 
   useEffect(() => {
-    localStorage.setItem('cutsync_active_version', activeVersionId)
-  }, [activeVersionId])
+    localStorage.setItem('cutsync_active_project_id', activeProjectId)
+    if (activeVersionId) {
+      localStorage.setItem('cutsync_active_version', activeVersionId)
+    }
+  }, [activeProjectId, activeVersionId])
 
   // Cross-tab synchronization via localStorage storage event
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === 'cutsync_versions' && e.newValue) {
+      if (e.key === 'cutsync_projects' && e.newValue) {
         try {
           const updated = JSON.parse(e.newValue)
           if (Array.isArray(updated) && updated.length > 0) {
-            setVersions(updated)
+            setProjects(updated)
           }
         } catch (err) {
-          console.error('Failed to sync versions across tabs', err)
+          console.error('Failed to sync projects across tabs', err)
         }
       }
     }
@@ -1090,12 +1240,71 @@ function App() {
     return (
       <>
         <LandingPage
-          onEnterStudio={(role = 'editor') => {
-            setMode(role)
-            setCurrentView('studio')
+          onEnterStudio={(target = 'editor') => {
+            if (target === 'client') {
+              setMode('client')
+              setCurrentView('studio')
+            } else {
+              // 'editor' or 'dashboard' or 'demo'
+              setCurrentView('dashboard')
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
         />
+        {/* Global Toast Notification */}
+        {toast && (
+          <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+            toast.type === 'success'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-950/80'
+              : toast.type === 'warning'
+              ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-amber-950/80'
+              : 'bg-gradient-to-r from-[#1b2336] to-[#25324e] text-white border border-[#3b4b72] shadow-blue-950/80'
+          }`}>
+            <span className="text-lg">
+              {toast.type === 'success' ? '✅' : toast.type === 'warning' ? '⚠️' : '🔔'}
+            </span>
+            <div className="text-xs font-medium">
+              {toast.message}
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="text-white/70 hover:text-white text-xs mr-2"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </>
+    )
+  }
+
+  // Render Projects Dashboard when currentView === 'dashboard'
+  if (currentView === 'dashboard') {
+    return (
+      <>
+        <ProjectsDashboard
+          projects={projects}
+          onOpenStudio={(projId) => {
+            setActiveProjectId(projId)
+            setMode('editor')
+            setCurrentView('studio')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          onOpenNewProjectModal={() => setShowNewProjectModal(true)}
+          onNavigateHome={() => {
+            setCurrentView('home')
+            window.history.pushState({}, '', window.location.pathname)
+          }}
+          onCopyClientLink={(projId) => copySpecificClientLink(projId)}
+          onDeleteProject={(projId) => handleDeleteProject(projId)}
+        />
+
+        <NewProjectModal
+          isOpen={showNewProjectModal}
+          onClose={() => setShowNewProjectModal(false)}
+          onCreateProject={handleCreateProject}
+        />
+
         {/* Global Toast Notification */}
         {toast && (
           <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
@@ -1129,8 +1338,8 @@ function App() {
       <header className="border-b border-[#212638] bg-[#131622]/90 backdrop-blur px-4 lg:px-8 py-3.5 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           
-          {/* Home Button & Brand Logo */}
-          <div className="flex items-center gap-3">
+          {/* Home Button, Dashboard Button & Brand Logo */}
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => {
@@ -1141,73 +1350,94 @@ function App() {
               title="חזור לדף הבית של CutSync"
             >
               <Home className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
-              <span>דף הבית</span>
+              <span className="hidden sm:inline">דף הבית</span>
             </button>
 
+            {mode === 'editor' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentView('dashboard')
+                  window.history.pushState({}, '', window.location.pathname)
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:text-white transition-all shadow-sm"
+                title="חזור לדשבורד הפרויקטים"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
+                <span>דשבורד פרויקטים</span>
+              </button>
+            )}
+
             <div
-              className="flex items-center gap-2.5 cursor-pointer select-none"
+              className="flex items-center gap-2 cursor-pointer select-none"
               onClick={() => {
-                setCurrentView('home')
-                window.history.pushState({}, '', window.location.pathname)
+                if (mode === 'editor') setCurrentView('dashboard')
+                else setCurrentView('home')
               }}
-              title="חזור לדף הבית"
+              title={mode === 'editor' ? "חזור לדשבורד" : "דף הבית"}
             >
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30">
                 <Scissors className="w-4 h-4 text-white" />
               </div>
-              <div>
+              <div className="hidden md:block">
                 <div className="flex items-center gap-1.5">
-                  <h1 className="text-lg font-bold tracking-wide text-white">CutSync</h1>
+                  <h1 className="text-sm font-bold tracking-wide text-white truncate max-w-[140px]">{currentProject.title}</h1>
                   <span className="px-1.5 py-0.2 text-[10px] font-semibold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
                     Studio
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-400 hidden sm:block">סביבת סקירה ועבודה</p>
               </div>
             </div>
           </div>
 
-          {/* Mode Switcher (Hidden if client opened through direct share link) */}
-          {!isDirectClientLink ? (
+          {/* Mode Switcher / Role Identity */}
+          {!isDirectClientLink && mode === 'editor' ? (
             <div className="flex items-center bg-[#1c2132] p-1 rounded-xl border border-[#2b334a]">
               <button
-                onClick={() => setMode('client')}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  mode === 'client'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>מצב לקוח (הוספת הערות)</span>
-              </button>
-              <button
                 onClick={() => setMode('editor')}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  mode === 'editor'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white shadow-md"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>מצב עורך (צ'קליסט וביצוע)</span>
+                <span>מצב עורך (סטודיו)</span>
+              </button>
+              <button
+                onClick={() => setMode('client')}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-gray-200"
+                title="הצג איך הלקוח רואה את הדף"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>תצוגת לקוח</span>
+              </button>
+            </div>
+          ) : mode === 'client' && !isDirectClientLink ? (
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-xs font-semibold text-purple-200 flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-purple-400" />
+                <span>תצוגת לקוח</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setMode('editor')}
+                className="text-xs text-indigo-300 hover:text-indigo-200 hover:underline px-2 py-1"
+              >
+                חזור למצב עורך
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-xs font-semibold text-purple-200">
               <Eye className="w-3.5 h-3.5 text-purple-400" />
-              <span>סקירת לקוח (קישור שיתוף ישיר)</span>
+              <span>סקירת לקוח ייעודית</span>
             </div>
           )}
 
-          {/* Video upload & Actions */}
+          {/* Actions Bar */}
           <div className="flex items-center gap-2">
             {mode === 'editor' && (
               <>
                 <button
-                  onClick={copyClientShareLink}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a2538] hover:bg-[#22324c] border border-emerald-500/40 text-xs text-emerald-300 font-semibold transition-all shadow-md shadow-emerald-950/30"
-                  title="העתק קישור שיתוף ישיר ונקי לשליחה ללקוח"
+                  onClick={() => copySpecificClientLink(currentProject.id)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#1a2538] hover:bg-[#22324c] border border-emerald-500/40 text-xs text-emerald-300 font-semibold transition-all shadow-md shadow-emerald-950/30"
+                  title="העתק קישור סקירה ישיר ונקי לשליחה ללקוח זה"
                 >
                   <Link2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>העתק קישור ללקוח 🔗</span>
@@ -1261,31 +1491,35 @@ function App() {
         </div>
       </header>
 
-      {/* Mode Guidance Banner */}
-      <div className={`px-4 py-2 text-xs border-b transition-colors select-none ${
-        mode === 'client'
-          ? 'bg-purple-950/40 border-purple-900/50 text-purple-200'
-          : 'bg-indigo-950/40 border-indigo-900/50 text-indigo-200'
-      }`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {mode === 'client' ? (
-              <>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-                <span><strong>מצב לקוח:</strong> צפה בסרטון, עצור בכל נקודה שתרצה לתקן, סמן על המסך או כתוב הערה. בסיום לחץ על הכפתור הירוק למעלה או למטה.</span>
-              </>
-            ) : (
-              <>
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 flex-shrink-0"></span>
-                <span><strong>מצב עורך:</strong> לחץ על כל הערה לקפיצה מיידית לפריים. סמן [V] למשימות שתיקנת בפרמייר, וייצא קובץ מרקרים CSV לציר הזמן שלך.</span>
-              </>
-            )}
+      {/* Client Personalized Welcome Banner */}
+      {mode === 'client' ? (
+        <div className="bg-gradient-to-r from-purple-950/60 via-indigo-950/50 to-[#0e1320] border-b border-purple-500/30 px-4 py-2.5 text-xs text-purple-200">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping flex-shrink-0"></span>
+              <span>
+                שלום <strong>{currentProject.clientName || 'לקוח יקר'}</strong>! הוזמנת לסקור את <strong>"{currentProject.title}"</strong>. צפה בסרטון, עצור בכל נקודה כדי להשאיר הערה, לצייר על המסך או להקליט. בסיום אשר את הגרסה.
+              </span>
+            </div>
+            <span className="text-[11px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 hidden md:inline">
+              חוויית סקירה ללקוח
+            </span>
           </div>
-          <span className="font-mono text-[11px] opacity-75 hidden sm:inline whitespace-nowrap">
-            {mode === 'client' ? `נרשמו ${comments.length} הערות` : `בוצעו ${completedCount} מתוך ${comments.length}`}
-          </span>
         </div>
-      </div>
+      ) : (
+        /* Mode Guidance Banner for Editor */
+        <div className="px-4 py-2 text-xs border-b transition-colors select-none bg-indigo-950/40 border-indigo-900/50 text-indigo-200">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 flex-shrink-0"></span>
+              <span><strong>סטודיו עורך:</strong> פרויקט פעיל: <strong>"{currentProject.title}"</strong>. לחץ על כל הערה לקפיצה לפריים. סמן [V] למשימות שבוצעו, וייצא CSV לציר הזמן בפרמייר.</span>
+            </div>
+            <span className="font-mono text-[11px] opacity-75 hidden sm:inline whitespace-nowrap">
+              בוצעו {completedCount} מתוך {comments.length}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Main Workspace */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
