@@ -151,6 +151,7 @@ function App() {
   const fileInputNewVersionRef = useRef(null)
   const canvasRef = useRef(null)
   const playerContainerRef = useRef(null)
+  const canvasSnapshotRef = useRef(null)
 
   // Voice Recording State
   const [isRecording, setIsRecording] = useState(false)
@@ -259,6 +260,7 @@ function App() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    canvasSnapshotRef.current = null
     setHasDrawing(false)
     setActiveDrawingImage(null)
   }, [])
@@ -328,13 +330,21 @@ function App() {
     if (!isDrawingMode) return
     const canvas = canvasRef.current
     if (!canvas) return
+    const ctx = canvas.getContext('2d')
     const { x, y } = getCanvasCoordinates(e, canvas)
+
+    // Save snapshot of canvas so we can do smooth real-time preview of shapes
+    try {
+      canvasSnapshotRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    } catch (err) {
+      console.warn('Could not get image data for snapshot:', err)
+      canvasSnapshotRef.current = null
+    }
 
     setIsDrawing(true)
     setStartPos({ x, y })
 
     if (drawTool === 'pen') {
-      const ctx = canvas.getContext('2d')
       ctx.strokeStyle = drawColor
       ctx.fillStyle = drawColor
       ctx.lineWidth = 3
@@ -359,6 +369,25 @@ function App() {
       ctx.lineTo(x, y)
       ctx.stroke()
       setHasDrawing(true)
+    } else if (drawTool === 'circle') {
+      // Live animation / preview of the circle resizing!
+      if (canvasSnapshotRef.current) {
+        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
+      }
+      const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
+      ctx.strokeStyle = drawColor
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI)
+      ctx.stroke()
+      setHasDrawing(true)
+    } else if (drawTool === 'arrow') {
+      // Live animation / preview of the arrow stretching and rotating!
+      if (canvasSnapshotRef.current) {
+        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
+      }
+      drawArrow(ctx, startPos.x, startPos.y, x, y, drawColor)
+      setHasDrawing(true)
     }
   }
 
@@ -370,18 +399,30 @@ function App() {
     const { x, y } = getCanvasCoordinates(e, canvas)
 
     if (drawTool === 'circle') {
+      if (canvasSnapshotRef.current) {
+        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
+      }
       const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
-      ctx.strokeStyle = drawColor
-      ctx.lineWidth = 3
-      ctx.beginPath()
-      ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI)
-      ctx.stroke()
-      setHasDrawing(true)
+      if (radius > 3) {
+        ctx.strokeStyle = drawColor
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI)
+        ctx.stroke()
+        setHasDrawing(true)
+      }
     } else if (drawTool === 'arrow') {
-      drawArrow(ctx, startPos.x, startPos.y, x, y, drawColor)
-      setHasDrawing(true)
+      if (canvasSnapshotRef.current) {
+        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
+      }
+      const dist = Math.hypot(x - startPos.x, y - startPos.y)
+      if (dist > 5) {
+        drawArrow(ctx, startPos.x, startPos.y, x, y, drawColor)
+        setHasDrawing(true)
+      }
     }
 
+    canvasSnapshotRef.current = null
     setIsDrawing(false)
   }
 
@@ -1073,6 +1114,7 @@ function App() {
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
                 className={`absolute inset-0 w-full h-full object-contain ${
                   isDrawingMode
                     ? 'cursor-crosshair z-30 pointer-events-auto bg-black/10'
