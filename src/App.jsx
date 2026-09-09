@@ -316,13 +316,19 @@ function App() {
 
   // Drawing Markup State
   const [isDrawingMode, setIsDrawingMode] = useState(false)
-  const [drawTool, setDrawTool] = useState('pen') // 'pen' | 'circle' | 'arrow' | 'text'
+  const [drawTool, setDrawTool] = useState('pen') // 'select' | 'pen' | 'circle' | 'arrow' | 'text'
   const [drawColor, setDrawColor] = useState('#eab308') // yellow default
   const [hasDrawing, setHasDrawing] = useState(false)
   const [isDrawing, setIsDrawing] = useState(false)
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
   const [activeDrawingImage, setActiveDrawingImage] = useState(null)
   const [textInputState, setTextInputState] = useState(null)
+  const [shapes, setShapes] = useState([])
+  const [selectedShapeId, setSelectedShapeId] = useState(null)
+  const [isDraggingShape, setIsDraggingShape] = useState(false)
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 })
+  const [hoveredShapeId, setHoveredShapeId] = useState(null)
+  const currentPenPointsRef = useRef([])
 
   // Input states
   const [newCommentText, setNewCommentText] = useState('')
@@ -480,10 +486,45 @@ function App() {
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     canvasSnapshotRef.current = null
+    setShapes([])
+    setSelectedShapeId(null)
     setHasDrawing(false)
     setActiveDrawingImage(null)
     setTextInputState(null)
   }, [])
+
+  // Delete selected shape
+  const deleteSelectedShape = useCallback(() => {
+    if (!selectedShapeId) return
+    setShapes((prev) => {
+      const updated = prev.filter((s) => s.id !== selectedShapeId)
+      if (updated.length === 0) setHasDrawing(false)
+      return updated
+    })
+    setSelectedShapeId(null)
+  }, [selectedShapeId])
+
+  // Undo last shape
+  const undoLastShape = useCallback(() => {
+    setShapes((prev) => {
+      if (prev.length === 0) return prev
+      const updated = prev.slice(0, prev.length - 1)
+      if (updated.length === 0) setHasDrawing(false)
+      return updated
+    })
+    setSelectedShapeId(null)
+  }, [])
+
+  // Mathematical helper: distance from point (px, py) to line segment (x1, y1) -> (x2, y2)
+  const pointToSegmentDist = (px, py, x1, y1, x2, y2) => {
+    const l2 = Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)
+    if (l2 === 0) return Math.hypot(px - x1, py - y1)
+    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2
+    t = Math.max(0, Math.min(1, t))
+    const projX = x1 + t * (x2 - x1)
+    const projY = y1 + t * (y2 - y1)
+    return Math.hypot(px - projX, py - projY)
+  }
 
   // Draw arrow helper
   const drawArrow = (ctx, fromx, fromy, tox, toy, color) => {
@@ -519,7 +560,6 @@ function App() {
     const boxHeight = fontSize + paddingY * 2
     const radius = 8
 
-    // Clamp within 960x540 canvas bounds
     let boxX = x - boxWidth / 2
     let boxY = y - boxHeight / 2
     if (boxX < 10) boxX = 10
@@ -527,7 +567,6 @@ function App() {
     if (boxY < 10) boxY = 10
     if (boxY + boxHeight > 530) boxY = 530 - boxHeight
 
-    // Draw rounded dark glass pill background
     ctx.fillStyle = 'rgba(10, 14, 24, 0.94)'
     ctx.strokeStyle = color
     ctx.lineWidth = 2.5
@@ -545,11 +584,9 @@ function App() {
     ctx.fill()
     ctx.stroke()
 
-    // Reset shadow
     ctx.shadowColor = 'transparent'
     ctx.shadowBlur = 0
 
-    // Draw text in crisp white centered inside pill
     ctx.fillStyle = '#ffffff'
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
@@ -558,18 +595,248 @@ function App() {
     ctx.restore()
   }
 
-  // Commit text input to canvas
+  // Hit testing for shapes
+  const hitTestShape = (shape, x, y, ctx) => {
+    if (shape.type === 'circle') {
+      const dist = Math.hypot(x - shape.cx, y - shape.cy)
+      return dist <= shape.radius + 14
+    }
+    if (shape.type === 'arrow') {
+      return pointToSegmentDist(x, y, shape.fromX, shape.fromY, shape.toX, shape.toY) <= 16
+    }
+    if (shape.type === 'text') {
+      const fontSize = 18
+      if (ctx) ctx.font = `bold ${fontSize}px Heebo, Rubik, sans-serif`
+      const textWidth = ctx ? ctx.measureText(shape.text).width : (shape.text.length * 11)
+      const paddingX = 14
+      const paddingY = 8
+      const boxWidth = textWidth + paddingX * 2
+      const boxHeight = fontSize + paddingY * 2
+      let boxX = shape.x - boxWidth / 2
+      let boxY = shape.y - boxHeight / 2
+      if (boxX < 10) boxX = 10
+      if (boxX + boxWidth > 950) boxX = 950 - boxWidth
+      if (boxY < 10) boxY = 10
+      if (boxY + boxHeight > 530) boxY = 530 - boxHeight
+      return x >= boxX - 6 && x <= boxX + boxWidth + 6 && y >= boxY - 6 && y <= boxY + boxHeight + 6
+    }
+    if (shape.type === 'pen') {
+      if (!shape.points || shape.points.length === 0) return false
+      if (shape.points.length === 1) return Math.hypot(x - shape.points[0].x, y - shape.points[0].y) <= 14
+      for (let i = 0; i < shape.points.length - 1; i++) {
+        if (pointToSegmentDist(x, y, shape.points[i].x, shape.points[i].y, shape.points[i + 1].x, shape.points[i + 1].y) <= 14) {
+          return true
+        }
+      }
+      return false
+    }
+    return false
+  }
+
+  const findShapeAtPos = (x, y, shapesList, ctx) => {
+    for (let i = shapesList.length - 1; i >= 0; i--) {
+      if (hitTestShape(shapesList[i], x, y, ctx)) {
+        return shapesList[i]
+      }
+    }
+    return null
+  }
+
+  // Render a single shape with optional selection handles
+  const renderSingleShape = (ctx, s, isSelected) => {
+    if (s.type === 'circle') {
+      ctx.save()
+      ctx.strokeStyle = s.color
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.arc(s.cx, s.cy, s.radius, 0, 2 * Math.PI)
+      ctx.stroke()
+
+      if (isSelected) {
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 1.5
+        ctx.setLineDash([4, 4])
+        ctx.beginPath()
+        ctx.arc(s.cx, s.cy, s.radius + 6, 0, 2 * Math.PI)
+        ctx.stroke()
+        ctx.setLineDash([])
+
+        const handles = [
+          { x: 0, y: -(s.radius + 6) },
+          { x: (s.radius + 6), y: 0 },
+          { x: 0, y: (s.radius + 6) },
+          { x: -(s.radius + 6), y: 0 }
+        ]
+        ctx.fillStyle = '#ffffff'
+        ctx.strokeStyle = s.color
+        ctx.lineWidth = 1.5
+        handles.forEach(h => {
+          ctx.fillRect(s.cx + h.x - 3, s.cy + h.y - 3, 6, 6)
+          ctx.strokeRect(s.cx + h.x - 3, s.cy + h.y - 3, 6, 6)
+        })
+      }
+      ctx.restore()
+    } else if (s.type === 'arrow') {
+      ctx.save()
+      drawArrow(ctx, s.fromX, s.fromY, s.toX, s.toY, s.color)
+
+      if (isSelected) {
+        ctx.fillStyle = '#ffffff'
+        ctx.strokeStyle = s.color
+        ctx.lineWidth = 1.5
+        ;[{ x: s.fromX, y: s.fromY }, { x: s.toX, y: s.toY }].forEach(p => {
+          ctx.beginPath()
+          ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI)
+          ctx.fill()
+          ctx.stroke()
+        })
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'
+        ctx.lineWidth = 1
+        ctx.setLineDash([3, 3])
+        ctx.beginPath()
+        ctx.moveTo(s.fromX, s.fromY)
+        ctx.lineTo(s.toX, s.toY)
+        ctx.stroke()
+      }
+      ctx.restore()
+    } else if (s.type === 'text') {
+      ctx.save()
+      drawTextBadge(ctx, s.text, s.x, s.y, s.color)
+
+      if (isSelected) {
+        const fontSize = 18
+        ctx.font = `bold ${fontSize}px Heebo, Rubik, sans-serif`
+        const textWidth = ctx.measureText(s.text).width
+        const paddingX = 14
+        const paddingY = 8
+        const boxWidth = textWidth + paddingX * 2
+        const boxHeight = fontSize + paddingY * 2
+        let boxX = s.x - boxWidth / 2
+        let boxY = s.y - boxHeight / 2
+        if (boxX < 10) boxX = 10
+        if (boxX + boxWidth > 950) boxX = 950 - boxWidth
+        if (boxY < 10) boxY = 10
+        if (boxY + boxHeight > 530) boxY = 530 - boxHeight
+
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 1.5
+        ctx.setLineDash([4, 4])
+        ctx.strokeRect(boxX - 4, boxY - 4, boxWidth + 8, boxHeight + 8)
+        ctx.setLineDash([])
+
+        ctx.fillStyle = '#ffffff'
+        ctx.strokeStyle = s.color
+        ctx.lineWidth = 1.5
+        ;[
+          { x: boxX - 4, y: boxY - 4 },
+          { x: boxX + boxWidth + 4, y: boxY - 4 },
+          { x: boxX + boxWidth + 4, y: boxY + boxHeight + 4 },
+          { x: boxX - 4, y: boxY + boxHeight + 4 }
+        ].forEach(c => {
+          ctx.fillRect(c.x - 3, c.y - 3, 6, 6)
+          ctx.strokeRect(c.x - 3, c.y - 3, 6, 6)
+        })
+      }
+      ctx.restore()
+    } else if (s.type === 'pen') {
+      ctx.save()
+      if (s.points && s.points.length > 0) {
+        ctx.strokeStyle = s.color
+        ctx.fillStyle = s.color
+        ctx.lineWidth = 3
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        ctx.beginPath()
+        ctx.moveTo(s.points[0].x, s.points[0].y)
+        for (let i = 1; i < s.points.length; i++) {
+          ctx.lineTo(s.points[i].x, s.points[i].y)
+        }
+        ctx.stroke()
+
+        if (isSelected) {
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+          s.points.forEach(p => {
+            minX = Math.min(minX, p.x)
+            minY = Math.min(minY, p.y)
+            maxX = Math.max(maxX, p.x)
+            maxY = Math.max(maxY, p.y)
+          })
+          ctx.strokeStyle = '#ffffff'
+          ctx.lineWidth = 1.5
+          ctx.setLineDash([4, 4])
+          ctx.strokeRect(minX - 6, minY - 6, maxX - minX + 12, maxY - minY + 12)
+        }
+      }
+      ctx.restore()
+    }
+  }
+
+  // Render all shapes on canvas
+  const renderShapesOnCanvas = useCallback((canvas, shapesList, selId, activePreview = null) => {
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    shapesList.forEach(s => {
+      renderSingleShape(ctx, s, s.id === selId)
+    })
+
+    if (activePreview) {
+      if (activePreview.type === 'circle') {
+        ctx.save()
+        ctx.strokeStyle = activePreview.color
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.arc(activePreview.cx, activePreview.cy, activePreview.radius, 0, 2 * Math.PI)
+        ctx.stroke()
+        ctx.restore()
+      } else if (activePreview.type === 'arrow') {
+        ctx.save()
+        drawArrow(ctx, activePreview.fromX, activePreview.fromY, activePreview.toX, activePreview.toY, activePreview.color)
+        ctx.restore()
+      } else if (activePreview.type === 'pen' && activePreview.points) {
+        ctx.save()
+        ctx.strokeStyle = activePreview.color
+        ctx.lineWidth = 3
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        ctx.beginPath()
+        ctx.moveTo(activePreview.points[0].x, activePreview.points[0].y)
+        for (let i = 1; i < activePreview.points.length; i++) {
+          ctx.lineTo(activePreview.points[i].x, activePreview.points[i].y)
+        }
+        ctx.stroke()
+        ctx.restore()
+      }
+    }
+  }, [])
+
+  // Auto-redraw canvas whenever shapes or selectedShapeId changes
+  useEffect(() => {
+    if (canvasRef.current && isDrawingMode) {
+      renderShapesOnCanvas(canvasRef.current, shapes, selectedShapeId)
+    }
+  }, [shapes, selectedShapeId, isDrawingMode, renderShapesOnCanvas])
+
+  // Commit text input to shapes array
   const commitTextOverlay = () => {
     if (!textInputState || !textInputState.text.trim()) {
       setTextInputState(null)
       return
     }
 
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    const newShape = {
+      id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      type: 'text',
+      color: drawColor,
+      x: textInputState.x,
+      y: textInputState.y,
+      text: textInputState.text.trim()
+    }
 
-    drawTextBadge(ctx, textInputState.text.trim(), textInputState.x, textInputState.y, drawColor)
+    setShapes(prev => [...prev, newShape])
+    setSelectedShapeId(newShape.id)
     setHasDrawing(true)
     setTextInputState(null)
   }
@@ -588,13 +855,11 @@ function App() {
     let drawWidth, drawHeight, offsetX, offsetY
 
     if (containerAspect > canvasAspect) {
-      // Container is wider than the 16:9 canvas -> pillarbox (bars on left & right)
       drawHeight = containerHeight
       drawWidth = containerHeight * canvasAspect
       offsetX = (containerWidth - drawWidth) / 2
       offsetY = 0
     } else {
-      // Container is taller than the 16:9 canvas -> letterbox (bars on top & bottom)
       drawWidth = containerWidth
       drawHeight = containerWidth / canvasAspect
       offsetX = 0
@@ -613,7 +878,7 @@ function App() {
     return { x, y }
   }
 
-  // Handle canvas mouse events
+  // Handle canvas mouse events (Drawing, Selecting, Dragging & Moving!)
   const handleMouseDown = (e) => {
     if (!isDrawingMode) return
     const canvas = canvasRef.current
@@ -621,6 +886,22 @@ function App() {
     const ctx = canvas.getContext('2d')
     const { x, y } = getCanvasCoordinates(e, canvas)
 
+    // Check if user clicked on ANY existing shape
+    const clickedShape = findShapeAtPos(x, y, shapes, ctx)
+
+    if (clickedShape) {
+      if (textInputState && textInputState.text.trim()) {
+        commitTextOverlay()
+      } else {
+        setTextInputState(null)
+      }
+      setSelectedShapeId(clickedShape.id)
+      setIsDraggingShape(true)
+      setDragStartPos({ x, y })
+      return
+    }
+
+    // Clicked empty space
     if (drawTool === 'text') {
       if (textInputState && textInputState.text.trim()) {
         commitTextOverlay()
@@ -630,6 +911,7 @@ function App() {
       const mouseY = e.clientY - rect.top
       const pctX = (mouseX / rect.width) * 100
       const pctY = (mouseY / rect.height) * 100
+      setSelectedShapeId(null)
       setTextInputState({
         x,
         y,
@@ -640,96 +922,178 @@ function App() {
       return
     }
 
-    // Save snapshot of canvas so we can do smooth real-time preview of shapes
-    try {
-      canvasSnapshotRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    } catch (err) {
-      console.warn('Could not get image data for snapshot:', err)
-      canvasSnapshotRef.current = null
+    if (drawTool === 'select') {
+      setSelectedShapeId(null)
+      return
     }
 
+    // Start drawing new shape
+    setSelectedShapeId(null)
     setIsDrawing(true)
     setStartPos({ x, y })
 
     if (drawTool === 'pen') {
-      ctx.strokeStyle = drawColor
-      ctx.fillStyle = drawColor
-      ctx.lineWidth = 3
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      ctx.beginPath()
-      ctx.moveTo(x, y)
-      ctx.lineTo(x, y)
-      ctx.stroke()
-      setHasDrawing(true)
+      currentPenPointsRef.current = [{ x, y }]
     }
   }
 
   const handleMouseMove = (e) => {
-    if (!isDrawing || !isDrawingMode || drawTool === 'text') return
+    if (!isDrawingMode) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const { x, y } = getCanvasCoordinates(e, canvas)
 
-    if (drawTool === 'pen') {
-      ctx.lineTo(x, y)
-      ctx.stroke()
-      setHasDrawing(true)
-    } else if (drawTool === 'circle') {
-      // Live animation / preview of the circle resizing!
-      if (canvasSnapshotRef.current) {
-        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
+    // A: Dragging existing shape
+    if (isDraggingShape && selectedShapeId) {
+      const dx = x - dragStartPos.x
+      const dy = y - dragStartPos.y
+      if (dx !== 0 || dy !== 0) {
+        setShapes(prevShapes =>
+          prevShapes.map(s => {
+            if (s.id !== selectedShapeId) return s
+            if (s.type === 'circle') {
+              return {
+                ...s,
+                cx: Math.max(10, Math.min(950, s.cx + dx)),
+                cy: Math.max(10, Math.min(530, s.cy + dy))
+              }
+            }
+            if (s.type === 'arrow') {
+              return {
+                ...s,
+                fromX: Math.max(10, Math.min(950, s.fromX + dx)),
+                fromY: Math.max(10, Math.min(530, s.fromY + dy)),
+                toX: Math.max(10, Math.min(950, s.toX + dx)),
+                toY: Math.max(10, Math.min(530, s.toY + dy))
+              }
+            }
+            if (s.type === 'text') {
+              return {
+                ...s,
+                x: Math.max(10, Math.min(950, s.x + dx)),
+                y: Math.max(10, Math.min(530, s.y + dy))
+              }
+            }
+            if (s.type === 'pen') {
+              return {
+                ...s,
+                points: s.points.map(p => ({
+                  x: Math.max(10, Math.min(950, p.x + dx)),
+                  y: Math.max(10, Math.min(530, p.y + dy))
+                }))
+              }
+            }
+            return s
+          })
+        )
+        setDragStartPos({ x, y })
       }
-      const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
-      ctx.strokeStyle = drawColor
-      ctx.lineWidth = 3
-      ctx.beginPath()
-      ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI)
-      ctx.stroke()
-      setHasDrawing(true)
-    } else if (drawTool === 'arrow') {
-      // Live animation / preview of the arrow stretching and rotating!
-      if (canvasSnapshotRef.current) {
-        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
-      }
-      drawArrow(ctx, startPos.x, startPos.y, x, y, drawColor)
-      setHasDrawing(true)
+      return
     }
+
+    // B: Actively drawing a new shape
+    if (isDrawing) {
+      if (drawTool === 'pen') {
+        currentPenPointsRef.current.push({ x, y })
+        renderShapesOnCanvas(canvas, shapes, null, {
+          type: 'pen',
+          color: drawColor,
+          points: currentPenPointsRef.current
+        })
+      } else if (drawTool === 'circle') {
+        const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
+        renderShapesOnCanvas(canvas, shapes, null, {
+          type: 'circle',
+          color: drawColor,
+          cx: startPos.x,
+          cy: startPos.y,
+          radius
+        })
+      } else if (drawTool === 'arrow') {
+        renderShapesOnCanvas(canvas, shapes, null, {
+          type: 'arrow',
+          color: drawColor,
+          fromX: startPos.x,
+          fromY: startPos.y,
+          toX: x,
+          toY: y
+        })
+      }
+      return
+    }
+
+    // C: Hover check for cursor styling
+    const shapeUnder = findShapeAtPos(x, y, shapes, ctx)
+    setHoveredShapeId(shapeUnder ? shapeUnder.id : null)
   }
 
   const handleMouseUp = (e) => {
-    if (!isDrawing || !isDrawingMode || drawTool === 'text') return
+    if (!isDrawingMode) return
+
+    if (isDraggingShape) {
+      setIsDraggingShape(false)
+      return
+    }
+
+    if (!isDrawing) return
+
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
     const { x, y } = getCanvasCoordinates(e, canvas)
 
     if (drawTool === 'circle') {
-      if (canvasSnapshotRef.current) {
-        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
-      }
       const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
-      if (radius > 3) {
-        ctx.strokeStyle = drawColor
-        ctx.lineWidth = 3
-        ctx.beginPath()
-        ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI)
-        ctx.stroke()
+      if (radius > 4) {
+        const newShape = {
+          id: `circle-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          type: 'circle',
+          color: drawColor,
+          cx: startPos.x,
+          cy: startPos.y,
+          radius
+        }
+        setShapes(prev => [...prev, newShape])
+        setSelectedShapeId(newShape.id)
         setHasDrawing(true)
+      } else {
+        renderShapesOnCanvas(canvas, shapes, selectedShapeId)
       }
     } else if (drawTool === 'arrow') {
-      if (canvasSnapshotRef.current) {
-        ctx.putImageData(canvasSnapshotRef.current, 0, 0)
-      }
       const dist = Math.hypot(x - startPos.x, y - startPos.y)
-      if (dist > 5) {
-        drawArrow(ctx, startPos.x, startPos.y, x, y, drawColor)
+      if (dist > 6) {
+        const newShape = {
+          id: `arrow-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          type: 'arrow',
+          color: drawColor,
+          fromX: startPos.x,
+          fromY: startPos.y,
+          toX: x,
+          toY: y
+        }
+        setShapes(prev => [...prev, newShape])
+        setSelectedShapeId(newShape.id)
         setHasDrawing(true)
+      } else {
+        renderShapesOnCanvas(canvas, shapes, selectedShapeId)
       }
+    } else if (drawTool === 'pen') {
+      if (currentPenPointsRef.current.length > 1) {
+        const newShape = {
+          id: `pen-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          type: 'pen',
+          color: drawColor,
+          points: [...currentPenPointsRef.current]
+        }
+        setShapes(prev => [...prev, newShape])
+        setSelectedShapeId(newShape.id)
+        setHasDrawing(true)
+      } else {
+        renderShapesOnCanvas(canvas, shapes, selectedShapeId)
+      }
+      currentPenPointsRef.current = []
     }
 
-    canvasSnapshotRef.current = null
     setIsDrawing(false)
   }
 
@@ -1163,6 +1527,7 @@ function App() {
 
     let drawingData = null
     if (hasDrawing && canvasRef.current) {
+      renderShapesOnCanvas(canvasRef.current, shapes, null)
       drawingData = canvasRef.current.toDataURL()
     }
 
@@ -1768,7 +2133,11 @@ function App() {
                 onMouseLeave={handleMouseUp}
                 className={`absolute inset-0 w-full h-full object-contain ${
                   isDrawingMode
-                    ? drawTool === 'text'
+                    ? isDraggingShape || hoveredShapeId
+                      ? 'cursor-move z-30 pointer-events-auto bg-black/10'
+                      : drawTool === 'select'
+                      ? 'cursor-default z-30 pointer-events-auto bg-black/10'
+                      : drawTool === 'text'
                       ? 'cursor-text z-30 pointer-events-auto bg-black/10'
                       : 'cursor-crosshair z-30 pointer-events-auto bg-black/10'
                     : hasDrawing
@@ -1999,10 +2368,21 @@ function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          setDrawTool('select')
+                          setTextInputState(null)
+                        }}
+                        className={`p-1 rounded transition-colors ${drawTool === 'select' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        title="בחר והזז צורות (Pointer)"
+                      >
+                        <MousePointer className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
                           setDrawTool('pen')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded ${drawTool === 'pen' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1 rounded transition-colors ${drawTool === 'pen' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                         title="עט חופשי"
                       >
                         <PenTool className="w-3.5 h-3.5" />
@@ -2013,7 +2393,7 @@ function App() {
                           setDrawTool('circle')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded ${drawTool === 'circle' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1 rounded transition-colors ${drawTool === 'circle' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                         title="עיגול נמתח"
                       >
                         <Circle className="w-3.5 h-3.5" />
@@ -2024,7 +2404,7 @@ function App() {
                           setDrawTool('arrow')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded ${drawTool === 'arrow' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1 rounded transition-colors ${drawTool === 'arrow' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                         title="חץ נמתח"
                       >
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -2035,7 +2415,7 @@ function App() {
                           setDrawTool('text')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded ${drawTool === 'text' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1 rounded transition-colors ${drawTool === 'text' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                         title="טקסט על גבי הפריים"
                       >
                         <Type className="w-3.5 h-3.5" />
@@ -2052,7 +2432,14 @@ function App() {
                           <button
                             key={c.color}
                             type="button"
-                            onClick={() => setDrawColor(c.color)}
+                            onClick={() => {
+                              setDrawColor(c.color)
+                              if (selectedShapeId) {
+                                setShapes((prev) =>
+                                  prev.map((s) => (s.id === selectedShapeId ? { ...s, color: c.color } : s))
+                                )
+                              }
+                            }}
                             style={{ backgroundColor: c.color }}
                             className={`w-3.5 h-3.5 rounded-full transition-transform ${drawColor === c.color ? 'scale-125 ring-2 ring-white' : 'hover:scale-110'}`}
                             title={c.name}
@@ -2060,12 +2447,35 @@ function App() {
                         ))}
                       </div>
 
+                      {/* Delete selected shape */}
+                      {selectedShapeId && (
+                        <button
+                          type="button"
+                          onClick={deleteSelectedShape}
+                          className="p-1 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                          title="מחק צורה נבחרת (Delete)"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {/* Undo last shape */}
+                      <button
+                        type="button"
+                        onClick={undoLastShape}
+                        disabled={shapes.length === 0}
+                        className="p-1 text-gray-400 hover:text-gray-200 disabled:opacity-30 disabled:pointer-events-none rounded transition-colors"
+                        title="בטל צורה אחרונה (Undo)"
+                      >
+                        <Undo2 className="w-3.5 h-3.5" />
+                      </button>
+
                       {/* Clear canvas */}
                       <button
                         type="button"
                         onClick={clearCanvas}
                         className="p-1 text-gray-400 hover:text-red-400 rounded transition-colors"
-                        title="נקה ציור"
+                        title="נקה הכל"
                       >
                         <Eraser className="w-3.5 h-3.5" />
                       </button>
