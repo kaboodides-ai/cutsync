@@ -54,6 +54,7 @@ import NewProjectModal from './NewProjectModal'
 import AuthModal from './AuthModal'
 import Confetti from './Confetti'
 import KeyboardShortcutsModal from './KeyboardShortcutsModal'
+import OAuthPopupHandler from './OAuthPopupHandler'
 import {
   playPop,
   playCheck,
@@ -182,7 +183,7 @@ function AudioCommentPlayer({ src, duration, label = "הערה קולית" }) {
   )
 }
 
-function App() {
+function MainApp() {
   const videoRef = useRef(null)
   const fileInputRef = useRef(null)
   const fileInputNewVersionRef = useRef(null)
@@ -271,7 +272,21 @@ function App() {
       }
     )
 
-    return () => subscription.unsubscribe()
+    const handleAuthMessage = async (event) => {
+      if (event.data?.type === 'CUTSYNC_AUTH_SUCCESS') {
+        const user = await getSessionUser()
+        if (user) {
+          handleAuthSuccess(user)
+          setShowAuthModal(false)
+        }
+      }
+    }
+    window.addEventListener('message', handleAuthMessage)
+
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener('message', handleAuthMessage)
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAuthSuccess = (user) => {
@@ -4306,5 +4321,21 @@ function App() {
   )
 }
 
-export default App
+export default function App() {
+  const isPopup = typeof window !== 'undefined' && (
+    (window.opener !== null && window.opener !== window) ||
+    window.name === 'GoogleAuth' ||
+    window.name === 'DiscordAuth' ||
+    (window.location.search && (
+      window.location.search.includes('error=') ||
+      window.location.search.includes('error_code=')
+    ))
+  )
+
+  if (isPopup) {
+    return <OAuthPopupHandler />
+  }
+
+  return <MainApp />
+}
 
