@@ -24,10 +24,12 @@ import {
   MousePointer,
   HelpCircle,
   Eye,
-  Link2
+  Link2,
+  User,
+  LogOut
 } from 'lucide-react'
 
-export default function LandingPage({ onEnterStudio }) {
+export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModal, onLogout }) {
   const [openFaq, setOpenFaq] = useState(null)
 
   const toggleFaq = (index) => {
@@ -97,14 +99,52 @@ export default function LandingPage({ onEnterStudio }) {
             <a href="#faq" className="hover:text-purple-300 transition-colors">שאלות נפוצות</a>
           </nav>
 
-          {/* Quick CTA */}
+          {/* Quick Auth / CTA */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => onEnterStudio('editor')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-[1.03] active:scale-95"
-            >
-              <span>דשבורד פרויקטים 🚀</span>
-            </button>
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onEnterStudio('editor')}
+                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#141926] hover:bg-[#1d253a] border border-[#232d44] transition-all cursor-pointer"
+                  title="כניסה לדשבורד"
+                >
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    className="w-7 h-7 rounded-lg object-cover border border-purple-500/40"
+                  />
+                  <span className="hidden sm:inline text-xs font-bold text-white">{currentUser.name}</span>
+                </button>
+                <button
+                  onClick={() => onEnterStudio('editor')}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer"
+                >
+                  <span>דשבורד פרויקטים 🚀</span>
+                </button>
+                <button
+                  onClick={onLogout}
+                  className="p-2 rounded-xl bg-[#141926] hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-[#232d44] transition-all cursor-pointer"
+                  title="התנתק"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onOpenAuthModal?.('login')}
+                  className="px-4 py-2.5 rounded-xl bg-[#141926] hover:bg-[#1d253a] border border-[#232d44] text-xs font-bold text-gray-200 hover:text-white transition-all cursor-pointer"
+                >
+                  התחברות / הרשמה
+                </button>
+                <button
+                  onClick={() => onOpenAuthModal?.('register')}
+                  className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer"
+                >
+                  <span>התחל בחינם 🚀</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -141,10 +181,16 @@ export default function LandingPage({ onEnterStudio }) {
         {/* CTA Buttons Group */}
         <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <button
-            onClick={() => onEnterStudio('editor')}
-            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-black text-base shadow-2xl shadow-purple-950/80 flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 group"
+            onClick={() => {
+              if (currentUser) {
+                onEnterStudio('editor')
+              } else {
+                onOpenAuthModal?.('register')
+              }
+            }}
+            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-black text-base shadow-2xl shadow-purple-950/80 flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 group cursor-pointer"
           >
-            <span>התחל לעבוד עכשיו (חינם בדמו)</span>
+            <span>{currentUser ? 'המשך לדשבורד שלך 🚀' : 'התחל לעבוד עכשיו (חינם בדמו)'}</span>
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           </button>
 
@@ -510,8 +556,14 @@ export default function LandingPage({ onEnterStudio }) {
             </div>
 
             <button
-              onClick={() => onEnterStudio('editor')}
-              className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-950/60 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+              onClick={() => {
+                if (currentUser) {
+                  onEnterStudio('editor')
+                } else {
+                  onOpenAuthModal?.('login')
+                }
+              }}
+              className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-950/60 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>כניסה לדשבורד הפרויקטים</span>
               <ArrowLeft className="w-4 h-4" />

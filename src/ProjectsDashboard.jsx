@@ -17,17 +17,23 @@ import {
   User,
   Sparkles,
   ArrowRight,
-  Filter
+  Filter,
+  LogOut,
+  ChevronDown
 } from 'lucide-react'
 
 export default function ProjectsDashboard({
   projects = [],
+  currentUser,
   onOpenStudio,
   onOpenNewProjectModal,
   onNavigateHome,
   onCopyClientLink,
-  onDeleteProject
+  onDeleteProject,
+  onOpenAuthModal,
+  onLogout
 }) {
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all') // 'all' | 'pending' | 'approved'
 
@@ -94,15 +100,74 @@ export default function ProjectsDashboard({
             </div>
           </div>
 
-          {/* Action: New Project CTA */}
+          {/* Actions: New Project CTA & User Profile */}
           <div className="flex items-center gap-3">
             <button
               onClick={onOpenNewProjectModal}
-              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>פרויקט סקירה חדש 🚀</span>
             </button>
+
+            {/* User Profile Pill & Dropdown */}
+            {currentUser ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#141926] hover:bg-[#1d253a] border border-[#232d44] transition-all cursor-pointer shadow-md"
+                >
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    className="w-7 h-7 rounded-lg object-cover border border-purple-500/40"
+                  />
+                  <div className="hidden sm:flex flex-col text-right">
+                    <span className="text-xs font-bold text-white leading-tight">{currentUser.name}</span>
+                    <span className="text-[10px] text-indigo-400 font-semibold">
+                      {currentUser.provider === 'google' ? 'Gmail / Google' : currentUser.provider === 'discord' ? 'Discord' : 'אימייל'}
+                    </span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute left-0 mt-2 w-56 bg-[#111624] border border-[#26334f] rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in">
+                    <div className="px-3 py-2 border-b border-gray-800/80 mb-1">
+                      <p className="text-xs font-bold text-white">{currentUser.name}</p>
+                      <p className="text-[10px] text-gray-400 truncate">{currentUser.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false)
+                        onOpenAuthModal?.('login')
+                      }}
+                      className="w-full text-right px-3 py-2 rounded-xl hover:bg-[#1a2236] text-xs text-gray-200 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <User className="w-3.5 h-3.5 text-purple-400" />
+                      <span>החלף משתמש</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false)
+                        onLogout?.()
+                      }}
+                      className="w-full text-right px-3 py-2 rounded-xl hover:bg-red-500/10 text-xs text-red-400 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-red-400" />
+                      <span>התנתק מהחשבון</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => onOpenAuthModal?.('login')}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                התחברות
+              </button>
+            )}
           </div>
 
         </div>
@@ -119,9 +184,9 @@ export default function ProjectsDashboard({
               <span>מרכז ניהול הפרויקטים שלך</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white">
-              הפרויקטים והסרטונים בביקורת 🎬
+              {currentUser ? `הפרויקטים של ${currentUser.name} 🎬` : 'הפרויקטים והסרטונים בביקורת 🎬'}
             </h1>
-            <p className="text-xs sm:text-sm text-gray-400 mt-1">
+            <p className="text-xs sm:sm text-gray-400 mt-1">
               נהל גרסאות, הפק קישורי סקירה ללקוחות, ועקוב אחר התקדמות התיקונים בזמן אמת.
             </p>
           </div>

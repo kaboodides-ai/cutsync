@@ -49,6 +49,13 @@ import {
 import LandingPage from './LandingPage'
 import ProjectsDashboard from './ProjectsDashboard'
 import NewProjectModal from './NewProjectModal'
+import AuthModal from './AuthModal'
+import {
+  getCurrentUser,
+  logoutUser,
+  getUserProjects,
+  saveUserProjects
+} from './authService'
 
 // Demo sample video (Open source Blender video)
 const DEFAULT_VIDEO = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
@@ -174,8 +181,17 @@ function App() {
   const audioChunksRef = useRef([])
   const recordingTimerRef = useRef(null)
 
-  // Multi-Project Architecture State
+  // Auth State
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser())
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authModalInitialTab, setAuthModalInitialTab] = useState('login')
+
+  // Multi-Project Architecture State (Isolated per User)
   const [projects, setProjects] = useState(() => {
+    const user = getCurrentUser()
+    if (user?.id) {
+      return getUserProjects(user.id)
+    }
     const saved = localStorage.getItem('cutsync_projects')
     if (saved) {
       try {
@@ -183,62 +199,7 @@ function App() {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed
       } catch (e) { console.error(e) }
     }
-
-    // Backward compatibility: migrate existing versions or create default demo
-    let initialComments = [
-      { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח', drawing: null, replies: [] },
-      { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח', drawing: null, replies: [
-        { id: 'r1', author: 'עורך', text: 'הגברתי ב-3dB ואיזנתי עם הדיבור, נשמע מעולה עכשיו!', createdAt: new Date(Date.now() - 3600000).toISOString() }
-      ] },
-      { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח', drawing: null, replies: [] },
-    ]
-    const oldComments = localStorage.getItem('cutsync_comments')
-    if (oldComments) {
-      try {
-        const parsed = JSON.parse(oldComments)
-        if (Array.isArray(parsed) && parsed.length > 0) initialComments = parsed
-      } catch (e) { console.error(e) }
-    }
-
-    let defaultVersions = [
-      {
-        id: 'v1',
-        number: 1,
-        name: 'גרסה 1 (V1)',
-        videoSrc: DEFAULT_VIDEO,
-        videoTitle: 'סרטון תדמית מוצר - חברת אלפא',
-        createdAt: new Date().toISOString(),
-        comments: initialComments,
-        approved: false,
-        approvedAt: null,
-        approvedBy: null,
-        approvalNote: null,
-        reopenRequested: false,
-        reopenRequestedAt: null,
-        reopenRequestedBy: null,
-        reopenRequestReason: null
-      }
-    ]
-
-    const savedVersions = localStorage.getItem('cutsync_versions')
-    if (savedVersions) {
-      try {
-        const parsed = JSON.parse(savedVersions)
-        if (Array.isArray(parsed) && parsed.length > 0) defaultVersions = parsed
-      } catch (e) { console.error(e) }
-    }
-
-    return [
-      {
-        id: 'proj-demo-1',
-        title: 'סרטון תדמית מוצר - חברת אלפא',
-        clientName: 'דניאל כהן',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        versions: defaultVersions,
-        activeVersionId: 'v1'
-      }
-    ]
+    return []
   })
 
   // Active Project ID & Modal State
@@ -246,9 +207,32 @@ function App() {
     const params = new URLSearchParams(window.location.search)
     const projParam = params.get('project')
     if (projParam) return projParam
-    return localStorage.getItem('cutsync_active_project_id') || 'proj-demo-1'
+    const user = getCurrentUser()
+    if (user?.id) {
+      const userProjs = getUserProjects(user.id)
+      if (userProjs.length > 0) return userProjs[0].id
+    }
+    return localStorage.getItem('cutsync_active_project_id') || 'proj-google-1'
   })
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
+
+  const handleAuthSuccess = (user) => {
+    setCurrentUser(user)
+    const userProjects = getUserProjects(user.id)
+    setProjects(userProjects)
+    if (userProjects.length > 0) {
+      setActiveProjectId(userProjects[0].id)
+    }
+    setCurrentView('dashboard')
+    showToast(`ברוך הבא, ${user.name}! התחברת בהצלחה via ${user.provider === 'google' ? 'Google' : user.provider === 'discord' ? 'Discord' : 'אימייל'}.`, 'success')
+  }
+
+  const handleLogout = () => {
+    logoutUser()
+    setCurrentUser(null)
+    setCurrentView('home')
+    showToast('התנתקת בהצלחה מהמערכת', 'info')
+  }
 
   // Current active project
   const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0] || {
@@ -448,11 +432,14 @@ function App() {
 
   // Save projects and active IDs to localStorage
   useEffect(() => {
+    if (currentUser?.id) {
+      saveUserProjects(currentUser.id, projects)
+    }
     localStorage.setItem('cutsync_projects', JSON.stringify(projects))
     if (currentProject?.versions) {
       localStorage.setItem('cutsync_versions', JSON.stringify(currentProject.versions))
     }
-  }, [projects, currentProject])
+  }, [projects, currentProject, currentUser])
 
   useEffect(() => {
     localStorage.setItem('cutsync_active_project_id', activeProjectId)
@@ -464,10 +451,11 @@ function App() {
   // Cross-tab synchronization via localStorage storage event
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === 'cutsync_projects' && e.newValue) {
+      const expectedKey = currentUser?.id ? `cutsync_projects_${currentUser.id}` : 'cutsync_projects'
+      if (e.key === expectedKey && e.newValue) {
         try {
           const updated = JSON.parse(e.newValue)
-          if (Array.isArray(updated) && updated.length > 0) {
+          if (Array.isArray(updated)) {
             setProjects(updated)
           }
         } catch (err) {
@@ -477,7 +465,7 @@ function App() {
     }
     window.addEventListener('storage', handleStorageChange)
     return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
+  }, [currentUser])
 
   // Canvas Drawing functions
   const clearCanvas = useCallback(() => {
@@ -1707,17 +1695,36 @@ function App() {
     return (
       <>
         <LandingPage
+          currentUser={currentUser}
+          onOpenAuthModal={(initialTab = 'login') => {
+            setAuthModalInitialTab(initialTab)
+            setShowAuthModal(true)
+          }}
+          onLogout={handleLogout}
           onEnterStudio={(target = 'editor') => {
             if (target === 'client') {
               setMode('client')
               setCurrentView('studio')
             } else {
-              // 'editor' or 'dashboard' or 'demo'
-              setCurrentView('dashboard')
+              if (!currentUser) {
+                setAuthModalInitialTab('login')
+                setShowAuthModal(true)
+              } else {
+                setCurrentView('dashboard')
+              }
             }
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
         />
+
+        {/* Global Auth Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          initialTab={authModalInitialTab}
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={handleAuthSuccess}
+        />
+
         {/* Global Toast Notification */}
         {toast && (
           <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
@@ -1751,6 +1758,12 @@ function App() {
       <>
         <ProjectsDashboard
           projects={projects}
+          currentUser={currentUser}
+          onOpenAuthModal={(initialTab = 'login') => {
+            setAuthModalInitialTab(initialTab)
+            setShowAuthModal(true)
+          }}
+          onLogout={handleLogout}
           onOpenStudio={(projId) => {
             setActiveProjectId(projId)
             setMode('editor')
@@ -1770,6 +1783,14 @@ function App() {
           isOpen={showNewProjectModal}
           onClose={() => setShowNewProjectModal(false)}
           onCreateProject={handleCreateProject}
+        />
+
+        {/* Global Auth Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          initialTab={authModalInitialTab}
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={handleAuthSuccess}
         />
 
         {/* Global Toast Notification */}
@@ -1911,6 +1932,25 @@ function App() {
                   <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
                   <span className="hidden md:inline">מרקרים ל-Premiere</span>
                 </button>
+                {currentUser && (
+                  <div
+                    onClick={() => {
+                      setAuthModalInitialTab('login')
+                      setShowAuthModal(true)
+                    }}
+                    className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#131a29] border border-[#232f48] cursor-pointer hover:border-purple-500/50 transition-all"
+                    title="לחץ להחלפת משתמש"
+                  >
+                    <img
+                      src={currentUser.avatar}
+                      alt={currentUser.name}
+                      className="w-5 h-5 rounded-md object-cover"
+                    />
+                    <span className="text-[11px] font-bold text-gray-200 truncate max-w-[80px]">
+                      {currentUser.name}
+                    </span>
+                  </div>
+                )}
               </>
             )}
 
@@ -3778,6 +3818,14 @@ function App() {
           </button>
         </div>
       )}
+
+      {/* Global Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        initialTab={authModalInitialTab}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   )
 }
