@@ -92,25 +92,17 @@ export default function LandingPage({ onEnterStudio }) {
             <a href="#why" className="hover:text-purple-300 transition-colors">למה CutSync?</a>
             <a href="#features" className="hover:text-purple-300 transition-colors">תכונות הדגל</a>
             <a href="#how-it-works" className="hover:text-purple-300 transition-colors">איך זה עובד?</a>
-            <a href="#roles" className="hover:text-purple-300 transition-colors">עורך או לקוח?</a>
+            <a href="#roles" className="hover:text-purple-300 transition-colors">חיבור עורך ולקוח</a>
             <a href="#faq" className="hover:text-purple-300 transition-colors">שאלות נפוצות</a>
           </nav>
 
           {/* Quick CTA */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => onEnterStudio('client')}
-              className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white bg-[#151b2c] hover:bg-[#1f2840] border border-[#242f4c] transition-all"
-            >
-              <Users className="w-3.5 h-3.5 text-purple-400" />
-              <span>תצוגת לקוח</span>
-            </button>
-
-            <button
               onClick={() => onEnterStudio('editor')}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-[1.03] active:scale-95"
             >
-              <span>פתח סטודיו (דמו חי) 🚀</span>
+              <span>דשבורד פרויקטים 🚀</span>
             </button>
           </div>
         </div>
@@ -482,17 +474,19 @@ export default function LandingPage({ onEnterStudio }) {
         </div>
       </section>
 
-      {/* Role Split Entry Cards */}
+      {/* Seamless Workflow: Editor Workspace ↔ Client Direct Link */}
       <section id="roles" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-2">מי אתה?</h2>
-          <h3 className="text-3xl font-black text-white">בחר את סביבת העבודה שלך</h3>
-          <p className="mt-2 text-xs sm:text-sm text-gray-400">התנסה ישירות בממשק המותאם עבורך:</p>
+          <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-2">איך זה עובד בפועל?</h2>
+          <h3 className="text-3xl font-black text-white">חיבור פשוט ומהיר בין העורך ללקוח</h3>
+          <p className="mt-2 text-xs sm:text-sm text-gray-400">
+            העורך מקבל שליטה מלאה בניהול הפרויקט — והלקוח נכנס ישירות לקישור שלו בלי שום סיבוך:
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           
-          {/* Card 1: Editor */}
+          {/* Card 1: Editor Workspace */}
           <div className="bg-gradient-to-b from-[#161c2d] to-[#101422] p-8 rounded-3xl border border-indigo-500/30 shadow-2xl flex flex-col justify-between gap-6 hover:border-indigo-500/60 transition-all">
             <div>
               <div className="flex items-center gap-3 mb-4">
@@ -500,17 +494,17 @@ export default function LandingPage({ onEnterStudio }) {
                   <Scissors className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-white">אני עורך וידאו 🎬</h4>
-                  <span className="text-xs text-indigo-300">Editor Workspace</span>
+                  <h4 className="text-xl font-bold text-white">1. דשבורד העורך 🎬</h4>
+                  <span className="text-xs text-indigo-300">ניהול פרויקטים וסבבי גרסאות</span>
                 </div>
               </div>
               <p className="text-xs text-gray-300 leading-relaxed mb-4">
-                קבל שליטה מלאה: נהל גרסאות סרטון, קפוץ מיד לפריים של כל תיקון, סמן משימות שבוצעו, וייצא קובץ CSV ישירות ל-Timeline בפרמייר.
+                מרכז השליטה שלך: העלה סרטונים, נהל גרסאות (V1, V2, V3), העתק קישור ייעודי לכל לקוח, סמן משימות כבוצעו, וייצא קובץ CSV ישירות ל-Timeline בפרמייר.
               </p>
               <div className="flex flex-wrap gap-2 text-[11px] text-gray-400">
-                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ ייצוא מרקרים CSV</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ צ'קליסט משימות</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ העלאת גרסאות חדשות</span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ דשבורד מרובה פרויקטים</span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ ייצוא מרקרים ל-Premiere</span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ צ'קליסט משימות לתיקון</span>
               </div>
             </div>
 
@@ -518,40 +512,48 @@ export default function LandingPage({ onEnterStudio }) {
               onClick={() => onEnterStudio('editor')}
               className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-950/60 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
             >
-              <span>כניסה כעורך וידאו</span>
+              <span>כניסה לדשבורד הפרויקטים</span>
               <ArrowLeft className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Card 2: Client */}
+          {/* Card 2: Client Direct Experience */}
           <div className="bg-gradient-to-b from-[#131d27] to-[#0e1720] p-8 rounded-3xl border border-emerald-500/30 shadow-2xl flex flex-col justify-between gap-6 hover:border-emerald-500/60 transition-all">
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <Users className="w-6 h-6" />
+                  <Link2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-white">אני הלקוח / הבמאי 👤</h4>
-                  <span className="text-xs text-emerald-300">Client Review Mode</span>
+                  <h4 className="text-xl font-bold text-white">2. קישור ישיר ללקוח 🔗</h4>
+                  <span className="text-xs text-emerald-300">נשלח בוואטסאפ — ללא צורך בהרשמה</span>
                 </div>
               </div>
               <p className="text-xs text-gray-300 leading-relaxed mb-4">
-                ממשק נקי ומזמין: צפה בסרטון, עצור בכל נקודה שתרצה, סמן על המסך בעיגול או חץ, הקלט הערה קולית, ואשר את הגרסה הסופית ברגע שהכל מושלם.
+                הלקוח מקבל ממך קישור ישיר לסרטון שלו. הוא פותח אותו בכל דפדפן (במחשב או בנייד), רואה את הברכה האישית, מסמן הערות וציורים, ומאשר את הגרסה הסופית ברגע שהכל מושלם.
               </p>
               <div className="flex flex-wrap gap-2 text-[11px] text-gray-400">
-                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ ציור וחצים על הפריים</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ הקלטה קולית מובנית</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ אישור גרסה סופי בלחיצה</span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ 0 הרשמות, 0 סיסמאות</span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ קישור ייחודי לכל פרויקט</span>
+                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ אישור גרסה רשמי בלחיצה</span>
               </div>
             </div>
 
-            <button
-              onClick={() => onEnterStudio('client')}
-              className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/60 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-            >
-              <span>כניסה כלקוח / צפייה בסקירה</span>
-              <ArrowLeft className="w-4 h-4" />
-            </button>
+            <div className="p-3.5 rounded-xl bg-[#0b141a] border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-emerald-300 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>הלקוח מקבל קישור פרטי בוואטסאפ לכל סרטון</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onEnterStudio('client')}
+                className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 whitespace-nowrap"
+                title="צפה בדוגמה לאיך הלקוח רואה את הקישור"
+              >
+                <span>צפה בדמו לקוח</span>
+                <ArrowLeft className="w-3 h-3" />
+              </button>
+            </div>
           </div>
 
         </div>
