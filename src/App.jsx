@@ -67,8 +67,12 @@ import {
   getCurrentUser,
   logoutUser,
   getUserProjects,
-  saveUserProjects
+  saveUserProjects,
+  shapeCutSyncUser,
+  getSessionUser,
+  fetchProfile
 } from './authService'
+import { supabase } from './lib/supabase'
 
 // Demo sample video (Open source Blender video)
 const DEFAULT_VIDEO = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
@@ -195,54 +199,95 @@ function App() {
   const recordingTimerRef = useRef(null)
 
   // Auth State
-  const [currentUser, setCurrentUser] = useState(() => getCurrentUser())
+  const [currentUser, setCurrentUser] = useState(null) // null until Supabase session resolves
+  const [authLoading, setAuthLoading] = useState(true)  // true while checking session
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authModalInitialTab, setAuthModalInitialTab] = useState('login')
 
-  // Multi-Project Architecture State (Isolated per User)
-  const [projects, setProjects] = useState(() => {
-    const user = getCurrentUser()
-    if (user?.id) {
-      return getUserProjects(user.id)
-    }
-    const saved = localStorage.getItem('cutsync_projects')
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed
-      } catch (e) { console.error(e) }
-    }
-    return []
-  })
+  // Projects State (loaded async from Supabase)
+  const [projects, setProjects] = useState([])
 
   // Active Project ID & Modal State
   const [activeProjectId, setActiveProjectId] = useState(() => {
     const params = new URLSearchParams(window.location.search)
-    const projParam = params.get('project')
-    if (projParam) return projParam
-    const user = getCurrentUser()
-    if (user?.id) {
-      const userProjs = getUserProjects(user.id)
-      if (userProjs.length > 0) return userProjs[0].id
-    }
-    return localStorage.getItem('cutsync_active_project_id') || 'proj-google-1'
+    return params.get('project') || null
   })
   const [showNewProjectModal, setShowNewProjectModal] = useState(false)
 
-  const handleAuthSuccess = (user) => {
-    setCurrentUser(user)
-    const userProjects = getUserProjects(user.id)
-    setProjects(userProjects)
-    if (userProjects.length > 0) {
-      setActiveProjectId(userProjects[0].id)
+  // ── Load projects for a user async ─────────────────────────
+  const loadUserProjects = useCallback(async (user) => {
+    if (!user?.id) return
+    const projs = await getUserProjects(user.id)
+    setProjects(projs)
+    if (projs.length > 0 && !activeProjectId) {
+      setActiveProjectId(projs[0].id)
     }
-    setCurrentView('dashboard')
-    showToast(`ברוך הבא, ${user.name}! התחברת בהצלחה via ${user.provider === 'google' ? 'Google' : user.provider === 'discord' ? 'Discord' : 'אימייל'}.`, 'success')
+  }, [activeProjectId])
+
+  // ── Supabase Auth State Change Listener ────────────────────
+  // This fires on: page load (session restore), login, logout, token refresh
+  useEffect(() => {
+    // Check for existing session on mount
+    getSessionUser().then((user) => {
+      setCurrentUser(user)
+      setAuthLoading(false)
+      if (user) loadUserProjects(user)
+    })
+
+    // Subscribe to future auth state changes (login/logout/token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          // If this is the OAuth popup window, close it immediately
+          if (window.opener && window.opener !== window) {
+            window.close()
+            return
+          }
+          setShowAuthModal(false)
+          const profile = await fetchProfile(session.user.id)
+          const user = shapeCutSyncUser(session.user, profile)
+          setCurrentUser(user)
+          setAuthLoading(false)
+          const projs = await getUserProjects(user.id)
+          setProjects(projs)
+          if (projs.length > 0) setActiveProjectId((prev) => prev || projs[0].id)
+          // Only navigate to dashboard on explicit login (not token refresh)
+          if (event === 'SIGNED_IN') {
+            setCurrentView((v) => (v === 'home' ? 'dashboard' : v))
+            showToast(`ברוך הבא, ${user.name}! 👋`, 'success')
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setCurrentUser(null)
+          setProjects([])
+          setActiveProjectId(null)
+          setAuthLoading(false)
+          setCurrentView('home')
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Silent token refresh — just update user if needed
+          const profile = await fetchProfile(session.user.id)
+          const user = shapeCutSyncUser(session.user, profile)
+          setCurrentUser(user)
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAuthSuccess = (user) => {
+    // Called after email/password login — OAuth is handled by onAuthStateChange above
+    if (!user || user.needsEmailConfirmation) return
+    setCurrentUser(user)
+    loadUserProjects(user).then(() => {
+      setCurrentView('dashboard')
+      showToast(`ברוך הבא, ${user.name}! התחברת בהצלחה.`, 'success')
+    })
   }
 
-  const handleLogout = () => {
-    logoutUser()
+  const handleLogout = async () => {
+    await logoutUser()
     setCurrentUser(null)
+    setProjects([])
     setCurrentView('home')
     showToast('התנתקת בהצלחה מהמערכת', 'info')
   }
@@ -295,19 +340,6 @@ function App() {
       })
     )
   }
-
-  // Global listener for OAuth popup completion
-  useEffect(() => {
-    const handleAuthMessage = (event) => {
-      if (event.data?.type === 'CUTSYNC_AUTH_SUCCESS' && event.data?.user) {
-        handleAuthSuccess(event.data.user)
-        setShowAuthModal(false)
-      }
-    }
-    window.addEventListener('message', handleAuthMessage)
-    return () => window.removeEventListener('message', handleAuthMessage)
-  }, [])
-
   // Current active project
   const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0] || {
     id: 'proj-demo-1',
@@ -512,16 +544,14 @@ function App() {
     showToast('הועתק קישור סקירה ישיר ללקוח! שלח אותו בוואטסאפ 🔗', 'success')
   }
 
-  // Save projects and active IDs to localStorage
+  // Save projects to Supabase whenever they change (debounced to avoid hammering)
   useEffect(() => {
-    if (currentUser?.id) {
+    if (!currentUser?.id || projects.length === 0) return
+    const timer = setTimeout(() => {
       saveUserProjects(currentUser.id, projects)
-    }
-    localStorage.setItem('cutsync_projects', JSON.stringify(projects))
-    if (currentProject?.versions) {
-      localStorage.setItem('cutsync_versions', JSON.stringify(currentProject.versions))
-    }
-  }, [projects, currentProject, currentUser])
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [projects, currentUser])
 
   useEffect(() => {
     localStorage.setItem('cutsync_active_project_id', activeProjectId)
@@ -1948,6 +1978,11 @@ function App() {
 
   // Render Projects Dashboard when currentView === 'dashboard'
   if (currentView === 'dashboard') {
+    // Guard: not authenticated → back to home
+    if (!currentUser) {
+      setCurrentView('home')
+      return null
+    }
     return (
       <>
         <ProjectsDashboard
@@ -2011,6 +2046,26 @@ function App() {
           </div>
         )}
       </>
+    )
+  }
+
+  // Show loading screen while Supabase checks for existing session
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0b0e17] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-900/50 animate-pulse">
+            <Scissors className="w-7 h-7 text-white" />
+          </div>
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <svg className="w-4 h-4 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <span>טוען...</span>
+          </div>
+        </div>
+      </div>
     )
   }
 
