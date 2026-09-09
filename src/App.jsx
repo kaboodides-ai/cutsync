@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Play,
   Pause,
@@ -25,7 +25,12 @@ import {
   ChevronLeft,
   Upload,
   Layers,
-  HelpCircle
+  HelpCircle,
+  PenTool,
+  ArrowUpRight,
+  Eraser,
+  Undo2,
+  MousePointer
 } from 'lucide-react'
 
 // Demo sample video (Open source Blender video)
@@ -50,6 +55,7 @@ function formatTime(seconds) {
 function App() {
   const videoRef = useRef(null)
   const fileInputRef = useRef(null)
+  const canvasRef = useRef(null)
 
   // Video State
   const [videoSrc, setVideoSrc] = useState(DEFAULT_VIDEO)
@@ -60,6 +66,15 @@ function App() {
   const [playbackRate, setPlaybackRate] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
 
+  // Drawing Markup State
+  const [isDrawingMode, setIsDrawingMode] = useState(false)
+  const [drawTool, setDrawTool] = useState('pen') // 'pen' | 'circle' | 'arrow'
+  const [drawColor, setDrawColor] = useState('#eab308') // yellow default
+  const [hasDrawing, setHasDrawing] = useState(false)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 })
+  const [activeDrawingImage, setActiveDrawingImage] = useState(null)
+
   // Comments / Revisions State
   const [comments, setComments] = useState(() => {
     const saved = localStorage.getItem('cutsync_comments')
@@ -67,9 +82,9 @@ function App() {
       try { return JSON.parse(saved) } catch (e) { console.error(e) }
     }
     return [
-      { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח' },
-      { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח' },
-      { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח' },
+      { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח', drawing: null },
+      { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח', drawing: null },
+      { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח', drawing: null },
     ]
   })
 
@@ -88,6 +103,100 @@ function App() {
   useEffect(() => {
     localStorage.setItem('cutsync_comments', JSON.stringify(comments))
   }, [comments])
+
+  // Canvas Drawing functions
+  const clearCanvas = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    setHasDrawing(false)
+    setActiveDrawingImage(null)
+  }, [])
+
+  // Draw arrow helper
+  const drawArrow = (ctx, fromx, fromy, tox, toy, color) => {
+    const headlen = 14
+    const dx = tox - fromx
+    const dy = toy - fromy
+    const angle = Math.atan2(dy, dx)
+    ctx.strokeStyle = color
+    ctx.fillStyle = color
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(fromx, fromy)
+    ctx.lineTo(tox, toy)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(tox, toy)
+    ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6))
+    ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6))
+    ctx.closePath()
+    ctx.fill()
+  }
+
+  // Handle canvas mouse events
+  const handleMouseDown = (e) => {
+    if (!isDrawingMode) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * canvas.width
+    const y = ((e.clientY - rect.top) / rect.height) * canvas.height
+
+    setIsDrawing(true)
+    setStartPos({ x, y })
+
+    if (drawTool === 'pen') {
+      const ctx = canvas.getContext('2d')
+      ctx.strokeStyle = drawColor
+      ctx.lineWidth = 3
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+    }
+  }
+
+  const handleMouseMove = (e) => {
+    if (!isDrawing || !isDrawingMode) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const rect = canvas.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * canvas.width
+    const y = ((e.clientY - rect.top) / rect.height) * canvas.height
+
+    if (drawTool === 'pen') {
+      ctx.lineTo(x, y)
+      ctx.stroke()
+      setHasDrawing(true)
+    }
+  }
+
+  const handleMouseUp = (e) => {
+    if (!isDrawing || !isDrawingMode) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const rect = canvas.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * canvas.width
+    const y = ((e.clientY - rect.top) / rect.height) * canvas.height
+
+    if (drawTool === 'circle') {
+      const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
+      ctx.strokeStyle = drawColor
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI)
+      ctx.stroke()
+      setHasDrawing(true)
+    } else if (drawTool === 'arrow') {
+      drawArrow(ctx, startPos.x, startPos.y, x, y, drawColor)
+      setHasDrawing(true)
+    }
+
+    setIsDrawing(false)
+  }
 
   // Video event handlers
   const handlePlayPause = () => {
@@ -111,10 +220,36 @@ function App() {
     }
   }
 
-  const seekTo = (timeInSec) => {
+  const renderDrawing = (drawingData) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (drawingData) {
+      const img = new Image()
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        setHasDrawing(true)
+      }
+      img.src = drawingData
+    } else {
+      setHasDrawing(false)
+    }
+  }
+
+  const seekTo = (timeInSec, drawingData = null) => {
     if (videoRef.current) {
       videoRef.current.currentTime = timeInSec
       setCurrentTime(timeInSec)
+    }
+    if (drawingData) {
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause()
+        setIsPlaying(false)
+      }
+      renderDrawing(drawingData)
+    } else {
+      clearCanvas()
     }
   }
 
@@ -140,6 +275,7 @@ function App() {
       setVideoTitle(file.name.replace(/\.[^/.]+$/, ''))
       setComments([]) // reset for new video
       setCurrentTime(0)
+      clearCanvas()
     }
   }
 
@@ -148,12 +284,18 @@ function App() {
     e?.preventDefault()
     if (!newCommentText.trim()) return
 
+    let drawingData = null
+    if (hasDrawing && canvasRef.current) {
+      drawingData = canvasRef.current.toDataURL()
+    }
+
     const newComment = {
       id: Date.now().toString(),
       time: Math.floor(currentTime),
       category: selectedCategory,
       text: newCommentText.trim(),
       urgent: isUrgent,
+      drawing: drawingData,
       completed: false,
       author: mode === 'client' ? 'לקוח' : 'עורך',
       createdAt: new Date().toISOString()
@@ -162,6 +304,8 @@ function App() {
     setComments((prev) => [...prev, newComment].sort((a, b) => a.time - b.time))
     setNewCommentText('')
     setIsUrgent(false)
+    clearCanvas()
+    setIsDrawingMode(false)
   }
 
   // Toggle Completed
@@ -312,23 +456,45 @@ function App() {
             </div>
 
             {/* Video Canvas Container */}
-            <div className="relative bg-black aspect-video flex items-center justify-center group overflow-hidden">
+            <div className="relative bg-black aspect-video flex items-center justify-center group overflow-hidden select-none">
               <video
                 ref={videoRef}
                 src={videoSrc}
-                onPlay={() => setIsPlaying(true)}
+                onPlay={() => {
+                  setIsPlaying(true)
+                  if (!hasDrawing) clearCanvas()
+                }}
                 onPause={() => setIsPlaying(false)}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
-                onClick={handlePlayPause}
+                onClick={() => {
+                  if (!isDrawingMode) handlePlayPause()
+                }}
                 className="w-full h-full object-contain cursor-pointer"
               />
 
-              {/* Big overlay play button when paused */}
-              {!isPlaying && (
+              {/* Overlay Canvas for Visual Annotations */}
+              <canvas
+                ref={canvasRef}
+                width={960}
+                height={540}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                className={`absolute inset-0 w-full h-full object-contain ${
+                  isDrawingMode
+                    ? 'cursor-crosshair z-30 pointer-events-auto bg-black/10'
+                    : hasDrawing
+                    ? 'z-20 pointer-events-none'
+                    : 'pointer-events-none'
+                }`}
+              />
+
+              {/* Big overlay play button when paused and not drawing */}
+              {!isPlaying && !isDrawingMode && !hasDrawing && (
                 <button
                   onClick={handlePlayPause}
-                  className="absolute w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-500 text-white flex items-center justify-center shadow-xl shadow-purple-900/50 backdrop-blur-sm transition-transform hover:scale-110 active:scale-95"
+                  className="absolute w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-500 text-white flex items-center justify-center shadow-xl shadow-purple-900/50 backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 z-20"
                 >
                   <Play className="w-8 h-8 fill-current ml-1" />
                 </button>
@@ -360,7 +526,7 @@ function App() {
                         key={comment.id}
                         onClick={(e) => {
                           e.stopPropagation()
-                          seekTo(comment.time)
+                          seekTo(comment.time, comment.drawing)
                         }}
                         onMouseEnter={() => setHoveredMarker(comment.id)}
                         onMouseLeave={() => setHoveredMarker(null)}
@@ -377,6 +543,7 @@ function App() {
                             <span className="font-mono text-purple-400 font-bold ml-1">
                               {formatTime(comment.time)}
                             </span>
+                            {comment.drawing && '🎨 '}
                             {comment.text}
                           </div>
                         )}
@@ -446,6 +613,96 @@ function App() {
                     {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
                   </button>
                 </div>
+              </div>
+
+              {/* Drawing Toolbar Toggle & Tools */}
+              <div className="pt-2 border-t border-[#23293d] flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (videoRef.current && !videoRef.current.paused) {
+                        videoRef.current.pause()
+                        setIsPlaying(false)
+                      }
+                      setIsDrawingMode(!isDrawingMode)
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      isDrawingMode
+                        ? 'bg-amber-500 text-black shadow-md shadow-amber-900/30'
+                        : 'bg-[#22283a] text-gray-300 hover:text-white hover:bg-[#2c3349]'
+                    }`}
+                  >
+                    <PenTool className="w-3.5 h-3.5" />
+                    <span>{isDrawingMode ? 'סגור מצב סימון' : 'צייר על הפריים'}</span>
+                  </button>
+
+                  {isDrawingMode && (
+                    <div className="flex items-center gap-1 bg-[#1a1f2e] p-1 rounded-lg border border-[#2b334a]">
+                      {/* Tool selection */}
+                      <button
+                        type="button"
+                        onClick={() => setDrawTool('pen')}
+                        className={`p-1 rounded ${drawTool === 'pen' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        title="עט חופשי"
+                      >
+                        <PenTool className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDrawTool('circle')}
+                        className={`p-1 rounded ${drawTool === 'circle' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        title="עיגול"
+                      >
+                        <Circle className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDrawTool('arrow')}
+                        className={`p-1 rounded ${drawTool === 'arrow' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        title="חץ"
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Color palette */}
+                      <div className="flex items-center gap-1 border-r border-[#2b334a] pr-1.5 mr-1">
+                        {[
+                          { color: '#eab308', name: 'צהוב' },
+                          { color: '#ef4444', name: 'אדום' },
+                          { color: '#10b981', name: 'ירוק' },
+                          { color: '#38bdf8', name: 'תכלת' }
+                        ].map((c) => (
+                          <button
+                            key={c.color}
+                            type="button"
+                            onClick={() => setDrawColor(c.color)}
+                            style={{ backgroundColor: c.color }}
+                            className={`w-3.5 h-3.5 rounded-full transition-transform ${drawColor === c.color ? 'scale-125 ring-2 ring-white' : 'hover:scale-110'}`}
+                            title={c.name}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Clear canvas */}
+                      <button
+                        type="button"
+                        onClick={clearCanvas}
+                        className="p-1 text-gray-400 hover:text-red-400 rounded transition-colors"
+                        title="נקה ציור"
+                      >
+                        <Eraser className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {hasDrawing && (
+                  <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span>✨</span>
+                    <span>יש סימון שמור ברגע זה</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -632,7 +889,7 @@ function App() {
                       <div className="flex items-center gap-2 mb-1">
                         {/* Timecode click jumps video */}
                         <button
-                          onClick={() => seekTo(comment.time)}
+                          onClick={() => seekTo(comment.time, comment.drawing)}
                           className="font-mono text-xs font-bold text-purple-400 hover:text-purple-300 bg-purple-950/50 hover:bg-purple-900/60 px-2 py-0.5 rounded border border-purple-500/30 transition-colors"
                           title="קפוץ לרגע זה בוידאו"
                         >
@@ -644,6 +901,18 @@ function App() {
                           <span className={`text-[11px] px-2 py-0.5 rounded-md border font-medium ${cat.color}`}>
                             {cat.icon} {cat.label}
                           </span>
+                        )}
+
+                        {comment.drawing && (
+                          <button
+                            type="button"
+                            onClick={() => seekTo(comment.time, comment.drawing)}
+                            className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 hover:bg-amber-500/30 transition-colors"
+                            title="לחץ לצפייה בסימון על גבי הפריים"
+                          >
+                            <PenTool className="w-2.5 h-2.5" />
+                            <span>סימון ויזואלי</span>
+                          </button>
                         )}
 
                         {comment.urgent && (
