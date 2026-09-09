@@ -3,6 +3,9 @@
 // Public API is identical to the old localStorage version so App.jsx needs minimal changes.
 
 import { supabase } from './lib/supabase'
+import { generateUUID, isValidUUID } from './lib/uuid'
+
+export { generateUUID, isValidUUID }
 
 const DEFAULT_VIDEO =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
@@ -294,6 +297,167 @@ export async function getUserProjects(userId) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Project by ID — load a single project (accessible to clients without login)
+// ─────────────────────────────────────────────────────────────
+export async function getProjectById(projectId) {
+  if (!projectId) return null
+
+  const { data: proj, error: projErr } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .single()
+
+  if (projErr || !proj) {
+    console.warn('[CutSync] Could not find project:', projectId, projErr)
+    return null
+  }
+
+  const { data: versionRows } = await supabase
+    .from('versions')
+    .select('*')
+    .eq('project_id', proj.id)
+    .order('number', { ascending: true })
+
+  const versionIds = (versionRows || []).map((v) => v.id)
+  let commentRows = []
+  if (versionIds.length > 0) {
+    const { data: cr } = await supabase
+      .from('comments')
+      .select('*')
+      .in('version_id', versionIds)
+      .order('time', { ascending: true })
+    commentRows = cr || []
+  }
+
+  const versions = (versionRows || []).map((ver) => ({
+    id: ver.id,
+    number: ver.number,
+    name: ver.name,
+    videoSrc: ver.video_src,
+    videoTitle: proj.title,
+    approved: ver.approved,
+    approvedAt: ver.approved_at,
+    approvedBy: ver.approved_by,
+    approvalNote: ver.approval_note,
+    createdAt: ver.created_at,
+    comments: commentRows
+      .filter((c) => c.version_id === ver.id)
+      .map((c) => ({
+        id: c.id,
+        time: c.time,
+        category: c.category,
+        text: c.text,
+        author: c.author,
+        completed: c.completed,
+        drawing: c.drawing,
+        reactions: c.reactions || {},
+        replies: c.replies || [],
+        audioSrc: c.audio_src,
+        audioDuration: c.audio_duration,
+        createdAt: c.created_at
+      }))
+  }))
+
+  if (versions.length === 0) {
+    const defaultVerId = generateUUID()
+    versions.push({
+      id: defaultVerId,
+      number: 1,
+      name: 'גרסה 1 (V1)',
+      videoSrc: DEFAULT_VIDEO,
+      videoTitle: proj.title,
+      approved: false,
+      comments: []
+    })
+  }
+
+  return {
+    id: proj.id,
+    title: proj.title,
+    clientName: proj.client_name || 'הלקוח',
+    activeVersionId: proj.active_version_id || versions[0]?.id,
+    createdAt: proj.created_at,
+    updatedAt: proj.updated_at,
+    versions
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Upload video to Supabase Storage ('videos' bucket)
+// ─────────────────────────────────────────────────────────────
+export async function uploadVideoToStorage(file) {
+  if (!file) return null
+
+  const ext = file.name.split('.').pop() || 'mp4'
+  const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
+  const filePath = `uploads/${cleanName}`
+
+  const { data, error } = await supabase.storage
+    .from('videos')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type || 'video/mp4'
+    })
+
+  if (error) {
+    console.error('[CutSync] Error uploading video to Supabase Storage:', error)
+    throw error
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('videos')
+    .getPublicUrl(filePath)
+
+  return publicUrlData.publicUrl
+}
+
+// ─────────────────────────────────────────────────────────────
+// Save comments added by client directly to Supabase
+// ─────────────────────────────────────────────────────────────
+export async function saveClientComments(versionId, comments) {
+  if (!versionId || !comments) return
+
+  for (const c of comments) {
+    const commentId = isValidUUID(c.id) ? c.id : generateUUID()
+    const { error } = await supabase.from('comments').upsert({
+      id: commentId,
+      version_id: versionId,
+      time: c.time || 0,
+      category: c.category || 'general',
+      text: c.text || '',
+      author: c.author || 'לקוח',
+      completed: !!c.completed,
+      drawing: c.drawing || null,
+      reactions: c.reactions || {},
+      replies: c.replies || [],
+      audio_src: c.audioSrc || null,
+      audio_duration: c.audioDuration || null
+    })
+    if (error) console.error('[CutSync] Error saving client comment:', error)
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Save version approval state (called when client approves)
+// ─────────────────────────────────────────────────────────────
+export async function saveVersionApproval(versionId, approvalData) {
+  if (!versionId || !approvalData) return
+
+  const { error } = await supabase.from('versions').update({
+    approved: !!approvalData.approved,
+    approved_at: approvalData.approvedAt || null,
+    approved_by: approvalData.approvedBy || null,
+    approval_note: approvalData.approvalNote || null
+  }).eq('id', versionId)
+
+  if (error) {
+    console.error('[CutSync] Error updating version approval:', error)
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Projects — save entire project list back to Supabase
 // This does a smart diff: upsert projects/versions, upsert comments
 // ─────────────────────────────────────────────────────────────
@@ -301,36 +465,42 @@ export async function saveUserProjects(userId, projects) {
   if (!userId || !projects) return
 
   for (const proj of projects) {
+    const safeProjId = isValidUUID(proj.id) ? proj.id : generateUUID()
+    const safeActiveVerId = isValidUUID(proj.activeVersionId) ? proj.activeVersionId : null
+
     // Upsert project row
     const { error: pErr } = await supabase.from('projects').upsert({
-      id: proj.id,
+      id: safeProjId,
       user_id: userId,
       title: proj.title,
       client_name: proj.clientName || '',
-      active_version_id: proj.activeVersionId || null,
+      active_version_id: safeActiveVerId,
       updated_at: new Date().toISOString()
     })
     if (pErr) { console.error('[CutSync] Error saving project:', pErr); continue }
 
     for (const ver of (proj.versions || [])) {
+      const safeVerId = isValidUUID(ver.id) ? ver.id : generateUUID()
       // Upsert version row
       const { error: vErr } = await supabase.from('versions').upsert({
-        id: ver.id,
-        project_id: proj.id,
+        id: safeVerId,
+        project_id: safeProjId,
         number: ver.number || 1,
         name: ver.name || 'גרסה 1',
         video_src: ver.videoSrc || '',
         approved: ver.approved || false,
         approved_at: ver.approvedAt || null,
-        approved_by: ver.approvedBy || null
+        approved_by: ver.approvedBy || null,
+        approval_note: ver.approvalNote || null
       })
       if (vErr) { console.error('[CutSync] Error saving version:', vErr); continue }
 
       // Upsert comments
       for (const c of (ver.comments || [])) {
+        const safeCommentId = isValidUUID(c.id) ? c.id : generateUUID()
         await supabase.from('comments').upsert({
-          id: c.id,
-          version_id: ver.id,
+          id: safeCommentId,
+          version_id: safeVerId,
           time: c.time || 0,
           category: c.category || 'general',
           text: c.text || '',

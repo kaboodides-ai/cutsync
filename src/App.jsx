@@ -73,7 +73,13 @@ import {
   saveUserProjects,
   shapeCutSyncUser,
   getSessionUser,
-  fetchProfile
+  fetchProfile,
+  getProjectById,
+  saveClientComments,
+  saveVersionApproval,
+  uploadVideoToStorage,
+  generateUUID,
+  isValidUUID
 } from './authService'
 import { supabase } from './lib/supabase'
 
@@ -226,6 +232,30 @@ function MainApp() {
       setActiveProjectId(projs[0].id)
     }
   }, [activeProjectId])
+
+  // ── Load direct project from URL (?project=UUID) ───────────
+  // Works for clients without login, or direct links
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const projParam = params.get('project')
+    if (projParam) {
+      getProjectById(projParam).then((proj) => {
+        if (proj) {
+          setProjects((prev) => {
+            const exists = prev.some((p) => p.id === proj.id)
+            return exists ? prev.map((p) => (p.id === proj.id ? proj : p)) : [proj, ...prev]
+          })
+          setActiveProjectId(proj.id)
+          if (params.get('view') === 'client') {
+            setMode('client')
+            setCurrentView('studio')
+          }
+        }
+      }).catch((err) => {
+        console.warn('[CutSync] Failed to load direct project:', err)
+      })
+    }
+  }, [])
 
   // ── Supabase Auth State Change Listener ────────────────────
   // This fires on: page load (session restore), login, logout, token refresh
@@ -420,6 +450,11 @@ function MainApp() {
   const [duration, setDuration] = useState(0)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
+  const [videoLoadError, setVideoLoadError] = useState(false)
+
+  useEffect(() => {
+    setVideoLoadError(false)
+  }, [videoSrc])
 
   // Drawing Markup State
   const [isDrawingMode, setIsDrawingMode] = useState(false)
@@ -500,17 +535,18 @@ function MainApp() {
 
   // Project Creation & Management Handlers
   const handleCreateProject = ({ title, clientName, videoSrc }) => {
-    const newId = 'proj-' + Date.now()
+    const newId = generateUUID()
+    const versionId = generateUUID()
     const newProject = {
       id: newId,
       title,
       clientName: clientName || 'הלקוח',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      activeVersionId: 'v1',
+      activeVersionId: versionId,
       versions: [
         {
-          id: 'v1',
+          id: versionId,
           number: 1,
           name: 'גרסה 1 (V1)',
           videoSrc,
@@ -594,6 +630,29 @@ function MainApp() {
     }, 800)
     return () => clearTimeout(timer)
   }, [projects, currentUser])
+
+  // Save client review feedback (comments, replies, reactions, approvals) to Supabase
+  useEffect(() => {
+    if (currentUser?.id || !currentProject?.id || !currentVersion?.id) return
+    const timer = setTimeout(async () => {
+      try {
+        if (currentVersion.comments && currentVersion.comments.length > 0) {
+          await saveClientComments(currentVersion.id, currentVersion.comments)
+        }
+        if (currentVersion.approved !== undefined) {
+          await saveVersionApproval(currentVersion.id, {
+            approved: currentVersion.approved,
+            approvedAt: currentVersion.approvedAt,
+            approvedBy: currentVersion.approvedBy,
+            approvalNote: currentVersion.approvalNote
+          })
+        }
+      } catch (err) {
+        console.warn('[CutSync] Could not auto-sync client feedback to cloud:', err)
+      }
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [currentUser, currentProject?.id, currentVersion?.id, currentVersion?.comments, currentVersion?.approved])
 
   useEffect(() => {
     localStorage.setItem('cutsync_active_project_id', activeProjectId)
@@ -1481,27 +1540,47 @@ function MainApp() {
   }
 
   // Replace video in CURRENT active version
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const url = URL.createObjectURL(file)
-      const title = file.name.replace(/\.[^/.]+$/, '')
-      setVersions((prev) =>
-        prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: url, videoTitle: title } : v))
-      )
-      setCurrentTime(0)
-      clearCanvas()
-    }
-  }
-
-  // Upload NEW Version (creates V2, V3, etc.)
-  const handleUploadNewVersion = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    showToast('מעלה סרטון לענן כדי שהלקוח יוכל לצפות... ⏳', 'info')
+    let url = ''
+    try {
+      url = await uploadVideoToStorage(file)
+      showToast('הסרטון הועלה לענן בהצלחה! 🚀', 'success')
+    } catch (err) {
+      console.warn('[CutSync] Cloud storage upload failed:', err)
+      url = URL.createObjectURL(file)
+      showToast('הסרטון נשמר מקומית בדפדפן. ודא ש-Bucket בשם videos קיים ב-Supabase', 'warning')
+    }
+
+    const title = file.name.replace(/\.[^/.]+$/, '')
+    setVersions((prev) =>
+      prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: url, videoTitle: title } : v))
+    )
+    setCurrentTime(0)
+    clearCanvas()
+  }
+
+  // Upload NEW Version (creates V2, V3, etc.)
+  const handleUploadNewVersion = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    showToast('מעלה גרסה חדשה לענן... ⏳', 'info')
+    let url = ''
+    try {
+      url = await uploadVideoToStorage(file)
+      showToast('הגרסה החדשה הועלתה לענן בהצלחה! 🚀', 'success')
+    } catch (err) {
+      console.warn('[CutSync] Cloud storage upload failed:', err)
+      url = URL.createObjectURL(file)
+      showToast('הגרסה נשמרה מקומית בדפדפן. ודא ש-Bucket בשם videos קיים ב-Supabase', 'warning')
+    }
+
     const newNumber = versions.length + 1
-    const newId = `v${newNumber}`
-    const url = URL.createObjectURL(file)
+    const newId = generateUUID()
     const title = file.name.replace(/\.[^/.]+$/, '')
 
     const newVersion = {
@@ -1762,7 +1841,7 @@ function MainApp() {
     }
 
     const newComment = {
-      id: Date.now().toString(),
+      id: generateUUID(),
       time: Math.floor(currentTime),
       category: selectedCategory,
       text: newCommentText.trim() || 'הודעה קולית',
@@ -2489,11 +2568,74 @@ function MainApp() {
                 onPause={() => setIsPlaying(false)}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
+                onError={(e) => {
+                  console.warn('[CutSync] Video playback error:', videoSrc, e)
+                  setVideoLoadError(true)
+                }}
                 onClick={() => {
                   if (!isDrawingMode) handlePlayPause()
                 }}
                 className="w-full h-full object-contain cursor-pointer"
               />
+
+              {/* Video Load Error Overlay */}
+              {videoLoadError && (
+                <div className="absolute inset-0 bg-[#0c101a]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-40 gap-3 text-white">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-1 shadow-lg shadow-amber-950/40">
+                    <Video className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-base font-bold text-white">לא ניתן להפעיל את הסרטון בקישור זה</h3>
+                  {videoSrc?.startsWith('blob:') ? (
+                    <p className="text-xs text-gray-300 max-w-md leading-relaxed">
+                      הסרטון נשמר כקובץ זמני בדפדפן העורך בלבד. כדי שהלקוח יוכל לצפות בו בכל מכשיר, יש להעלות את הסרטון לענן או לספק קישור ישיר לסרטון (Direct URL).
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-300 max-w-md leading-relaxed">
+                      כתובת הסרטון אינה זמינה כעת או שהקובץ אינו נגיש.
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                    {mode === 'editor' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white transition-all cursor-pointer shadow-lg shadow-purple-900/40"
+                        >
+                          העלה סרטון מחדש לענן
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = window.prompt('הזן כתובת קישור ישיר לסרטון (MP4 URL):', '')
+                            if (url?.trim()) {
+                              setVersions((prev) =>
+                                prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: url.trim() } : v))
+                              )
+                              setVideoLoadError(false)
+                            }
+                          }}
+                          className="px-4 py-2 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/10 text-xs font-semibold text-gray-200 transition-all cursor-pointer"
+                        >
+                          הזן קישור URL ישיר
+                        </button>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVersions((prev) =>
+                          prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: DEFAULT_VIDEO } : v))
+                        )
+                        setVideoLoadError(false)
+                      }}
+                      className="px-4 py-2 rounded-xl bg-gray-800/80 hover:bg-gray-700 text-xs text-gray-300 transition-all cursor-pointer"
+                    >
+                      הצג סרטון דוגמה
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Overlay Canvas for Visual Annotations */}
               <canvas

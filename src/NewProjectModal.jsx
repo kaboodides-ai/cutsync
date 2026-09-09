@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
-import { X, Upload, Video, Sparkles, Check, Film, User } from 'lucide-react'
+import { X, Upload, Video, Sparkles, Check, Film, User, Link2, AlertCircle, Loader2 } from 'lucide-react'
+import { uploadVideoToStorage } from './authService'
 
 const SAMPLE_TEMPLATES = [
   {
@@ -19,11 +20,14 @@ const SAMPLE_TEMPLATES = [
 export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
   const [title, setTitle] = useState('')
   const [clientName, setClientName] = useState('')
-  const [videoSourceType, setVideoSourceType] = useState('upload') // 'upload' | 'sample'
+  const [videoSourceType, setVideoSourceType] = useState('upload') // 'upload' | 'url' | 'sample'
   const [uploadedFile, setUploadedFile] = useState(null)
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState('')
+  const [directVideoUrl, setDirectVideoUrl] = useState('')
   const [selectedSampleUrl, setSelectedSampleUrl] = useState(SAMPLE_TEMPLATES[0].url)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState('')
+  const [uploadError, setUploadError] = useState('')
   const fileInputRef = useRef(null)
 
   if (!isOpen) return null
@@ -34,6 +38,7 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
       const url = URL.createObjectURL(file)
       setUploadedFile(file)
       setUploadedVideoUrl(url)
+      setUploadError('')
       if (!title) {
         const cleanName = file.name.replace(/\.[^/.]+$/, "")
         setTitle(cleanName)
@@ -41,23 +46,44 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!title.trim()) return
 
     setIsSubmitting(true)
-    const finalVideoUrl = videoSourceType === 'upload' && uploadedVideoUrl
-      ? uploadedVideoUrl
-      : selectedSampleUrl
+    setUploadError('')
+    let finalVideoUrl = ''
+
+    if (videoSourceType === 'upload' && uploadedFile) {
+      try {
+        setUploadStatus('מעלה סרטון לענן כדי שהלקוח יוכל לצפות בו... ☁️')
+        finalVideoUrl = await uploadVideoToStorage(uploadedFile)
+      } catch (err) {
+        console.warn('[CutSync] Cloud upload failed, falling back to local URL:', err)
+        finalVideoUrl = uploadedVideoUrl
+        setUploadError(
+          'הסרטון נשמר מקומית. כדי שהלקוח יוכל לצפות בו במכשירים אחרים, יש לוודא ש-Bucket בשם videos קיים ב-Supabase Storage (או להשתמש בקישור ישיר לסרטון).'
+        )
+      }
+    } else if (videoSourceType === 'url') {
+      finalVideoUrl = directVideoUrl.trim()
+    } else {
+      finalVideoUrl = selectedSampleUrl
+    }
+
+    if (!finalVideoUrl) {
+      finalVideoUrl = selectedSampleUrl
+    }
 
     onCreateProject({
       title: title.trim(),
       clientName: clientName.trim() || 'הלקוח',
       videoSrc: finalVideoUrl,
-      videoFileName: uploadedFile ? uploadedFile.name : 'סרטון הדגמה.mp4'
+      videoFileName: uploadedFile ? uploadedFile.name : 'סרטון פרויקט.mp4'
     })
 
     setIsSubmitting(false)
+    setUploadStatus('')
     onClose()
   }
 
@@ -128,36 +154,49 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
               בחר סרטון לפרויקט:
             </label>
             
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setVideoSourceType('upload')}
-                className={`p-3 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                   videoSourceType === 'upload'
                     ? 'bg-purple-950/40 border-purple-500 text-purple-200 shadow-md'
                     : 'bg-[#181f30] border-[#252f48] text-gray-400 hover:text-gray-200'
                 }`}
               >
                 <Upload className="w-4 h-4" />
-                <span>העלאת קובץ מהמחשב</span>
+                <span className="text-[11px] font-bold">קובץ מהמחשב</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVideoSourceType('url')}
+                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                  videoSourceType === 'url'
+                    ? 'bg-indigo-950/40 border-indigo-500 text-indigo-200 shadow-md'
+                    : 'bg-[#181f30] border-[#252f48] text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <Link2 className="w-4 h-4" />
+                <span className="text-[11px] font-bold">קישור ישיר (URL)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setVideoSourceType('sample')}
-                className={`p-3 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                   videoSourceType === 'sample'
                     ? 'bg-purple-950/40 border-purple-500 text-purple-200 shadow-md'
                     : 'bg-[#181f30] border-[#252f48] text-gray-400 hover:text-gray-200'
                 }`}
               >
                 <Sparkles className="w-4 h-4" />
-                <span>השתמש בסרטון דוגמה</span>
+                <span className="text-[11px] font-bold">סרטון דוגמה</span>
               </button>
             </div>
 
             {/* Upload Area */}
-            {videoSourceType === 'upload' ? (
+            {videoSourceType === 'upload' && (
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="mt-1 border-2 border-dashed border-[#2d3a5a] hover:border-purple-500/60 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#161c2c] hover:bg-[#1a2236] transition-all text-center"
@@ -175,16 +214,33 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
                 {uploadedFile ? (
                   <div>
                     <span className="text-xs font-bold text-emerald-400 block">{uploadedFile.name}</span>
-                    <span className="text-[10px] text-gray-400">קובץ נבחר בהצלחה ({(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB)</span>
+                    <span className="text-[10px] text-gray-400">קובץ נבחר ({(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB) — יעלה לענן של Supabase</span>
                   </div>
                 ) : (
                   <div>
                     <span className="text-xs font-bold text-white block">לחץ כאן לבחירת קובץ וידאו</span>
-                    <span className="text-[10px] text-gray-400">MP4, MOV, WebM (כל רזולוציה)</span>
+                    <span className="text-[10px] text-gray-400">MP4, MOV, WebM — עולה לענן וזמין לכל לקוח</span>
                   </div>
                 )}
               </div>
-            ) : (
+            )}
+
+            {/* Direct URL Area */}
+            {videoSourceType === 'url' && (
+              <div className="mt-1 flex flex-col gap-1.5">
+                <input
+                  type="url"
+                  value={directVideoUrl}
+                  onChange={(e) => setDirectVideoUrl(e.target.value)}
+                  placeholder="https://example.com/video.mp4 או קישור ישיר מ-Drive/Dropbox"
+                  className="bg-[#1a2133] border border-[#2c3752] focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
+                />
+                <span className="text-[10px] text-gray-400">הדבק קישור ישיר לקובץ וידאו הפתוח לצפייה פומבית ברשת.</span>
+              </div>
+            )}
+
+            {/* Sample Templates Area */}
+            {videoSourceType === 'sample' && (
               <div className="mt-1 flex flex-col gap-2">
                 {SAMPLE_TEMPLATES.map((tmpl) => (
                   <label
@@ -208,6 +264,22 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
                     <span className="text-[10px] font-mono text-gray-400">{tmpl.duration}</span>
                   </label>
                 ))}
+              </div>
+            )}
+
+            {/* Upload Status indicator */}
+            {uploadStatus && (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-medium animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                <span>{uploadStatus}</span>
+              </div>
+            )}
+
+            {/* Upload warning/error */}
+            {uploadError && (
+              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>{uploadError}</span>
               </div>
             )}
           </div>
