@@ -123,3 +123,4 @@ export default function EditProjectModal({ isOpen, onClose, project, onSave }) {
     </div>
   )
 }
+
