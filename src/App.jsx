@@ -37,6 +37,7 @@ import {
   Send,
   FileSpreadsheet,
   AlertCircle,
+  Bell,
   Mic,
   MicOff,
   Square,
@@ -199,7 +200,11 @@ function App() {
         approved: false,
         approvedAt: null,
         approvedBy: null,
-        approvalNote: null
+        approvalNote: null,
+        reopenRequested: false,
+        reopenRequestedAt: null,
+        reopenRequestedBy: null,
+        reopenRequestReason: null
       }
     ]
   })
@@ -249,11 +254,24 @@ function App() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showFullscreenDrawer, setShowFullscreenDrawer] = useState(false)
 
-  // Version Approval State
+  // Version Approval & Reopen State
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [approverName, setApproverName] = useState('הלקוח')
   const [approvalNote, setApprovalNote] = useState('')
   const [showCelebration, setShowCelebration] = useState(false)
+  const [showEditorReopenModal, setShowEditorReopenModal] = useState(false)
+  const [editorReopenReason, setEditorReopenReason] = useState('')
+  const [dismissedReopenModalVersionId, setDismissedReopenModalVersionId] = useState(null)
+  const [toast, setToast] = useState(null)
+  const toastTimeoutRef = useRef(null)
+
+  const showToast = useCallback((message, type = 'info') => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToast({ message, type })
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null)
+    }, 4500)
+  }, [])
 
   // Save versions and active version to localStorage
   useEffect(() => {
@@ -263,6 +281,24 @@ function App() {
   useEffect(() => {
     localStorage.setItem('cutsync_active_version', activeVersionId)
   }, [activeVersionId])
+
+  // Cross-tab synchronization via localStorage storage event
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'cutsync_versions' && e.newValue) {
+        try {
+          const updated = JSON.parse(e.newValue)
+          if (Array.isArray(updated) && updated.length > 0) {
+            setVersions(updated)
+          }
+        } catch (err) {
+          console.error('Failed to sync versions across tabs', err)
+        }
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   // Canvas Drawing functions
   const clearCanvas = useCallback(() => {
@@ -621,7 +657,11 @@ function App() {
       approved: false,
       approvedAt: null,
       approvedBy: null,
-      approvalNote: null
+      approvalNote: null,
+      reopenRequested: false,
+      reopenRequestedAt: null,
+      reopenRequestedBy: null,
+      reopenRequestReason: null
     }
 
     if (videoRef.current && !videoRef.current.paused) {
@@ -651,16 +691,108 @@ function App() {
             approved: true,
             approvedAt: timestamp,
             approvedBy: approver,
-            approvalNote: note
+            approvalNote: note,
+            reopenRequested: false,
+            reopenRequestedAt: null,
+            reopenRequestedBy: null,
+            reopenRequestReason: null
           }
         }
         return v
       })
     )
+    showToast('הגרסה אושרה בהצלחה! 🎉', 'success')
   }
 
-  const handleReopenVersion = (versionId) => {
-    if (window.confirm('האם אתה בטוח שברצונך לבטל את האישור ולפתוח את הגרסה מחדש לתיקונים?')) {
+  // Editor requests client permission to reopen
+  const handleEditorRequestReopen = (versionId, reason = '') => {
+    const timestamp = new Date().toISOString()
+    setVersions((prev) =>
+      prev.map((v) => {
+        if (v.id === versionId) {
+          return {
+            ...v,
+            reopenRequested: true,
+            reopenRequestedAt: timestamp,
+            reopenRequestedBy: 'עורך',
+            reopenRequestReason: reason
+          }
+        }
+        return v
+      })
+    )
+    setShowEditorReopenModal(false)
+    setEditorReopenReason('')
+    setDismissedReopenModalVersionId(null)
+    showToast('נשלחה בקשת פתיחה מחדש ללקוח! הודעה הוצגה במסך הלקוח לאישורו.', 'info')
+  }
+
+  // Editor cancels the reopen request
+  const handleCancelReopenRequest = (versionId) => {
+    setVersions((prev) =>
+      prev.map((v) => {
+        if (v.id === versionId) {
+          return {
+            ...v,
+            reopenRequested: false,
+            reopenRequestedAt: null,
+            reopenRequestedBy: null,
+            reopenRequestReason: null
+          }
+        }
+        return v
+      })
+    )
+    showToast('בקשת הפתיחה מחדש בוטלה.', 'info')
+  }
+
+  // Client approves the editor's request to reopen
+  const handleClientApproveReopen = (versionId) => {
+    setVersions((prev) =>
+      prev.map((v) => {
+        if (v.id === versionId) {
+          return {
+            ...v,
+            approved: false,
+            approvedAt: null,
+            approvedBy: null,
+            approvalNote: null,
+            reopenRequested: false,
+            reopenRequestedAt: null,
+            reopenRequestedBy: null,
+            reopenRequestReason: null
+          }
+        }
+        return v
+      })
+    )
+    setDismissedReopenModalVersionId(null)
+    showToast('הגרסה נפתחה מחדש לתיקונים לבקשת העורך! 🔓', 'success')
+  }
+
+  // Client rejects the editor's request to reopen
+  const handleClientRejectReopen = (versionId) => {
+    setVersions((prev) =>
+      prev.map((v) => {
+        if (v.id === versionId) {
+          return {
+            ...v,
+            reopenRequested: false,
+            reopenRequestedAt: null,
+            reopenRequestedBy: null,
+            reopenRequestReason: null
+          }
+        }
+        return v
+      })
+    )
+    setDismissedReopenModalVersionId(null)
+    showToast('הבקשה לפתיחה מחדש נדחתה. הגרסה נשארה מאושרת סופית ✅', 'info')
+  }
+
+  // Client self-reopens directly
+  const handleClientSelfReopen = (versionId) => {
+    if (window.confirm('האם אתה בטוח שברצונך לבטל את האישור שלך ולפתוח את הגרסה מחדש להערות נוספות?')) {
       setVersions((prev) =>
         prev.map((v) => {
           if (v.id === versionId) {
@@ -669,13 +801,28 @@ function App() {
               approved: false,
               approvedAt: null,
               approvedBy: null,
-              approvalNote: null
+              approvalNote: null,
+              reopenRequested: false,
+              reopenRequestedAt: null,
+              reopenRequestedBy: null,
+              reopenRequestReason: null
             }
           }
           return v
         })
       )
+      setDismissedReopenModalVersionId(null)
+      showToast('הגרסה נפתחה מחדש להערות. 🔓', 'info')
     }
+  }
+
+  const notifyClientReopenRequestViaWhatsApp = () => {
+    let msg = `🔔 *היי ${currentVersion.approvedBy || 'הלקוח'}, שלחתי במערכת CutSync בקשה לפתיחה מחדש של ${currentVersion.name}* (${videoTitle}).\n`
+    if (currentVersion.reopenRequestReason) {
+      msg += `💬 *סיבת הבקשה:* "${currentVersion.reopenRequestReason}"\n`
+    }
+    msg += `\nאשמח שתיכנס למערכת כדי לאשר את פתיחת הגרסה מחדש כדי שאוכל להמשיך לעדכן 🎬✨\nנשלח מ-CutSync`
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   const notifyClientApprovedViaWhatsApp = () => {
@@ -1071,9 +1218,16 @@ function App() {
                     >
                       <span>{ver.name}</span>
                       {ver.approved ? (
-                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
-                          ✓ אושר
-                        </span>
+                        ver.reopenRequested ? (
+                          <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 animate-pulse">
+                            <Bell className="w-2.5 h-2.5" />
+                            ממתין לפתיחה
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+                            ✓ אושר
+                          </span>
+                        )
                       ) : (
                         <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
                           isActive ? 'bg-purple-950/70 text-purple-200' : 'bg-[#121520] text-gray-400'
@@ -1130,6 +1284,12 @@ function App() {
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 flex-shrink-0">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     <span>אושר ע"י {currentVersion.approvedBy || 'הלקוח'}</span>
+                  </span>
+                )}
+                {currentVersion.approved && currentVersion.reopenRequested && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 flex-shrink-0 animate-pulse">
+                    <Bell className="w-3 h-3 text-amber-400" />
+                    <span>העורך ביקש לפתוח מחדש</span>
                   </span>
                 )}
               </div>
@@ -2260,6 +2420,47 @@ function App() {
                   )}
                 </p>
 
+                {/* Persistent Reopen Alert for Client if Editor requested it */}
+                {currentVersion.reopenRequested && (
+                  <div className="bg-amber-950/70 border border-amber-500/60 rounded-xl p-3 flex flex-col gap-2 animate-pulse shadow-lg shadow-amber-950/40">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+                        <Bell className="w-4 h-4 text-amber-400" />
+                        <span>בקשה מהעורך לפתיחה מחדש!</span>
+                      </div>
+                      <span className="text-[10px] text-amber-400/80 font-mono">
+                        {formatReplyTime(currentVersion.reopenRequestedAt)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-200/90 leading-relaxed">
+                      העורך מבקש לפתוח מחדש את הגרסה לביצוע תיקונים או שינויים נוספים.
+                      {currentVersion.reopenRequestReason && (
+                        <span className="block mt-1 font-normal italic text-amber-100/90">
+                          סיבת העורך: "{currentVersion.reopenRequestReason}"
+                        </span>
+                      )}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleClientApproveReopen(currentVersion.id)}
+                        className="py-2 px-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-md active:scale-95"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>אשר פתיחה מחדש ✅</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleClientRejectReopen(currentVersion.id)}
+                        className="py-2 px-2.5 rounded-lg bg-[#1c2234] hover:bg-[#252e46] text-gray-300 border border-[#2d3752] font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95"
+                      >
+                        <X className="w-3.5 h-3.5 text-red-400" />
+                        <span>דחה בקשה</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-2 pt-1">
                   <button
                     onClick={notifyClientApprovedViaWhatsApp}
@@ -2271,7 +2472,7 @@ function App() {
 
                   <button
                     type="button"
-                    onClick={() => handleReopenVersion(currentVersion.id)}
+                    onClick={() => handleClientSelfReopen(currentVersion.id)}
                     className="text-xs text-gray-400 hover:text-amber-300 flex items-center justify-center gap-1.5 py-1 transition-colors"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -2309,25 +2510,58 @@ function App() {
             <div className="bg-[#151926] p-4 rounded-2xl border border-[#23293d] flex flex-col gap-2.5 shadow-xl mt-auto">
               {/* Approval status banner for Editor */}
               {currentVersion.approved ? (
-                <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2 text-emerald-300">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <div>
-                      <span className="font-bold">הלקוח אישר את {currentVersion.name}! 🎉</span>
-                      <div className="text-[10px] text-gray-300">
-                        אושר ע"י {currentVersion.approvedBy || 'הלקוח'} ({formatReplyTime(currentVersion.approvedAt)})
+                currentVersion.reopenRequested ? (
+                  <div className="p-3 rounded-xl bg-amber-950/50 border border-amber-500/50 flex flex-col gap-2 mb-1 shadow-lg shadow-amber-950/30">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-amber-300 font-bold">
+                        <Clock className="w-4 h-4 text-amber-400 animate-spin" />
+                        <span>נשלחה בקשת פתיחה מחדש ללקוח ⏳</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCancelReopenRequest(currentVersion.id)}
+                        className="text-[11px] text-gray-400 hover:text-red-400 underline transition-colors"
+                      >
+                        בטל בקשה
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                      הודעת אישור מופיעה כעת על המסך של הלקוח. ממתין שהלקוח יאשר.
+                      {currentVersion.reopenRequestReason && (
+                        <span className="block mt-0.5 text-amber-100/80 italic">"{currentVersion.reopenRequestReason}"</span>
+                      )}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={notifyClientReopenRequestViaWhatsApp}
+                      className="w-full py-1.5 px-3 rounded-lg bg-[#25304a] hover:bg-[#2e3b5b] text-gray-200 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>שלח תזכורת ללקוח ב-WhatsApp</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-between text-xs mb-1">
+                    <div className="flex items-center gap-2 text-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <div>
+                        <span className="font-bold">הלקוח אישר את {currentVersion.name}! 🎉</span>
+                        <div className="text-[10px] text-gray-300">
+                          אושר ע"י {currentVersion.approvedBy || 'הלקוח'} ({formatReplyTime(currentVersion.approvedAt)})
+                        </div>
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditorReopenModal(true)}
+                      className="text-[10px] text-amber-300 hover:text-amber-200 border border-amber-500/40 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-colors flex items-center gap-1 flex-shrink-0"
+                      title="בקש מהלקוח לאשר פתיחה מחדש"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>בקש לפתוח מחדש</span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleReopenVersion(currentVersion.id)}
-                    className="text-[10px] text-gray-400 hover:text-amber-300 border border-[#2d3752] px-2 py-1 rounded bg-[#151926] transition-colors flex-shrink-0"
-                    title="פתח מחדש להערות"
-                  >
-                    פתח מחדש
-                  </button>
-                </div>
+                )
               ) : (
                 <div className="p-2 rounded-xl bg-[#191f31] border border-[#273147] flex items-center justify-between text-xs text-gray-400 mb-1">
                   <div className="flex items-center gap-1.5">
@@ -2461,6 +2695,168 @@ function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Client Prompt Modal: Editor requests reopening after approval */}
+      {mode === 'client' && currentVersion.approved && currentVersion.reopenRequested && dismissedReopenModalVersionId !== currentVersion.id && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#151a28] border-2 border-amber-500/60 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl shadow-amber-950/70 flex flex-col gap-5 animate-in zoom-in-95 duration-200 text-right relative overflow-hidden">
+            {/* Ambient decorative glow */}
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 flex-shrink-0 animate-pulse">
+                  <Bell className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                    התקבלה בקשה מהעורך
+                  </div>
+                  <h3 className="text-base font-bold text-white leading-snug">
+                    העורך מבקש לפתוח מחדש את הסרטון 🔔
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDismissedReopenModalVersionId(currentVersion.id)}
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#1f2638] transition-colors"
+                title="סגור חלונית (הבקשה תישאר זמינה בתחתית המסך)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-[#1c2235] border border-[#2c3752] rounded-2xl p-4 flex flex-col gap-2.5">
+              <p className="text-xs text-gray-200 leading-relaxed">
+                סימנת את <strong className="text-white">{currentVersion.name}</strong> כמאושרת סופית, אך העורך מעוניין לפתוח אותה מחדש לצורך ביצוע שינויים או תיקונים נוספים.
+              </p>
+              {currentVersion.reopenRequestReason ? (
+                <div className="bg-[#151a28] border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90">
+                  <span className="font-semibold text-amber-300 block mb-1">💬 סיבת הפתיחה מהעורך:</span>
+                  "{currentVersion.reopenRequestReason}"
+                </div>
+              ) : (
+                <p className="text-[11px] text-gray-400">
+                  העורך לא ציין הערה נוספת, אך ממתין לאישורך במערכת.
+                </p>
+              )}
+              <div className="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span>זמן הבקשה: {formatReplyTime(currentVersion.reopenRequestedAt)}</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-gray-400 leading-normal">
+              באישור פתיחה מחדש, הסטטוס יחזור ל"פתוח" וניתן יהיה להמשיך להוסיף הערות ולבצע תיקונים.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => handleClientApproveReopen(currentVersion.id)}
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>אשר פתיחה מחדש לעריכה ✅</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleClientRejectReopen(currentVersion.id)}
+                className="w-full sm:w-auto py-3 px-4 rounded-xl bg-[#1c2234] hover:bg-[#252e46] text-gray-300 border border-[#2d3752] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <X className="w-4 h-4 text-red-400" />
+                <span>דחה בקשה (השאר מאושר)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editor Reopen Request Dialog Modal */}
+      {showEditorReopenModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#151a28] border border-[#2a344e] rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-150 text-right">
+            <div className="flex items-center justify-between border-b border-[#242c42] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <RotateCcw className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-white">
+                  בקשת פתיחה מחדש מהלקוח
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditorReopenModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-300 leading-relaxed">
+              גרסה זו אושרה סופית על ידי הלקוח. כדי לשמור על סדר ושקיפות, תופיע ללקוח הודעה בולטת על המסך לאשר את פתיחת הגרסה מחדש לפני שניתן להמשיך.
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-gray-300 font-semibold">
+                סיבת הפתיחה מחדש ללקוח (אופציונלי):
+              </label>
+              <textarea
+                rows="2"
+                value={editorReopenReason}
+                onChange={(e) => setEditorReopenReason(e.target.value)}
+                placeholder="למשל: 'נדרש דיוק קל בסאונד בסוף' או 'החלפת שוט בדקה 00:15'..."
+                className="bg-[#1c2234] border border-[#2d3752] focus:border-amber-500 rounded-xl p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#242c42]">
+              <button
+                type="button"
+                onClick={() => setShowEditorReopenModal(false)}
+                className="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-[#1e2538] transition-colors"
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEditorRequestReopen(currentVersion.id, editorReopenReason.trim())}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white text-xs font-bold shadow-lg shadow-amber-950/50 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>שלח בקשה ללקוח ✉️</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Toast Notification */}
+      {toast && (
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+          toast.type === 'success'
+            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-950/80'
+            : toast.type === 'warning'
+            ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-amber-950/80'
+            : 'bg-gradient-to-r from-[#1b2336] to-[#25324e] text-white border border-[#3b4b72] shadow-blue-950/80'
+        }`}>
+          <span className="text-lg">
+            {toast.type === 'success' ? '✅' : toast.type === 'warning' ? '⚠️' : '🔔'}
+          </span>
+          <div className="text-xs font-medium">
+            {toast.message}
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="text-white/70 hover:text-white text-xs mr-2"
+          >
+            ✕
+          </button>
         </div>
       )}
 
