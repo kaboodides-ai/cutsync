@@ -46,11 +46,13 @@ import {
   MessageSquare,
   Type,
   Camera,
-  Keyboard
+  Keyboard,
+  Pencil
 } from 'lucide-react'
 import LandingPage from './LandingPage'
 import ProjectsDashboard from './ProjectsDashboard'
 import NewProjectModal from './NewProjectModal'
+import EditProjectModal from './EditProjectModal'
 import AuthModal from './AuthModal'
 import Confetti from './Confetti'
 import KeyboardShortcutsModal from './KeyboardShortcutsModal'
@@ -550,6 +552,31 @@ function MainApp() {
       })
       showToast('הפרויקט נמחק בהצלחה.', 'info')
     }
+  }
+
+  const [projectToEditInStudio, setProjectToEditInStudio] = useState(null)
+
+  const handleUpdateProject = (projectId, { title, clientName }) => {
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id === projectId) {
+          const updatedTitle = title?.trim() || p.title
+          const updatedClient = clientName !== undefined ? clientName.trim() : p.clientName
+          return {
+            ...p,
+            title: updatedTitle,
+            clientName: updatedClient,
+            updatedAt: new Date().toISOString(),
+            versions: (p.versions || []).map((v) => ({
+              ...v,
+              videoTitle: updatedTitle
+            }))
+          }
+        }
+        return p
+      })
+    )
+    showToast('פרטי הפרויקט עודכנו בהצלחה! ✏️', 'success')
   }
 
   const copySpecificClientLink = (projectId) => {
@@ -2021,6 +2048,7 @@ function MainApp() {
           }}
           onCopyClientLink={(projId) => copySpecificClientLink(projId)}
           onDeleteProject={(projId) => handleDeleteProject(projId)}
+          onUpdateProject={handleUpdateProject}
         />
 
         <NewProjectModal
@@ -2145,6 +2173,19 @@ function MainApp() {
               <div className="hidden md:block">
                 <div className="flex items-center gap-1.5">
                   <h1 className="text-sm font-bold tracking-normal text-white truncate max-w-[140px]">{currentProject.title}</h1>
+                  {mode === 'editor' && !isDirectClientLink && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setProjectToEditInStudio(currentProject)
+                      }}
+                      className="p-1 rounded-md text-gray-400 hover:text-purple-300 hover:bg-[#1a2337] transition-all cursor-pointer"
+                      title="ערוך שם פרויקט ולקוח"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
                   <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
                     Studio
                   </span>
@@ -4303,6 +4344,17 @@ function MainApp() {
           {r.emoji}
         </div>
       ))}
+
+      {/* Edit Project Modal (for Studio header) */}
+      <EditProjectModal
+        isOpen={!!projectToEditInStudio}
+        project={projectToEditInStudio}
+        onClose={() => setProjectToEditInStudio(null)}
+        onSave={(projId, updates) => {
+          handleUpdateProject(projId, updates)
+          setProjectToEditInStudio(null)
+        }}
+      />
 
       {/* Keyboard Shortcuts Modal */}
       <KeyboardShortcutsModal

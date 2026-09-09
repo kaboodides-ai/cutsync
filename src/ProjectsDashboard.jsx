@@ -19,8 +19,10 @@ import {
   ArrowRight,
   Filter,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Pencil
 } from 'lucide-react'
+import EditProjectModal from './EditProjectModal'
 
 export default function ProjectsDashboard({
   projects = [],
@@ -30,9 +32,11 @@ export default function ProjectsDashboard({
   onNavigateHome,
   onCopyClientLink,
   onDeleteProject,
+  onUpdateProject,
   onOpenAuthModal,
   onLogout
 }) {
+  const [projectToEdit, setProjectToEdit] = useState(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all') // 'all' | 'pending' | 'approved'
@@ -353,14 +357,25 @@ export default function ProjectsDashboard({
                     </div>
 
                     {/* Title & Client Name */}
+                    {/* Title & Client Name */}
                     <div>
-                      <h3
-                        onClick={() => onOpenStudio(project.id)}
-                        className="text-base font-bold text-white hover:text-purple-300 transition-colors cursor-pointer truncate"
-                        title={project.title}
-                      >
-                        {project.title}
-                      </h3>
+                      <div className="flex items-center justify-between gap-2">
+                        <h3
+                          onClick={() => onOpenStudio(project.id)}
+                          className="text-base font-bold text-white hover:text-purple-300 transition-colors cursor-pointer truncate flex-1"
+                          title={project.title}
+                        >
+                          {project.title}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setProjectToEdit(project)}
+                          className="p-1 rounded-lg text-gray-500 hover:text-purple-300 hover:bg-[#1a2337] transition-all cursor-pointer"
+                          title="ערוך שם פרויקט ולקוח"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
                         <User className="w-3.5 h-3.5 text-indigo-400" />
                         <span>לקוח: <strong className="text-gray-300">{project.clientName || 'כללי'}</strong></span>
@@ -410,6 +425,15 @@ export default function ProjectsDashboard({
 
                     <button
                       type="button"
+                      onClick={() => setProjectToEdit(project)}
+                      className="p-2.5 rounded-xl bg-[#192033] hover:bg-purple-950/50 text-gray-400 hover:text-purple-300 border border-[#26314c] hover:border-purple-500/30 transition-colors cursor-pointer"
+                      title="ערוך שם פרויקט ולקוח"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => onDeleteProject(project.id)}
                       className="p-2.5 rounded-xl bg-[#192033] hover:bg-red-950/50 text-gray-400 hover:text-red-400 border border-[#26314c] hover:border-red-500/30 transition-colors"
                       title="מחק פרויקט"
@@ -425,6 +449,17 @@ export default function ProjectsDashboard({
         )}
 
       </main>
+
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={!!projectToEdit}
+        project={projectToEdit}
+        onClose={() => setProjectToEdit(null)}
+        onSave={(projectId, updates) => {
+          onUpdateProject?.(projectId, updates)
+          setProjectToEdit(null)
+        }}
+      />
 
       {/* Dashboard Footer with Creator Credit */}
       <footer className="mt-auto py-5 border-t border-[#1a2337] bg-[#090d16]/80 backdrop-blur-md text-xs text-gray-400">
