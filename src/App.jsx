@@ -394,10 +394,8 @@ function App() {
   const [isUrgent, setIsUrgent] = useState(false)
   const commentTextareaRef = useRef(null)
 
-  // In / Out Time Range States
-  const [isRangeMode, setIsRangeMode] = useState(false)
-  const [rangeStart, setRangeStart] = useState(0)
-  const [rangeEnd, setRangeEnd] = useState(0)
+  // Timeline Hover state for intuitive timecode preview
+  const [timelineHover, setTimelineHover] = useState(null) // { percent: 0, time: 0 }
 
   // Keyboard Shortcuts Modal
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
@@ -1307,22 +1305,6 @@ function App() {
           setIsPlaying(false)
         }
         commentTextareaRef.current?.focus()
-      } else if (e.key === 'i' || e.key === 'I') {
-        e.preventDefault()
-        const cur = Math.floor(videoRef.current ? videoRef.current.currentTime : currentTime)
-        setIsRangeMode(true)
-        setRangeStart(cur)
-        if (rangeEnd <= cur) setRangeEnd(cur + 5)
-        playPop()
-        showToast(`קבעת התחלת מקטע: ${formatTime(cur)} (In) ⏱️`, 'info')
-      } else if (e.key === 'o' || e.key === 'O') {
-        e.preventDefault()
-        const cur = Math.floor(videoRef.current ? videoRef.current.currentTime : currentTime)
-        setIsRangeMode(true)
-        setRangeEnd(cur)
-        if (rangeStart >= cur) setRangeStart(Math.max(0, cur - 5))
-        playPop()
-        showToast(`קבעת סיום מקטע: ${formatTime(cur)} (Out) ⏱️`, 'info')
       } else if (e.key === 's' || e.key === 'S') {
         e.preventDefault()
         handleCaptureSnapshot(currentTime, hasDrawing ? canvasRef.current : null)
@@ -1339,7 +1321,7 @@ function App() {
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [showFullscreenDrawer, isPlaying, currentTime, duration, rangeStart, rangeEnd, hasDrawing, handleCaptureSnapshot])
+  }, [showFullscreenDrawer, isPlaying, currentTime, duration, hasDrawing, handleCaptureSnapshot])
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -1707,14 +1689,9 @@ function App() {
       drawingData = canvasRef.current.toDataURL()
     }
 
-    const hasValidRange = isRangeMode && rangeEnd > rangeStart
-    const commentTime = hasValidRange ? rangeStart : Math.floor(currentTime)
-    const commentEndTime = hasValidRange ? rangeEnd : null
-
     const newComment = {
       id: Date.now().toString(),
-      time: commentTime,
-      endTime: commentEndTime,
+      time: Math.floor(currentTime),
       category: selectedCategory,
       text: newCommentText.trim() || 'הודעה קולית',
       urgent: isUrgent,
@@ -1733,9 +1710,6 @@ function App() {
     setIsUrgent(false)
     setRecordedAudioData(null)
     setRecordingDuration(0)
-    setIsRangeMode(false)
-    setRangeStart(0)
-    setRangeEnd(0)
     clearCanvas()
     setIsDrawingMode(false)
   }
@@ -1876,17 +1850,10 @@ function App() {
     let csv = "Marker Name,Description,In,Out,Duration,Marker Type\n"
     comments.forEach((c) => {
       const cat = CATEGORIES.find(cat => cat.id === c.category)
-      const inSec = c.time
-      const outSec = c.endTime && c.endTime > c.time ? c.endTime : c.time
-      const durSec = outSec - inSec
-
-      const inTimecode = `00:${formatTime(inSec)}:00`
-      const outTimecode = `00:${formatTime(outSec)}:00`
-      const durTimecode = `00:${formatTime(durSec)}:00`
-
+      const timecode = `00:${formatTime(c.time)}:00`
       const name = cat ? `${cat.label} - ${c.urgent ? 'דחוף' : 'תיקון'}` : 'תיקון'
       const desc = `"${c.text.replace(/"/g, '""')}"`
-      csv += `${name},${desc},${inTimecode},${outTimecode},${durTimecode},Comment\n`
+      csv += `${name},${desc},${timecode},${timecode},00:00:00:00,Comment\n`
     })
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -2507,9 +2474,48 @@ function App() {
 
             {/* Custom Interactive Player Controls */}
             <div className="p-3 bg-[#161a28] flex flex-col gap-2">
-              {/* Timeline with Markers */}
-              <div className="relative w-full h-5 flex items-center cursor-pointer group select-none">
-                {/* Background track */}
+              {/* Timeline with Modern Visual Progress & Markers */}
+              <div
+                className="relative w-full h-6 flex items-center cursor-pointer group select-none"
+                onMouseMove={(e) => {
+                  if (!duration) return
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+                  setTimelineHover({
+                    percent: pct * 100,
+                    time: pct * duration
+                  })
+                }}
+                onMouseLeave={() => setTimelineHover(null)}
+              >
+                {/* Visual Track Container */}
+                <div className="relative w-full h-2 group-hover:h-2.5 bg-[#23293c] rounded-full overflow-hidden transition-all pointer-events-none">
+                  {/* Purple-Indigo Progress Fill */}
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500 rounded-full transition-all duration-75"
+                    style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                  />
+                </div>
+
+                {/* Floating Scrub Head / Playhead Thumb */}
+                {duration > 0 && (
+                  <div
+                    style={{ left: `${(currentTime / duration) * 100}%` }}
+                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md shadow-purple-950 border-2 border-purple-600 pointer-events-none transition-transform group-hover:scale-125 z-20"
+                  />
+                )}
+
+                {/* Hover Timecode Tooltip (like YouTube / Vimeo) */}
+                {timelineHover && duration > 0 && (
+                  <div
+                    style={{ left: `${timelineHover.percent}%` }}
+                    className="absolute bottom-7 -translate-x-1/2 bg-[#0d101a] border border-[#2f3954] text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg shadow-xl pointer-events-none z-40 whitespace-nowrap animate-in fade-in duration-100"
+                  >
+                    {formatTime(timelineHover.time)}
+                  </div>
+                )}
+
+                {/* Interactive Native Range Slider (Transparent overlay for effortless scrubbing/click) */}
                 <input
                   type="range"
                   min="0"
@@ -2517,44 +2523,9 @@ function App() {
                   step="0.05"
                   value={currentTime}
                   onChange={(e) => seekTo(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-[#252c40] rounded-lg appearance-none cursor-pointer accent-purple-500 z-10 opacity-90 group-hover:h-2.5 transition-all"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30 m-0 p-0"
+                  title="גרור או לחץ כדי לקפוץ בזמן"
                 />
-
-                {/* Live Active Range Highlight when marking In/Out */}
-                {duration > 0 && isRangeMode && rangeEnd > rangeStart && (
-                  <div
-                    style={{
-                      left: `${(rangeStart / duration) * 100}%`,
-                      width: `${((rangeEnd - rangeStart) / duration) * 100}%`
-                    }}
-                    className="absolute top-1/2 -translate-y-1/2 h-2.5 bg-gradient-to-r from-amber-500/50 via-purple-500/50 to-pink-500/50 rounded-full border border-amber-400/80 pointer-events-none z-10 animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.5)]"
-                  />
-                )}
-
-                {/* Saved Range Comment Highlights */}
-                {duration > 0 &&
-                  comments
-                    .filter((c) => c.endTime && c.endTime > c.time)
-                    .map((c) => {
-                      const startPct = (c.time / duration) * 100
-                      const widthPct = ((c.endTime - c.time) / duration) * 100
-                      return (
-                        <div
-                          key={`range-bar-${c.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            seekTo(c.time, c.drawing)
-                          }}
-                          style={{ left: `${startPct}%`, width: `${widthPct}%` }}
-                          className={`absolute top-1/2 -translate-y-1/2 h-2 rounded-full cursor-pointer z-10 transition-all ${
-                            c.completed
-                              ? 'bg-emerald-500/40 border border-emerald-500/60'
-                              : 'bg-purple-500/40 border border-purple-400/70 hover:bg-purple-500/70'
-                          }`}
-                          title={`מקטע: ${formatTime(c.time)} ➔ ${formatTime(c.endTime)} (${c.endTime - c.time} שנ')`}
-                        />
-                      )
-                    })}
 
                 {/* Visual Comment Markers on Timeline */}
                 {duration > 0 &&
@@ -2571,22 +2542,26 @@ function App() {
                         onMouseEnter={() => setHoveredMarker(comment.id)}
                         onMouseLeave={() => setHoveredMarker(null)}
                         style={{ left: `${leftPercent}%` }}
-                        className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full z-20 transition-transform ${
+                        className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full z-40 transition-transform ${
                           comment.completed
-                            ? 'bg-emerald-500 ring-2 ring-emerald-900'
+                            ? 'bg-emerald-400 ring-2 ring-emerald-950'
                             : 'bg-amber-400 ring-2 ring-amber-950 animate-pulse'
                         } hover:scale-150 cursor-pointer shadow-md`}
                       >
                         {/* Tooltip on hover */}
                         {isHovered && (
-                          <div className="absolute bottom-6 right-1/2 translate-x-1/2 bg-[#0c0e17] text-white text-[11px] py-1 px-2.5 rounded-md shadow-xl border border-[#2d364e] whitespace-nowrap z-50 pointer-events-none">
-                            <span className="font-mono text-purple-400 font-bold ml-1">
+                          <div className="absolute bottom-6 right-1/2 translate-x-1/2 bg-[#0c0e17] text-white text-[11px] py-1 px-2.5 rounded-xl shadow-2xl border border-[#2d364e] whitespace-nowrap z-50 pointer-events-none flex items-center gap-1.5">
+                            <span className="font-mono text-purple-300 font-bold bg-purple-950/60 px-1.5 py-0.5 rounded">
                               {formatTime(comment.time)}
-                              {comment.endTime && comment.endTime > comment.time ? ` ➔ ${formatTime(comment.endTime)}` : ''}
+                            </span>
+                            <span className="text-gray-200">
+                              {comment.author === 'לקוח' ? '👤 לקוח:' : '🎬 עורך:'}
                             </span>
                             {comment.drawing && '🎨 '}
                             {comment.audio && '🎙️ '}
-                            {comment.text}
+                            <span className="max-w-[140px] truncate text-gray-300">
+                              {comment.text}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -2621,7 +2596,7 @@ function App() {
                   </button>
 
                   <span className="text-xs font-mono text-gray-300 font-semibold px-2">
-                    {formatTime(currentTime)}
+                    {formatTime(currentTime)} / {formatTime(duration)}
                   </span>
                 </div>
 
@@ -3052,9 +3027,6 @@ function App() {
                               title="קפוץ לרגע זה בוידאו"
                             >
                               ⏱️ {formatTime(comment.time)}
-                              {comment.endTime && comment.endTime > comment.time && (
-                                <span className="text-amber-300 mr-1">➔ {formatTime(comment.endTime)}</span>
-                              )}
                             </button>
 
                             {cat && (
@@ -3181,9 +3153,9 @@ function App() {
             )}
           </div>
 
-          {/* Add Revision Box (Human & Conversational) */}
+          {/* Add Revision Box (Simple & Conversational) */}
           <div className="bg-[#121624]/90 backdrop-blur-md p-5 rounded-3xl border border-white/[0.07] shadow-xl flex flex-col gap-3.5">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
                 <div>
@@ -3191,91 +3163,15 @@ function App() {
                     {mode === 'client' ? 'מה כדאי לשפר ברגע הזה? 💡' : 'הוספת הערה לפריים ✍️'}
                   </h2>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    {isRangeMode && rangeEnd > rangeStart
-                      ? `סימון מקטע מ-${formatTime(rangeStart)} עד ${formatTime(rangeEnd)} (${rangeEnd - rangeStart} שניות)`
-                      : `עצרת בנקודת הזמן ${formatTime(currentTime)} — שתף את המחשבות שלך`}
+                    עצרת בנקודת הזמן {formatTime(currentTime)} — שתף את המחשבות שלך
                   </p>
                 </div>
               </div>
 
-              {/* Timecode / In-Out Range Controls */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!isRangeMode) {
-                      setIsRangeMode(true)
-                      const cur = Math.floor(currentTime)
-                      setRangeStart(cur)
-                      setRangeEnd(Math.min(Math.floor(duration || cur + 5), cur + 5))
-                    } else {
-                      setIsRangeMode(false)
-                      setRangeStart(0)
-                      setRangeEnd(0)
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium transition-all border cursor-pointer ${
-                    isRangeMode
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                      : 'bg-[#171b29] text-gray-400 border-white/[0.08] hover:text-white hover:border-white/[0.2]'
-                  }`}
-                  title="סמן טווח זמן (מקטע In ➔ Out)"
-                >
-                  <Clock className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{isRangeMode ? 'טווח זמן פעיל' : 'סמן מקטע זמן (In/Out)'}</span>
-                </button>
-
-                {isRangeMode ? (
-                  <div className="flex items-center gap-1 bg-[#151928] border border-amber-500/40 px-2 py-0.5 rounded-xl text-xs font-mono shadow-sm">
-                    <span className="text-[10px] text-gray-400">In:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const cur = Math.floor(currentTime)
-                        setRangeStart(cur)
-                        if (rangeEnd <= cur) setRangeEnd(cur + 5)
-                      }}
-                      className="px-1.5 py-0.5 rounded bg-amber-500/25 text-amber-200 hover:bg-amber-500/40 font-bold cursor-pointer"
-                      title="קבע את הפריים הנוכחי כהתחלה (I)"
-                    >
-                      {formatTime(rangeStart)} (I)
-                    </button>
-                    <span className="text-gray-400">➔</span>
-                    <span className="text-[10px] text-gray-400">Out:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const cur = Math.floor(currentTime)
-                        setRangeEnd(cur)
-                        if (rangeStart >= cur) setRangeStart(Math.max(0, cur - 5))
-                      }}
-                      className="px-1.5 py-0.5 rounded bg-amber-500/25 text-amber-200 hover:bg-amber-500/40 font-bold cursor-pointer"
-                      title="קבע את הפריים הנוכחי כסיום (O)"
-                    >
-                      {formatTime(rangeEnd)} (O)
-                    </button>
-                    <span className="text-amber-300 font-sans text-[10px] px-1">
-                      ({Math.max(0, rangeEnd - rangeStart)}s)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsRangeMode(false)
-                        setRangeStart(0)
-                        setRangeEnd(0)
-                      }}
-                      className="text-gray-400 hover:text-white text-xs px-1 cursor-pointer"
-                      title="בטל טווח"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 bg-[#171b29] text-purple-300 border border-purple-500/30 px-3 py-1 rounded-xl text-xs font-mono font-bold">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{formatTime(currentTime)}</span>
-                  </div>
-                )}
+              {/* Simple Clean Time Badge */}
+              <div className="flex items-center gap-1.5 bg-[#171b29] text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl text-xs font-mono font-bold shadow-inner">
+                <Clock className="w-3.5 h-3.5 text-purple-400" />
+                <span>פריים: {formatTime(currentTime)}</span>
               </div>
             </div>
 
@@ -3577,11 +3473,6 @@ function App() {
                           title="קפוץ לרגע זה בוידאו"
                         >
                           ⏱️ {formatTime(comment.time)}
-                          {comment.endTime && comment.endTime > comment.time && (
-                            <span className="text-amber-300 mr-1 font-semibold">
-                              ➔ {formatTime(comment.endTime)} ({comment.endTime - comment.time}s)
-                            </span>
-                          )}
                         </button>
 
                         {/* Category badge */}

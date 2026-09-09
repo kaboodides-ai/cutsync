@@ -17,11 +17,9 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
       ]
     },
     {
-      title: '✍️ הערות, סימונים וטווח',
+      title: '✍️ הערות וסימונים',
       items: [
-        { keys: ['M', 'או', 'C'], label: 'הוספת הערה לפריים הנוכחי', desc: 'עוצר את הוידאו ומתמקד בתיבת הטקסט', icon: <MessageSquare className="w-3.5 h-3.5 text-purple-400" /> },
-        { keys: ['I'], label: 'קבע התחלת מקטע (Mark In)', desc: 'מגדיר תחילת טווח זמן להערה', icon: <Clock className="w-3.5 h-3.5 text-amber-400" /> },
-        { keys: ['O'], label: 'קבע סיום מקטע (Mark Out)', desc: 'מגדיר סיום טווח זמן להערה', icon: <Clock className="w-3.5 h-3.5 text-amber-400" /> },
+        { keys: ['M', 'או', 'C'], label: 'הוספת הערה לפריים', desc: 'עוצר את הוידאו ומתמקד בתיבת הטקסט', icon: <MessageSquare className="w-3.5 h-3.5 text-purple-400" /> },
         { keys: ['S'], label: 'צילום והורדת פריים (Snapshot 📸)', icon: <Camera className="w-3.5 h-3.5 text-pink-400" /> },
         { keys: ['Delete'], label: 'מחיקת צורה נבחרת בציור', desc: 'כאשר חץ, עיגול או טקסט נבחרים' },
         { keys: ['?'], label: 'פתיחה וסגירה של חלון עזרה זה' }
