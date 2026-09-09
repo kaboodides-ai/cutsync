@@ -50,6 +50,16 @@ import LandingPage from './LandingPage'
 import ProjectsDashboard from './ProjectsDashboard'
 import NewProjectModal from './NewProjectModal'
 import AuthModal from './AuthModal'
+import Confetti from './Confetti'
+import {
+  playPop,
+  playCheck,
+  playCelebration,
+  playCopy,
+  playReaction,
+  isSoundEnabled,
+  setSoundEnabled
+} from './soundFx'
 import {
   getCurrentUser,
   logoutUser,
@@ -232,6 +242,55 @@ function App() {
     setCurrentUser(null)
     setCurrentView('home')
     showToast('התנתקת בהצלחה מהמערכת', 'info')
+  }
+
+  // Dopamine Sound & Animation States
+  const [soundOn, setSoundOn] = useState(() => isSoundEnabled())
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [floatingReactions, setFloatingReactions] = useState([])
+
+  const handleToggleSound = () => {
+    const next = !soundOn
+    setSoundOn(next)
+    setSoundEnabled(next)
+    if (next) playPop()
+    showToast(next ? '🔊 צלילי משוב הופעלו' : '🔇 צלילי משוב הושתקו', 'info')
+  }
+
+  const handleAddReaction = (commentId, emoji, event) => {
+    playReaction()
+    const rect = event?.currentTarget?.getBoundingClientRect()
+    const id = Date.now() + Math.random()
+    setFloatingReactions((prev) => [
+      ...prev,
+      {
+        id,
+        emoji,
+        x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2,
+        y: rect ? rect.top : window.innerHeight / 2
+      }
+    ])
+    setTimeout(() => {
+      setFloatingReactions((prev) => prev.filter((r) => r.id !== id))
+    }, 1100)
+
+    // Save reaction to active version comments
+    setVersions((prev) =>
+      prev.map((v) => {
+        if (v.id === activeVersionId) {
+          const updatedComments = (v.comments || []).map((c) => {
+            if (c.id === commentId) {
+              const reactions = { ...(c.reactions || {}) }
+              reactions[emoji] = (reactions[emoji] || 0) + 1
+              return { ...c, reactions }
+            }
+            return c
+          })
+          return { ...v, comments: updatedComments }
+        }
+        return v
+      })
+    )
   }
 
   // Global listener for OAuth popup completion
@@ -437,6 +496,7 @@ function App() {
   }
 
   const copySpecificClientLink = (projectId) => {
+    playCopy()
     const url = `${window.location.origin}/?project=${projectId}&view=client`
     navigator.clipboard.writeText(url)
     showToast('הועתק קישור סקירה ישיר ללקוח! שלח אותו בוואטסאפ 🔗', 'success')
@@ -1332,7 +1392,10 @@ function App() {
         return v
       })
     )
-    showToast('הגרסה אושרה בהצלחה! 🎉', 'success')
+    playCelebration()
+    setShowConfetti(true)
+    setShowCelebration(true)
+    showToast('הגרסה אושרה בהצלחה! איזה כיף! 🎉', 'success')
   }
 
   // Editor requests client permission to reopen
@@ -1546,6 +1609,7 @@ function App() {
       createdAt: new Date().toISOString()
     }
 
+    playPop()
     updateActiveVersionComments((prev) => [...prev, newComment].sort((a, b) => a.time - b.time))
     setNewCommentText('')
     setIsUrgent(false)
@@ -1557,9 +1621,32 @@ function App() {
 
   // Toggle Completed in active version
   const toggleCommentComplete = (id) => {
-    updateActiveVersionComments((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, completed: !c.completed } : c))
-    )
+    updateActiveVersionComments((prev) => {
+      const updated = prev.map((c) => {
+        if (c.id === id) {
+          const nextCompleted = !c.completed
+          if (nextCompleted) {
+            playCheck()
+          } else {
+            playPop()
+          }
+          return { ...c, completed: nextCompleted }
+        }
+        return c
+      })
+
+      // Dopamine Milestone: When all tasks reach 100% completion!
+      const allDone = updated.length > 0 && updated.every((c) => c.completed)
+      if (allDone) {
+        setTimeout(() => {
+          playCelebration()
+          setShowConfetti(true)
+          showToast('🏆 מדהים! כל התיקונים בגרסה זו הושלמו בהצלחה!', 'success')
+        }, 180)
+      }
+
+      return updated
+    })
   }
 
   // Delete Comment in active version
@@ -1965,6 +2052,19 @@ function App() {
                 )}
               </>
             )}
+
+            {/* Sound FX Toggle (Dopamine) */}
+            <button
+              onClick={handleToggleSound}
+              className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+                soundOn
+                  ? 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:bg-purple-500/30 shadow-md shadow-purple-950/20'
+                  : 'bg-[#182033] border-gray-700/50 text-gray-500 hover:text-gray-300'
+              }`}
+              title={soundOn ? 'צלילי משוב פעילים 🔊 (לחץ להשתקה)' : 'צלילי משוב מושתקים 🔇 (לחץ להפעלה)'}
+            >
+              {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
 
             {mode === 'client' ? (
               <button
@@ -2420,6 +2520,7 @@ function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          playPop()
                           setDrawTool('select')
                           setTextInputState(null)
                         }}
@@ -2431,6 +2532,7 @@ function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          playPop()
                           setDrawTool('pen')
                           setTextInputState(null)
                         }}
@@ -2442,6 +2544,7 @@ function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          playPop()
                           setDrawTool('circle')
                           setTextInputState(null)
                         }}
@@ -2453,6 +2556,7 @@ function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          playPop()
                           setDrawTool('arrow')
                           setTextInputState(null)
                         }}
@@ -2464,6 +2568,7 @@ function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          playPop()
                           setDrawTool('text')
                           setTextInputState(null)
                         }}
@@ -3071,23 +3176,47 @@ function App() {
               </div>
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar with Dopamine Counter */}
             {comments.length > 0 && (
-              <div className="mt-2">
-                <div className="flex justify-between text-[11px] text-gray-400 mb-1">
-                  <span>{mode === 'client' ? 'סטטוס ביצוע התיקונים על ידי העורך' : 'קצב התקדמות בפרמייר'}</span>
-                  <span className="font-mono">{Math.round((completedCount / comments.length) * 100)}%</span>
+              <div className="mt-2.5">
+                <div className="flex justify-between text-[11px] text-gray-400 mb-1.5 font-medium">
+                  <span>{mode === 'client' ? 'סטטוס ביצוע התיקונים על ידי העורך' : 'קצב ביצוע משימות בפרמייר'}</span>
+                  <span className="font-mono font-bold text-white bg-[#1b2031] px-2 py-0.5 rounded-full border border-gray-700/50">
+                    {Math.round((completedCount / comments.length) * 100)}% ({completedCount}/{comments.length})
+                  </span>
                 </div>
-                <div className="w-full h-1.5 bg-[#23293d] rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-[#1b2133] rounded-full overflow-hidden border border-[#2a344d] shadow-inner">
                   <div
-                    className={`h-full transition-all duration-300 ${
-                      mode === 'client'
+                    className={`h-full transition-all duration-500 rounded-full ${
+                      completedCount === comments.length
+                        ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-green-300 shadow-md shadow-emerald-500/50 animate-pulse'
+                        : mode === 'client'
                         ? 'bg-gradient-to-r from-purple-500 to-emerald-400'
-                        : 'bg-gradient-to-r from-indigo-500 to-emerald-400'
+                        : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400'
                     }`}
                     style={{ width: `${(completedCount / comments.length) * 100}%` }}
                   />
                 </div>
+
+                {/* 100% Celebration Banner */}
+                {completedCount === comments.length && comments.length > 0 && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/80 via-[#102422] to-teal-950/70 border border-emerald-500/50 flex items-center justify-between text-xs animate-in zoom-in-95 shadow-lg shadow-emerald-950/40">
+                    <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                      <span className="text-base animate-bounce">🏆</span>
+                      <span>כל {comments.length} התיקונים הושלמו ב-100%!</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playCelebration()
+                        setShowConfetti(true)
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] shadow transition-all active:scale-95 cursor-pointer"
+                    >
+                      קונפטי! 🎉
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -3118,19 +3247,19 @@ function App() {
                     {mode === 'editor' ? (
                       <button
                         onClick={() => toggleCommentComplete(comment.id)}
-                        className="mt-0.5 text-gray-400 hover:text-emerald-400 transition-colors flex-shrink-0"
+                        className="mt-0.5 text-gray-400 hover:text-emerald-400 transition-all duration-200 active:scale-125 hover:scale-110 flex-shrink-0 cursor-pointer"
                         title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע בפרמייר'}
                       >
                         {comment.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950" />
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950/80 animate-in zoom-in-75 duration-200" />
                         ) : (
-                          <Circle className="w-5 h-5" />
+                          <Circle className="w-5 h-5 hover:text-emerald-400 transition-colors" />
                         )}
                       </button>
                     ) : (
                       <div className="mt-0.5 flex-shrink-0">
                         {comment.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400" title="העורך סימן שזה תוקן" />
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-in zoom-in-75 duration-200" title="העורך סימן שזה תוקן" />
                         ) : (
                           <Clock className="w-5 h-5 text-amber-400" title="ממתין לטיפול העורך" />
                         )}
@@ -3196,6 +3325,29 @@ function App() {
                           duration={comment.audioDuration}
                         />
                       )}
+
+                      {/* Interactive Emoji Reaction Bar (Dopamine) */}
+                      <div className="flex items-center gap-1 mt-2.5 flex-wrap">
+                        {['👍', '🔥', '👏', '💡', '❤️'].map((emoji) => {
+                          const count = comment.reactions?.[emoji] || 0
+                          return (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={(e) => handleAddReaction(comment.id, emoji, e)}
+                              className={`px-2 py-0.5 rounded-lg text-xs transition-all flex items-center gap-1 active:scale-125 cursor-pointer ${
+                                count > 0
+                                  ? 'bg-purple-500/25 border border-purple-500/40 text-purple-200'
+                                  : 'bg-[#182030] hover:bg-[#202a40] text-gray-400 hover:text-white border border-[#26314c]'
+                              }`}
+                              title={`הגב עם ${emoji}`}
+                            >
+                              <span>{emoji}</span>
+                              {count > 0 && <span className="text-[10px] font-bold text-purple-300">{count}</span>}
+                            </button>
+                          )
+                        })}
+                      </div>
 
                       {/* Threaded Discussion Section */}
                       <div className="mt-2.5 pt-2 border-t border-[#22283a]">
@@ -3830,6 +3982,20 @@ function App() {
           </button>
         </div>
       )}
+
+      {/* Celebration Confetti Cannon */}
+      <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
+
+      {/* Floating Emoji Particles */}
+      {floatingReactions.map((r) => (
+        <div
+          key={r.id}
+          style={{ left: r.x, top: r.y }}
+          className="fixed pointer-events-none z-50 text-2xl animate-in fade-in zoom-in slide-out-to-top-12 duration-1000 -translate-x-1/2 -translate-y-1/2 select-none"
+        >
+          {r.emoji}
+        </div>
+      ))}
 
       {/* Global Auth Modal */}
       <AuthModal
