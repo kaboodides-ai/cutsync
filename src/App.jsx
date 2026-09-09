@@ -59,11 +59,57 @@ function formatTime(seconds) {
 function App() {
   const videoRef = useRef(null)
   const fileInputRef = useRef(null)
+  const fileInputNewVersionRef = useRef(null)
   const canvasRef = useRef(null)
 
-  // Video State
-  const [videoSrc, setVideoSrc] = useState(DEFAULT_VIDEO)
-  const [videoTitle, setVideoTitle] = useState('פרויקט לדוגמה: סרטון תדמית v1')
+  // Version Stacking State (V1, V2, V3...)
+  const [versions, setVersions] = useState(() => {
+    const saved = localStorage.getItem('cutsync_versions')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      } catch (e) { console.error(e) }
+    }
+
+    // Backward compatibility: migrate legacy single comments to V1
+    const oldComments = localStorage.getItem('cutsync_comments')
+    let initialComments = [
+      { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח', drawing: null },
+      { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח', drawing: null },
+      { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח', drawing: null },
+    ]
+    if (oldComments) {
+      try {
+        const parsed = JSON.parse(oldComments)
+        if (Array.isArray(parsed) && parsed.length > 0) initialComments = parsed
+      } catch (e) { console.error(e) }
+    }
+
+    return [
+      {
+        id: 'v1',
+        number: 1,
+        name: 'גרסה 1 (V1)',
+        videoSrc: DEFAULT_VIDEO,
+        videoTitle: 'פרויקט לדוגמה: סרטון תדמית v1',
+        createdAt: new Date().toISOString(),
+        comments: initialComments
+      }
+    ]
+  })
+
+  const [activeVersionId, setActiveVersionId] = useState(() => {
+    return localStorage.getItem('cutsync_active_version') || 'v1'
+  })
+
+  // Derive current active version & its data
+  const currentVersion = versions.find((v) => v.id === activeVersionId) || versions[0]
+  const videoSrc = currentVersion.videoSrc
+  const videoTitle = currentVersion.videoTitle
+  const comments = currentVersion.comments || []
+
+  // Video playback State
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -79,19 +125,6 @@ function App() {
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
   const [activeDrawingImage, setActiveDrawingImage] = useState(null)
 
-  // Comments / Revisions State
-  const [comments, setComments] = useState(() => {
-    const saved = localStorage.getItem('cutsync_comments')
-    if (saved) {
-      try { return JSON.parse(saved) } catch (e) { console.error(e) }
-    }
-    return [
-      { id: '1', time: 3, category: 'cut', text: 'לקצר את השתיקה בהתחלה בחצי שנייה', completed: false, author: 'לקוח', drawing: null },
-      { id: '2', time: 8, category: 'audio', text: 'להגביר כאן מעט את מוזיקת הרקע', completed: true, author: 'לקוח', drawing: null },
-      { id: '3', time: 12, category: 'text', text: 'לבדוק איות בשם החברה', completed: false, author: 'לקוח', drawing: null },
-    ]
-  })
-
   // Input states
   const [newCommentText, setNewCommentText] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('cut')
@@ -103,10 +136,14 @@ function App() {
   const [copied, setCopied] = useState(false)
   const [hoveredMarker, setHoveredMarker] = useState(null)
 
-  // Save comments to localStorage
+  // Save versions and active version to localStorage
   useEffect(() => {
-    localStorage.setItem('cutsync_comments', JSON.stringify(comments))
-  }, [comments])
+    localStorage.setItem('cutsync_versions', JSON.stringify(versions))
+  }, [versions])
+
+  useEffect(() => {
+    localStorage.setItem('cutsync_active_version', activeVersionId)
+  }, [activeVersionId])
 
   // Canvas Drawing functions
   const clearCanvas = useCallback(() => {
@@ -270,20 +307,83 @@ function App() {
     }
   }
 
-  // File upload
+  // Helper to update comments inside active version
+  const updateActiveVersionComments = (updater) => {
+    setVersions((prev) =>
+      prev.map((v) => {
+        if (v.id === activeVersionId) {
+          const updated = typeof updater === 'function' ? updater(v.comments || []) : updater
+          return { ...v, comments: updated }
+        }
+        return v
+      })
+    )
+  }
+
+  // Switch Version
+  const switchVersion = (versionId) => {
+    if (versionId === activeVersionId) return
+    if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause()
+      setIsPlaying(false)
+    }
+    setActiveVersionId(versionId)
+    setCurrentTime(0)
+    clearCanvas()
+    setIsDrawingMode(false)
+  }
+
+  // Replace video in CURRENT active version
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0]
     if (file) {
       const url = URL.createObjectURL(file)
-      setVideoSrc(url)
-      setVideoTitle(file.name.replace(/\.[^/.]+$/, ''))
-      setComments([]) // reset for new video
+      const title = file.name.replace(/\.[^/.]+$/, '')
+      setVersions((prev) =>
+        prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: url, videoTitle: title } : v))
+      )
       setCurrentTime(0)
       clearCanvas()
     }
   }
 
-  // Add Comment
+  // Upload NEW Version (creates V2, V3, etc.)
+  const handleUploadNewVersion = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const newNumber = versions.length + 1
+    const newId = `v${newNumber}`
+    const url = URL.createObjectURL(file)
+    const title = file.name.replace(/\.[^/.]+$/, '')
+
+    const newVersion = {
+      id: newId,
+      number: newNumber,
+      name: `גרסה ${newNumber} (V${newNumber})`,
+      videoSrc: url,
+      videoTitle: title,
+      createdAt: new Date().toISOString(),
+      comments: []
+    }
+
+    if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause()
+      setIsPlaying(false)
+    }
+
+    setVersions((prev) => [...prev, newVersion])
+    setActiveVersionId(newId)
+    setCurrentTime(0)
+    clearCanvas()
+    setIsDrawingMode(false)
+
+    if (fileInputNewVersionRef.current) {
+      fileInputNewVersionRef.current.value = ''
+    }
+  }
+
+  // Add Comment to active version
   const handleAddComment = (e) => {
     e?.preventDefault()
     if (!newCommentText.trim()) return
@@ -305,28 +405,28 @@ function App() {
       createdAt: new Date().toISOString()
     }
 
-    setComments((prev) => [...prev, newComment].sort((a, b) => a.time - b.time))
+    updateActiveVersionComments((prev) => [...prev, newComment].sort((a, b) => a.time - b.time))
     setNewCommentText('')
     setIsUrgent(false)
     clearCanvas()
     setIsDrawingMode(false)
   }
 
-  // Toggle Completed
+  // Toggle Completed in active version
   const toggleCommentComplete = (id) => {
-    setComments((prev) =>
+    updateActiveVersionComments((prev) =>
       prev.map((c) => (c.id === id ? { ...c, completed: !c.completed } : c))
     )
   }
 
-  // Delete Comment
+  // Delete Comment in active version
   const deleteComment = (id) => {
-    setComments((prev) => prev.filter((c) => c.id !== id))
+    updateActiveVersionComments((prev) => prev.filter((c) => c.id !== id))
   }
 
   // Generate WhatsApp Message
   const getWhatsAppMessage = () => {
-    let msg = `🎬 *סיכום תיקונים - ${videoTitle}*\n`
+    let msg = `🎬 *סיכום תיקונים - ${videoTitle} (${currentVersion.name})*\n`
     msg += `סה"כ תיקונים: ${comments.length} | בוצעו: ${comments.filter(c => c.completed).length}\n\n`
 
     if (comments.length === 0) {
@@ -363,7 +463,7 @@ function App() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `${videoTitle}_markers.csv`)
+    link.setAttribute('download', `${videoTitle}_${currentVersion.id}_markers.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -519,13 +619,71 @@ function App() {
         {/* Left Section: Video Player & Timeline (7 cols) */}
         <section className="lg:col-span-7 flex flex-col gap-4">
           
+          {/* Version Stacking Switcher Bar */}
+          <div className="bg-[#151926] p-2.5 rounded-2xl border border-[#23293d] shadow-lg flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2 overflow-x-auto py-0.5">
+              <div className="flex items-center gap-1 text-xs text-gray-400 font-bold px-1 select-none">
+                <Layers className="w-4 h-4 text-purple-400" />
+                <span>גרסאות:</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {versions.map((ver) => {
+                  const isActive = ver.id === activeVersionId
+                  const verTotal = ver.comments ? ver.comments.length : 0
+                  return (
+                    <button
+                      key={ver.id}
+                      onClick={() => switchVersion(ver.id)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-950/50 ring-2 ring-purple-400/50 scale-[1.02]'
+                          : 'bg-[#1c2234] text-gray-300 hover:text-white hover:bg-[#252d45] border border-[#2b344e]'
+                      }`}
+                    >
+                      <span>{ver.name}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                        isActive ? 'bg-purple-950/70 text-purple-200' : 'bg-[#121520] text-gray-400'
+                      }`}>
+                        {verTotal} {verTotal === 1 ? 'הערה' : 'הערות'}
+                      </span>
+                      {isActive && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="גרסה נוכחית מוצגת"></span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Upload New Version Button for Editor */}
+            {mode === 'editor' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={fileInputNewVersionRef}
+                  onChange={handleUploadNewVersion}
+                  accept="video/*"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputNewVersionRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-200 text-xs font-bold transition-all hover:scale-105 active:scale-95"
+                  title="העלה סרטון מתוקן חדש (V2, V3...)"
+                >
+                  <Plus className="w-3.5 h-3.5 text-purple-400" />
+                  <span>העלה גרסה חדשה (V{versions.length + 1})</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Video Header Card */}
           <div className="bg-[#151926] rounded-2xl border border-[#23293d] overflow-hidden shadow-2xl shadow-black/60">
             {/* Title Bar */}
             <div className="px-4 py-2.5 bg-[#1a1f30] border-b border-[#242b40] flex items-center justify-between text-xs text-gray-300">
               <div className="flex items-center gap-2 font-medium truncate">
                 <Video className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                <span className="truncate">{videoTitle}</span>
+                <span className="truncate">{videoTitle} - <strong className="text-purple-300 font-bold">{currentVersion.name}</strong></span>
               </div>
               <span className="text-gray-400 font-mono text-[11px] bg-[#111420] px-2 py-0.5 rounded border border-[#2b334a]">
                 {formatTime(currentTime)} / {formatTime(duration)}
