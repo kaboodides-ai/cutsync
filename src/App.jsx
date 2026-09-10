@@ -23,6 +23,8 @@ import {
   Sparkles,
   Eye,
   SlidersHorizontal,
+  AlertCircle,
+  Film,
   ChevronRight,
   ChevronLeft,
   Upload,
@@ -534,7 +536,7 @@ function MainApp() {
   }, [])
 
   // Project Creation & Management Handlers
-  const handleCreateProject = ({ title, clientName, videoSrc }) => {
+  const handleCreateProject = ({ title, clientName, videoSrc, videoFile }) => {
     const newId = generateUUID()
     const versionId = generateUUID()
     const newProject = {
@@ -568,7 +570,34 @@ function MainApp() {
     setActiveProjectId(newId)
     setCurrentView('studio')
     setMode('editor')
-    showToast(`הפרויקט "${title}" נוצר בהצלחה! 🚀`, 'success')
+    
+    if (videoFile) {
+      showToast('הפרויקט נוצר מקומית! הסרטון עולה לענן ברקע כדי שהלקוח יוכל לצפות... ⏳', 'info')
+      // Background upload
+      uploadVideoToStorage(videoFile)
+        .then((cloudUrl) => {
+          setProjects((prev) =>
+            prev.map((p) => {
+              if (p.id === newId) {
+                return {
+                  ...p,
+                  versions: p.versions.map((v) =>
+                    v.id === versionId ? { ...v, videoSrc: cloudUrl } : v
+                  )
+                }
+              }
+              return p
+            })
+          )
+          showToast('הסרטון הועלה לענן בהצלחה! הלקוח יכול כעת לצפות. 🚀', 'success')
+        })
+        .catch((err) => {
+          console.warn('[CutSync] Cloud storage upload failed for new project:', err)
+          showToast(`העלאה לענן נכשלה: ${err.message || 'שגיאה לא ידועה'}. הסרטון מוצג מקומית בלבד.`, 'warning')
+        })
+    } else {
+      showToast(`הפרויקט "${title}" נוצר בהצלחה! 🚀`, 'success')
+    }
   }
 
   const handleDeleteProject = (projectId) => {
@@ -1544,23 +1573,30 @@ function MainApp() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    showToast('מעלה סרטון לענן כדי שהלקוח יוכל לצפות... ⏳', 'info')
-    let url = ''
-    try {
-      url = await uploadVideoToStorage(file)
-      showToast('הסרטון הועלה לענן בהצלחה! 🚀', 'success')
-    } catch (err) {
-      console.warn('[CutSync] Cloud storage upload failed:', err)
-      url = URL.createObjectURL(file)
-      showToast('הסרטון נשמר מקומית בדפדפן. ודא ש-Bucket בשם videos קיים ב-Supabase', 'warning')
-    }
-
+    // Immediately show the video locally for instant editing experience
+    const localUrl = URL.createObjectURL(file)
     const title = file.name.replace(/\.[^/.]+$/, '')
+    
     setVersions((prev) =>
-      prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: url, videoTitle: title } : v))
+      prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: localUrl, videoTitle: title } : v))
     )
     setCurrentTime(0)
     clearCanvas()
+    setVideoLoadError(false)
+
+    // Upload to cloud in the background
+    showToast('הסרטון מוצג מקומית, ומועלה לענן ברקע כדי שהלקוח יוכל לצפות... ⏳', 'info')
+    try {
+      const cloudUrl = await uploadVideoToStorage(file)
+      // Update the version with the persistent cloud URL
+      setVersions((prev) =>
+        prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: cloudUrl } : v))
+      )
+      showToast('הסרטון הועלה לענן בהצלחה! 🚀', 'success')
+    } catch (err) {
+      console.warn('[CutSync] Cloud storage upload failed:', err)
+      showToast(`העלאה לענן נכשלה: ${err.message || 'שגיאה לא ידועה'}. הסרטון מוצג מקומית בלבד.`, 'warning')
+    }
   }
 
   // Upload NEW Version (creates V2, V3, etc.)
@@ -1568,26 +1604,17 @@ function MainApp() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    showToast('מעלה גרסה חדשה לענן... ⏳', 'info')
-    let url = ''
-    try {
-      url = await uploadVideoToStorage(file)
-      showToast('הגרסה החדשה הועלתה לענן בהצלחה! 🚀', 'success')
-    } catch (err) {
-      console.warn('[CutSync] Cloud storage upload failed:', err)
-      url = URL.createObjectURL(file)
-      showToast('הגרסה נשמרה מקומית בדפדפן. ודא ש-Bucket בשם videos קיים ב-Supabase', 'warning')
-    }
-
+    // Immediately show the video locally for instant editing experience
+    const localUrl = URL.createObjectURL(file)
+    const title = file.name.replace(/\.[^/.]+$/, '')
     const newNumber = versions.length + 1
     const newId = generateUUID()
-    const title = file.name.replace(/\.[^/.]+$/, '')
 
     const newVersion = {
       id: newId,
       number: newNumber,
       name: `גרסה ${newNumber} (V${newNumber})`,
-      videoSrc: url,
+      videoSrc: localUrl,
       videoTitle: title,
       createdAt: new Date().toISOString(),
       comments: [],
@@ -1601,19 +1628,25 @@ function MainApp() {
       reopenRequestReason: null
     }
 
-    if (videoRef.current && !videoRef.current.paused) {
-      videoRef.current.pause()
-      setIsPlaying(false)
-    }
-
     setVersions((prev) => [...prev, newVersion])
-    setActiveVersionId(newId)
-    setCurrentTime(0)
-    clearCanvas()
-    setIsDrawingMode(false)
+    switchVersion(newId)
+    setVideoLoadError(false)
 
     if (fileInputNewVersionRef.current) {
       fileInputNewVersionRef.current.value = ''
+    }
+
+    // Upload to cloud in the background
+    showToast('הגרסה מוצגת מקומית, ומועלת לענן ברקע... ⏳', 'info')
+    try {
+      const cloudUrl = await uploadVideoToStorage(file)
+      setVersions((prev) =>
+        prev.map((v) => (v.id === newId ? { ...v, videoSrc: cloudUrl } : v))
+      )
+      showToast('הגרסה החדשה הועלתה לענן בהצלחה! 🚀', 'success')
+    } catch (err) {
+      console.warn('[CutSync] Cloud storage upload failed:', err)
+      showToast(`העלאה לענן נכשלה: ${err.message || 'שגיאה לא ידועה'}. הגרסה מוצגת מקומית בלבד.`, 'warning')
     }
   }
 
@@ -2578,62 +2611,91 @@ function MainApp() {
                 className="w-full h-full object-contain cursor-pointer"
               />
 
-              {/* Video Load Error Overlay */}
-              {videoLoadError && (
-                <div className="absolute inset-0 bg-[#0c101a]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-40 gap-3 text-white">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-1 shadow-lg shadow-amber-950/40">
-                    <Video className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-base font-bold text-white">לא ניתן להפעיל את הסרטון בקישור זה</h3>
-                  {videoSrc?.startsWith('blob:') ? (
-                    <p className="text-xs text-gray-300 max-w-md leading-relaxed">
-                      הסרטון נשמר כקובץ זמני בדפדפן העורך בלבד. כדי שהלקוח יוכל לצפות בו בכל מכשיר, יש להעלות את הסרטון לענן או לספק קישור ישיר לסרטון (Direct URL).
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-300 max-w-md leading-relaxed">
-                      כתובת הסרטון אינה זמינה כעת או שהקובץ אינו נגיש.
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-                    {mode === 'editor' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white transition-all cursor-pointer shadow-lg shadow-purple-900/40"
-                        >
-                          העלה סרטון מחדש לענן
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const url = window.prompt('הזן כתובת קישור ישיר לסרטון (MP4 URL):', '')
-                            if (url?.trim()) {
-                              setVersions((prev) =>
-                                prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: url.trim() } : v))
-                              )
-                              setVideoLoadError(false)
-                            }
-                          }}
-                          className="px-4 py-2 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/10 text-xs font-semibold text-gray-200 transition-all cursor-pointer"
-                        >
-                          הזן קישור URL ישיר
-                        </button>
-                      </>
+              {/* Empty / Error State Overlay */}
+              {(!videoSrc || videoLoadError) && (
+                <div className="absolute inset-0 bg-[#0c101a]/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center z-40 gap-6 text-white overflow-hidden">
+                  
+                  {/* Glow effect */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
+
+                  {/* Icon & Title */}
+                  <div className="flex flex-col items-center gap-4 relative z-10">
+                    <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-tr from-purple-600/20 to-indigo-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-2 shadow-2xl shadow-purple-900/30">
+                      {videoLoadError && videoSrc ? (
+                        <AlertCircle className="w-10 h-10 text-amber-400" />
+                      ) : (
+                        <Sparkles className="w-10 h-10" />
+                      )}
+                    </div>
+                    {videoLoadError && videoSrc ? (
+                      <h3 className="text-2xl font-extrabold text-white tracking-tight">אופס, הסרטון הזה לא זמין כרגע 🙈</h3>
+                    ) : (
+                      <h3 className="text-2xl font-extrabold text-white tracking-tight">בואו נתחיל לעבוד! 🎬</h3>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setVersions((prev) =>
-                          prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: DEFAULT_VIDEO } : v))
-                        )
-                        setVideoLoadError(false)
-                      }}
-                      className="px-4 py-2 rounded-xl bg-gray-800/80 hover:bg-gray-700 text-xs text-gray-300 transition-all cursor-pointer"
-                    >
-                      הצג סרטון דוגמה
-                    </button>
+                    
+                    {mode === 'editor' ? (
+                      <p className="text-sm text-gray-300 max-w-[420px] leading-relaxed">
+                        {videoLoadError && videoSrc 
+                          ? 'נראה שהקישור שבור, פג תוקף, או שהסרטון נשמר זמנית ונמחק ברענון הדף. בחר סרטון חדש כדי להמשיך לעבוד על הפרויקט.'
+                          : 'העלה סרטון למערכת, קבל קישור מהיר ללקוח, ותתחיל לאסוף הערות לתיקונים בצורה חכמה ומסודרת.'}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-300 max-w-md leading-relaxed">
+                        הסרטון לא זמין כרגע. אנא פנה לעורך הסרטון כדי לקבל קישור מעודכן.
+                      </p>
+                    )}
                   </div>
+
+                  {/* Actions for Editor */}
+                  {mode === 'editor' && (
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-4 relative z-10 w-full sm:w-auto">
+                      
+                      {/* Upload Button */}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="group relative flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-xl shadow-purple-900/40 w-full sm:w-auto justify-center overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                        <Upload className="w-5 h-5 relative z-10" />
+                        <span className="relative z-10">העלה סרטון מהמחשב</span>
+                      </button>
+
+                      {/* Add URL Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = window.prompt('הדבק כאן קישור ישיר לסרטון (MP4 URL):', '')
+                          if (url?.trim()) {
+                            setVersions((prev) =>
+                              prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: url.trim() } : v))
+                            )
+                            setVideoLoadError(false)
+                          }
+                        }}
+                        className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 hover:border-white/10 text-sm font-semibold text-gray-200 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                      >
+                        <Link2 className="w-5 h-5 text-indigo-400" />
+                        <span>קישור ישיר (URL)</span>
+                      </button>
+
+                      {/* Sample Video Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVersions((prev) =>
+                            prev.map((v) => (v.id === activeVersionId ? { ...v, videoSrc: DEFAULT_VIDEO } : v))
+                          )
+                          setVideoLoadError(false)
+                        }}
+                        className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#131723] hover:bg-[#1a2133] border border-[#2b334a] hover:border-[#384260] text-sm font-semibold text-gray-400 hover:text-gray-200 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                      >
+                        <Film className="w-5 h-5" />
+                        <span>סרטון דוגמה</span>
+                      </button>
+
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2736,7 +2798,8 @@ function MainApp() {
                 onMouseMove={(e) => {
                   if (!duration) return
                   const rect = e.currentTarget.getBoundingClientRect()
-                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+                  // RTL: 0 is on the right, 100 is on the left
+                  const pct = Math.max(0, Math.min(1, (rect.right - e.clientX) / rect.width))
                   setTimelineHover({
                     percent: pct * 100,
                     time: pct * duration
@@ -2748,24 +2811,24 @@ function MainApp() {
                 <div className="relative w-full h-2 group-hover:h-2.5 bg-[#23293c] rounded-full overflow-hidden transition-all pointer-events-none">
                   {/* Purple-Indigo Progress Fill */}
                   <div
-                    className="h-full bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500 rounded-full transition-all duration-75"
-                    style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                    className="absolute top-0 h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-600 rounded-full transition-all duration-75"
+                    style={{ right: 0, left: 'auto', width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
                   />
                 </div>
 
                 {/* Floating Scrub Head / Playhead Thumb */}
                 {duration > 0 && (
                   <div
-                    style={{ left: `${(currentTime / duration) * 100}%` }}
-                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md shadow-purple-950 border-2 border-purple-600 pointer-events-none transition-transform group-hover:scale-125 z-20"
+                    style={{ right: `${(currentTime / duration) * 100}%` }}
+                    className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md shadow-purple-950 border-2 border-purple-600 pointer-events-none transition-transform group-hover:scale-125 z-20"
                   />
                 )}
 
                 {/* Hover Timecode Tooltip (like YouTube / Vimeo) */}
                 {timelineHover && duration > 0 && (
                   <div
-                    style={{ left: `${timelineHover.percent}%` }}
-                    className="absolute bottom-7 -translate-x-1/2 bg-[#0d101a] border border-[#2f3954] text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg shadow-xl pointer-events-none z-40 whitespace-nowrap animate-in fade-in duration-100"
+                    style={{ right: `${timelineHover.percent}%` }}
+                    className="absolute bottom-7 translate-x-1/2 bg-[#0d101a] border border-[#2f3954] text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg shadow-xl pointer-events-none z-40 whitespace-nowrap animate-in fade-in duration-100"
                   >
                     {formatTime(timelineHover.time)}
                   </div>
@@ -2774,6 +2837,7 @@ function MainApp() {
                 {/* Interactive Native Range Slider (Transparent overlay for effortless scrubbing/click) */}
                 <input
                   type="range"
+                  dir="rtl"
                   min="0"
                   max={duration || 100}
                   step="0.05"
@@ -2786,7 +2850,7 @@ function MainApp() {
                 {/* Visual Comment Markers on Timeline */}
                 {duration > 0 &&
                   comments.map((comment) => {
-                    const leftPercent = (comment.time / duration) * 100
+                    const rightPercent = (comment.time / duration) * 100
                     const isHovered = hoveredMarker === comment.id
                     return (
                       <div
@@ -2797,8 +2861,8 @@ function MainApp() {
                         }}
                         onMouseEnter={() => setHoveredMarker(comment.id)}
                         onMouseLeave={() => setHoveredMarker(null)}
-                        style={{ left: `${leftPercent}%` }}
-                        className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full z-40 transition-transform ${
+                        style={{ right: `${rightPercent}%` }}
+                        className={`absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 rounded-full z-40 transition-transform ${
                           comment.completed
                             ? 'bg-emerald-400 ring-2 ring-emerald-950'
                             : 'bg-amber-400 ring-2 ring-amber-950 animate-pulse'
@@ -2806,7 +2870,7 @@ function MainApp() {
                       >
                         {/* Tooltip on hover */}
                         {isHovered && (
-                          <div className="absolute bottom-6 right-1/2 translate-x-1/2 bg-[#0c0e17] text-white text-[11px] py-1 px-2.5 rounded-xl shadow-2xl border border-[#2d364e] whitespace-nowrap z-50 pointer-events-none flex items-center gap-1.5">
+                          <div dir="rtl" className="absolute bottom-6 right-1/2 translate-x-1/2 bg-[#0c0e17] text-white text-[11px] py-1 px-2.5 rounded-xl shadow-2xl border border-[#2d364e] whitespace-nowrap z-50 pointer-events-none flex items-center gap-1.5">
                             <span className="font-mono text-purple-300 font-bold bg-purple-950/60 px-1.5 py-0.5 rounded">
                               {formatTime(comment.time)}
                             </span>

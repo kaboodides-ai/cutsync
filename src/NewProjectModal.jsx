@@ -53,18 +53,11 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
     setIsSubmitting(true)
     setUploadError('')
     let finalVideoUrl = ''
+    let fileToUpload = null
 
     if (videoSourceType === 'upload' && uploadedFile) {
-      try {
-        setUploadStatus('מעלה סרטון לענן כדי שהלקוח יוכל לצפות בו... ☁️')
-        finalVideoUrl = await uploadVideoToStorage(uploadedFile)
-      } catch (err) {
-        console.warn('[CutSync] Cloud upload failed, falling back to local URL:', err)
-        finalVideoUrl = uploadedVideoUrl
-        setUploadError(
-          'הסרטון נשמר מקומית. כדי שהלקוח יוכל לצפות בו במכשירים אחרים, יש לוודא ש-Bucket בשם videos קיים ב-Supabase Storage (או להשתמש בקישור ישיר לסרטון).'
-        )
-      }
+      finalVideoUrl = uploadedVideoUrl // Local blob URL for instant display
+      fileToUpload = uploadedFile // Pass file to parent for background upload
     } else if (videoSourceType === 'url') {
       finalVideoUrl = directVideoUrl.trim()
     } else {
@@ -79,6 +72,7 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
       title: title.trim(),
       clientName: clientName.trim() || 'הלקוח',
       videoSrc: finalVideoUrl,
+      videoFile: fileToUpload,
       videoFileName: uploadedFile ? uploadedFile.name : 'סרטון פרויקט.mp4'
     })
 
