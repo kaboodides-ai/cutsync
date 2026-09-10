@@ -278,12 +278,15 @@ function MainApp() {
       setCurrentUser(user)
       setAuthLoading(false)
       if (user) loadUserProjects(user)
+    }).catch(err => {
+      console.warn('[CutSync] getSessionUser failed:', err)
+      setAuthLoading(false)
     })
 
     // Subscribe to future auth state changes (login/logout/token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           // If this is the OAuth popup window, close it immediately
           if (window.opener && window.opener !== window) {
             window.close()
@@ -296,8 +299,9 @@ function MainApp() {
           setAuthLoading(false)
           const projs = await getUserProjects(user.id)
           setProjects(projs)
-          if (projs.length > 0) setActiveProjectId((prev) => prev || projs[0].id)
-          // Only navigate to dashboard on explicit login (not token refresh)
+          if (projs.length > 0 && !activeProjectId) setActiveProjectId(projs[0].id)
+          
+          // Only navigate to dashboard on explicit login
           if (event === 'SIGNED_IN') {
             setCurrentView((v) => (v === 'home' ? 'dashboard' : v))
             if (!hasWelcomedRef.current) {
