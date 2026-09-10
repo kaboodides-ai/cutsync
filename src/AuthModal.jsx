@@ -18,7 +18,8 @@ import {
   registerWithEmail,
   loginWithGoogle,
   loginWithDiscord,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  verifyEmailOtp
 } from './authService'
 
 // ─── Official Google "G" Icon ─────────────────────────────────
@@ -47,7 +48,7 @@ function DiscordIcon({ className = 'w-5 h-5' }) {
 // Supports: Email/Password, Google OAuth, Discord OAuth, Forgot Password
 // ─────────────────────────────────────────────────────────────
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab = 'login' }) {
-  // 'main' | 'forgot'
+  // 'main' | 'forgot' | 'verify'
   const [viewMode, setViewMode] = useState('main')
   const [tab, setTab] = useState(initialTab) // 'login' | 'register'
 
@@ -55,6 +56,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [otpToken, setOtpToken] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
@@ -74,6 +76,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
       setEmail('')
       setPassword('')
       setConfirmPassword('')
+      setOtpToken('')
     }
   }, [isOpen, initialTab])
 
@@ -99,8 +102,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
         const user = await registerWithEmail({ name, email, password })
         setLoading(false)
         if (user?.needsEmailConfirmation) {
-          setSuccess('נשלח אליך מייל אימות! פתח אותו ולחץ על הקישור כדי לסיים את ההרשמה.')
-          setViewMode('main')
+          setSuccess('קוד אימות נשלח לאימייל שלך! אנא הזן אותו כדי לסיים את ההרשמה.')
+          setViewMode('verify')
         } else {
           onAuthSuccess(user)
           onClose()
@@ -157,6 +160,26 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
     }
   }
 
+  // ── Verify OTP ──────────────────────────────────────────────
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault()
+    if (!otpToken.trim() || otpToken.length < 6) {
+      setError('נא להזין קוד אימות בן 6 ספרות')
+      return
+    }
+    setError(null)
+    setLoading(true)
+    try {
+      const user = await verifyEmailOtp(email, otpToken)
+      setLoading(false)
+      onAuthSuccess(user)
+      onClose()
+    } catch (err) {
+      setLoading(false)
+      setError(err.message || 'קוד האימות שגוי או פג תוקף.')
+    }
+  }
+
   return (
     <div
       dir="rtl"
@@ -177,6 +200,70 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
         >
           <X className="w-4 h-4" />
         </button>
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* VIEW: VERIFY OTP                                       */}
+        {/* ══════════════════════════════════════════════════════ */}
+        {viewMode === 'verify' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="text-center mb-6 mt-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3">
+                <ShieldCheck className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-black text-white">אימות חשבון</h3>
+              <p className="text-xs text-gray-400 mt-1">
+                שלחנו קוד בן 6 ספרות לכתובת:<br/>
+                <strong className="text-indigo-300" dir="ltr">{email}</strong>
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                <span>{error}</span>
+              </div>
+            )}
+            {success && (
+              <div className="mb-4 p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>{success}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-300 mb-1">קוד אימות (6 ספרות)</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  maxLength={6}
+                  value={otpToken}
+                  onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
+                  className="w-full text-center tracking-[0.5em] font-mono text-xl py-3 bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-700 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || otpToken.length < 6}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/30 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+              >
+                {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <span>אמת והתחבר</span>}
+              </button>
+            </form>
+
+            <div className="mt-5 text-center">
+              <button
+                onClick={() => setViewMode('main')}
+                className="text-[11px] text-gray-500 hover:text-gray-300 underline underline-offset-2 transition-colors cursor-pointer"
+              >
+                חזור להתחברות
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ══════════════════════════════════════════════════════ */}
         {/* VIEW: FORGOT PASSWORD                                  */}

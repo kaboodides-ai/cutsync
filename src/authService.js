@@ -104,6 +104,23 @@ export async function registerWithEmail({ name, email, password }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Email — Verify 6-digit OTP (Signup)
+// ─────────────────────────────────────────────────────────────
+export async function verifyEmailOtp(email, token) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email: email.trim().toLowerCase(),
+    token: token.trim(),
+    type: 'signup'
+  })
+
+  if (error) throw new Error(translateSupabaseError(error.message))
+  
+  // Important: After verifyOtp, Supabase automatically establishes the session!
+  const profile = await fetchProfile(data.user.id)
+  return shapeCutSyncUser(data.user, profile)
+}
+
+// ─────────────────────────────────────────────────────────────
 // Email + Password — Login
 // ─────────────────────────────────────────────────────────────
 export async function loginWithEmail(email, password) {
