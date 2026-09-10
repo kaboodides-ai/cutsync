@@ -14,12 +14,41 @@ if (!supabaseUrl || supabaseUrl.includes('YOUR_PROJECT_ID')) {
   )
 }
 
+const customStorage = {
+  getItem: (key) => {
+    if (typeof window === 'undefined') return null;
+    let val = window.localStorage.getItem(key);
+    if (!val) {
+      // Fallback to cookie
+      const cookies = document.cookie.split(';');
+      const cookie = cookies.find(c => c.trim().startsWith(key + '='));
+      if (cookie) {
+        val = decodeURIComponent(cookie.split('=')[1]);
+        // Restore to localStorage
+        window.localStorage.setItem(key, val);
+      }
+    }
+    return val;
+  },
+  setItem: (key, value) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(key, value);
+    // Also save to cookie (expires in 30 days)
+    document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+  },
+  removeItem: (key) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(key);
+    document.cookie = `${key}=; path=/; max-age=0; SameSite=Lax`;
+  }
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined
+    storage: customStorage
   }
 })
 
