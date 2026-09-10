@@ -603,15 +603,15 @@ function MainApp() {
   const handleDeleteProject = (projectId) => {
     const projToDelete = projects.find(p => p.id === projectId)
     if (!projToDelete) return
-    if (projects.length === 1) {
-      alert('לא ניתן למחוק את הפרויקט היחיד במערכת.')
-      return
-    }
+    
     if (window.confirm(`האם אתה בטוח שברצונך למחוק את הפרויקט "${projToDelete.title}"?`)) {
       setProjects(prev => {
         const remaining = prev.filter(p => p.id !== projectId)
         if (activeProjectId === projectId && remaining.length > 0) {
           setActiveProjectId(remaining[0].id)
+        } else if (remaining.length === 0) {
+          setActiveProjectId(null)
+          setCurrentView('dashboard') // Immediately drop to dashboard when no projects left
         }
         return remaining
       })
