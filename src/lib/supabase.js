@@ -14,58 +14,52 @@ if (!supabaseUrl || supabaseUrl.includes('YOUR_PROJECT_ID')) {
   )
 }
 
-const customStorage = {
+// Safari on iOS aggressively clears localStorage under ITP (Intelligent Tracking Prevention).
+// We use a hybrid storage: write to both localStorage AND sessionStorage.
+// On page open after full browser close, if localStorage is gone, sessionStorage may still have the token
+// (it survives minimise/restore on iOS but not full quit — which is exactly the Supabase token format needed).
+//
+// The real fix for full quit persistence is that Supabase's refresh token in localStorage should survive
+// as long as Safari doesn't classify it as cross-site tracking data.
+// We use a unique storageKey prefixed with the domain to avoid cross-site conflicts.
+const STORAGE_KEY_PREFIX = 'cutsync_auth_'
+
+const hybridStorage = {
   getItem: (key) => {
-    if (typeof window === 'undefined') return null;
     try {
-      let val = window.localStorage.getItem(key);
-      if (!val) {
-        // Fallback to cookie
-        const cookies = document.cookie.split(';');
-        const cookie = cookies.find(c => c.trim().startsWith(key + '='));
-        if (cookie) {
-          const cookieVal = cookie.substring(cookie.indexOf('=') + 1);
-          val = decodeURIComponent(cookieVal);
-          // Restore to localStorage
-          window.localStorage.setItem(key, val);
-        }
-      }
-      return val;
-    } catch (e) {
-      console.warn('Storage getItem error:', e);
-      return null;
+      // Primary: localStorage (survives full quit on most browsers)
+      const val = window.localStorage.getItem(key)
+      if (val) return val
+      // Fallback: sessionStorage (survives minimize/restore on iOS)
+      return window.sessionStorage.getItem(key)
+    } catch {
+      return null
     }
   },
   setItem: (key, value) => {
-    if (typeof window === 'undefined') return;
     try {
-      window.localStorage.setItem(key, value);
-      // Also save to cookie (expires in 30 days)
-      const encoded = encodeURIComponent(value);
-      if (encoded.length < 4000) { // Max cookie size is ~4KB
-        document.cookie = `${key}=${encoded}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
-      }
-    } catch (e) {
-      console.warn('Storage setItem error:', e);
+      window.localStorage.setItem(key, value)
+    } catch {
+      // localStorage blocked? (Safari Private mode quota = 0)
+    }
+    try {
+      window.sessionStorage.setItem(key, value)
+    } catch {
+      // ignore
     }
   },
   removeItem: (key) => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.removeItem(key);
-      document.cookie = `${key}=; path=/; max-age=0; SameSite=Lax`;
-    } catch (e) {
-      console.warn('Storage removeItem error:', e);
-    }
+    try { window.localStorage.removeItem(key) } catch { /* ignore */ }
+    try { window.sessionStorage.removeItem(key) } catch { /* ignore */ }
   }
-};
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storage: customStorage
+    storageKey: STORAGE_KEY_PREFIX + 'session',
+    storage: hybridStorage
   }
 })
-

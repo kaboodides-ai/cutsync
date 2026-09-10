@@ -557,11 +557,18 @@ function MainApp() {
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = 'hidden'
+      // iOS Safari ignores overflow:hidden — position:fixed prevents scroll
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
     } else {
       document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
     }
     return () => {
       document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
     }
   }, [isFullscreen])
 
@@ -1322,7 +1329,18 @@ function MainApp() {
 
     const canvas = canvasRef.current
     if (!canvas) return
-    const { x, y } = getCanvasCoordinates(e, canvas)
+
+    // Normalize touch events — on touchend, coordinates are in changedTouches
+    let clientX = e.clientX
+    let clientY = e.clientY
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX
+      clientY = e.changedTouches[0].clientY
+    } else if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    }
+    const { x, y } = getCanvasCoordinates({ clientX, clientY }, canvas)
 
     if (drawTool === 'circle') {
       const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2))
@@ -1395,24 +1413,62 @@ function MainApp() {
     }
   }
 
-  // Fullscreen Handler
+  // Fullscreen Handler — iOS Safari doesn't support requestFullscreen API at all.
+  // We detect it and use CSS fallback (isFullscreen state) for all mobile, and try native API on desktop.
+  const isMobileSafari = typeof navigator !== 'undefined' &&
+    /iP(ad|hone|od)/.test(navigator.userAgent) &&
+    !window.MSStream
+
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      if (playerContainerRef.current?.requestFullscreen) {
-        playerContainerRef.current.requestFullscreen().catch((err) => {
-          console.warn('Native fullscreen failed, using CSS fallback:', err)
-          setIsFullscreen(true)
-        })
-      } else {
-        setIsFullscreen(true)
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch((err) => console.warn(err))
-      }
+    if (isFullscreen) {
+      // Exit fullscreen
       setIsFullscreen(false)
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {})
+      } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      }
+      return
+    }
+
+    // Enter fullscreen
+    const el = playerContainerRef.current
+    if (!el) { setIsFullscreen(true); return }
+
+    if (isMobileSafari) {
+      // iOS Safari: only CSS fullscreen works
+      setIsFullscreen(true)
+      return
+    }
+
+    // Desktop / Android Chrome: try native fullscreen, fall back to CSS
+    const requestFn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen
+    if (requestFn) {
+      requestFn.call(el).then(() => {
+        setIsFullscreen(true)
+      }).catch(() => {
+        // Native failed (e.g. user gesture timeout), use CSS
+        setIsFullscreen(true)
+      })
+    } else {
+      setIsFullscreen(true)
     }
   }
+
+  // Sync isFullscreen state when user presses Esc on desktop
+  useEffect(() => {
+    const handleFsChange = () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        setIsFullscreen(false)
+      }
+    }
+    document.addEventListener('fullscreenchange', handleFsChange)
+    document.addEventListener('webkitfullscreenchange', handleFsChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange)
+      document.removeEventListener('webkitfullscreenchange', handleFsChange)
+    }
+  }, [])
 
   // Frame Snapshot Capture (PNG 📸)
   const handleCaptureSnapshot = useCallback((targetTime = null, targetDrawing = null) => {
@@ -2862,7 +2918,10 @@ function MainApp() {
             </div>
 
             {/* Custom Interactive Player Controls */}
-            <div className="p-3 bg-[#161a28] flex flex-col gap-2">
+            <div
+              className="p-3 bg-[#161a28] flex flex-col gap-2"
+              style={isFullscreen ? { paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' } : undefined}
+            >
               {/* Timeline with Modern Visual Progress & Markers */}
               <div
                 className="relative w-full h-6 flex items-center cursor-pointer group select-none"
