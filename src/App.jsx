@@ -2298,7 +2298,7 @@ function MainApp() {
                 title="חזור לדשבורד הפרויקטים"
               >
                 <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
-                <span>דשבורד פרויקטים</span>
+                <span className="hidden sm:inline">דשבורד פרויקטים</span>
               </button>
             )}
 
@@ -2923,39 +2923,41 @@ function MainApp() {
               </div>
 
               {/* Bottom control bar */}
-              <div className="flex items-center justify-between gap-2 pt-1.5 px-1">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 px-1">
                 {/* Left: Play/Pause and Step buttons */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={handlePlayPause}
-                    className="w-9 h-9 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center shadow-md shadow-purple-900/40 transition-all active:scale-95"
-                    title="רווח (Space) להפעלה/עצירה"
-                  >
-                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-                  </button>
-                  <button
-                    onClick={() => stepTime(-1)}
-                    className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
-                    title="שנייה אחורה (J / 1s)"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => stepTime(1)}
-                    className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
-                    title="שנייה קדימה (L / 1s)"
-                  >
-                    <RotateCw className="w-4 h-4" />
-                  </button>
-
-                  <span className="text-xs font-mono text-gray-300 font-semibold px-2">
+                <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handlePlayPause}
+                      className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center shadow-md shadow-purple-900/40 transition-all active:scale-95"
+                      title="רווח (Space) להפעלה/עצירה"
+                    >
+                      {isPlaying ? <Pause className="w-5 h-5 sm:w-4 sm:h-4" /> : <Play className="w-5 h-5 sm:w-4 sm:h-4 ml-0.5" />}
+                    </button>
+                    <button
+                      onClick={() => stepTime(-1)}
+                      className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                      title="שנייה אחורה (J / 1s)"
+                    >
+                      <RotateCcw className="w-5 h-5 sm:w-4 sm:h-4" />
+                    </button>
+                    <button
+                      onClick={() => stepTime(1)}
+                      className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                      title="שנייה קדימה (L / 1s)"
+                    >
+                      <RotateCw className="w-5 h-5 sm:w-4 sm:h-4" />
+                    </button>
+                  </div>
+                  
+                  <span className="text-xs sm:text-sm font-mono text-gray-300 font-semibold px-2">
                     {formatTime(currentTime)} / {formatTime(duration)}
                   </span>
                 </div>
 
                 {/* Right: Playback Speed, Snapshot, Shortcuts, Mute & Fullscreen */}
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center bg-[#181d2a]/80 rounded-xl p-0.5 border border-white/[0.06] text-[11px]">
+                <div className="flex items-center justify-end w-full sm:w-auto gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                  <div className="flex items-center bg-[#181d2a]/80 rounded-xl p-0.5 border border-white/[0.06] text-[11px] flex-shrink-0">
                     {[1, 1.25, 1.5, 2].map((rate) => (
                       <button
                         key={rate}
@@ -3016,8 +3018,8 @@ function MainApp() {
               </div>
 
               {/* Drawing Toolbar Toggle & Tools */}
-              <div className="pt-2.5 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2 px-1">
-                <div className="flex items-center gap-2">
+              <div className="pt-2.5 border-t border-white/[0.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -3508,7 +3510,7 @@ function MainApp() {
 
           {/* Add Revision Box (Simple & Conversational) */}
           <div className="bg-[#121624]/90 backdrop-blur-md p-5 rounded-3xl border border-white/[0.07] shadow-xl flex flex-col gap-3.5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
                 <div>
@@ -3522,7 +3524,7 @@ function MainApp() {
               </div>
 
               {/* Simple Clean Time Badge */}
-              <div className="flex items-center gap-1.5 bg-[#171b29] text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl text-xs font-mono font-bold shadow-inner">
+              <div className="flex items-center gap-1.5 bg-[#171b29] text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl text-xs font-mono font-bold shadow-inner flex-shrink-0">
                 <Clock className="w-3.5 h-3.5 text-purple-400" />
                 <span>פריים: {formatTime(currentTime)}</span>
               </div>
@@ -3662,7 +3664,7 @@ function MainApp() {
           
           {/* Header Card with Progress */}
           <div className="bg-[#121624]/90 backdrop-blur-md p-5 rounded-3xl border border-white/[0.07] shadow-xl">
-            <div className="flex items-center justify-between mb-3.5">
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-2 mb-3.5">
               <div>
                 <h2 className="text-base font-bold text-gray-100 flex items-center gap-2">
                   <span>{mode === 'client' ? 'ההערות והבקשות שלך 💬' : 'משימות לביצוע בפרמייר 🎬'}</span>
