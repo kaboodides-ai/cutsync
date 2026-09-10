@@ -209,6 +209,7 @@ function MainApp() {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const recordingTimerRef = useRef(null)
+  const hasWelcomedRef = useRef(false)
 
   // Auth State
   const [currentUser, setCurrentUser] = useState(null) // null until Supabase session resolves
@@ -290,7 +291,10 @@ function MainApp() {
           // Only navigate to dashboard on explicit login (not token refresh)
           if (event === 'SIGNED_IN') {
             setCurrentView((v) => (v === 'home' ? 'dashboard' : v))
-            showToast(`ברוך הבא, ${user.name}! 👋`, 'success')
+            if (!hasWelcomedRef.current) {
+              showToast(`ברוך הבא, ${user.name}! 👋`, 'success')
+              hasWelcomedRef.current = true
+            }
           }
         } else if (event === 'SIGNED_OUT') {
           setCurrentUser(null)
@@ -298,6 +302,7 @@ function MainApp() {
           setActiveProjectId(null)
           setAuthLoading(false)
           setCurrentView('home')
+          hasWelcomedRef.current = false
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Silent token refresh — just update user if needed
           const profile = await fetchProfile(session.user.id)
@@ -330,7 +335,10 @@ function MainApp() {
     setCurrentUser(user)
     loadUserProjects(user).then(() => {
       setCurrentView('dashboard')
-      showToast(`ברוך הבא, ${user.name}! התחברת בהצלחה.`, 'success')
+      if (!hasWelcomedRef.current) {
+        showToast(`ברוך הבא, ${user.name}! התחברת בהצלחה.`, 'success')
+        hasWelcomedRef.current = true
+      }
     })
   }
 
@@ -339,6 +347,7 @@ function MainApp() {
     setCurrentUser(null)
     setProjects([])
     setCurrentView('home')
+    hasWelcomedRef.current = false
     showToast('התנתקת בהצלחה מהמערכת', 'info')
   }
 
