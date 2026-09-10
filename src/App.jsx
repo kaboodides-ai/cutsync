@@ -546,6 +546,17 @@ function MainApp() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showFullscreenDrawer, setShowFullscreenDrawer] = useState(false)
 
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isFullscreen])
+
   // Version Approval & Reopen State
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [approverName, setApproverName] = useState('הלקוח')
@@ -2563,7 +2574,7 @@ function MainApp() {
             ref={playerContainerRef}
             className={`bg-[#111420] transition-all overflow-hidden relative select-none ${
               isFullscreen
-                ? 'fixed inset-0 z-50 rounded-none border-none flex flex-col justify-between w-screen h-screen bg-[#080a10]'
+                ? 'fixed inset-0 z-50 rounded-none border-none flex flex-col justify-between w-full h-[100dvh] bg-[#080a10]'
                 : 'rounded-3xl border border-white/[0.08] shadow-2xl shadow-black/70'
             }`}
           >
@@ -2625,6 +2636,8 @@ function MainApp() {
               <video
                 ref={videoRef}
                 src={videoSrc}
+                playsInline
+                webkit-playsinline="true"
                 onPlay={() => {
                   setIsPlaying(true)
                   if (!hasDrawing) clearCanvas()
@@ -2739,15 +2752,34 @@ function MainApp() {
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onTouchStart={(e) => {
+                  if (e.touches && e.touches.length > 0) {
+                    const touch = e.touches[0]
+                    handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY })
+                  }
+                }}
+                onTouchMove={(e) => {
+                  // Prevent scrolling while drawing!
+                  if (isDrawingMode && drawTool !== 'select') {
+                    e.preventDefault()
+                  }
+                  if (e.touches && e.touches.length > 0) {
+                    const touch = e.touches[0]
+                    handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY })
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  handleMouseUp(e)
+                }}
                 className={`absolute inset-0 w-full h-full object-contain ${
                   isDrawingMode
                     ? isDraggingShape || hoveredShapeId
-                      ? 'cursor-move z-30 pointer-events-auto bg-black/10'
+                      ? 'cursor-move z-30 pointer-events-auto bg-black/10 touch-none'
                       : drawTool === 'select'
-                      ? 'cursor-default z-30 pointer-events-auto bg-black/10'
+                      ? 'cursor-default z-30 pointer-events-auto bg-black/10 touch-none'
                       : drawTool === 'text'
-                      ? 'cursor-text z-30 pointer-events-auto bg-black/10'
-                      : 'cursor-crosshair z-30 pointer-events-auto bg-black/10'
+                      ? 'cursor-text z-30 pointer-events-auto bg-black/10 touch-none'
+                      : 'cursor-crosshair z-30 pointer-events-auto bg-black/10 touch-none'
                     : hasDrawing
                     ? 'z-20 pointer-events-none'
                     : 'pointer-events-none'
