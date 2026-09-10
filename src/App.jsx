@@ -2267,11 +2267,11 @@ function MainApp() {
       </div>
 
       {/* Top Navigation */}
-      <header className="border-b border-white/[0.08] bg-[#10131e]/85 backdrop-blur-xl px-4 lg:px-8 py-3 sticky top-0 z-40 transition-colors shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <header className="border-b border-white/[0.08] bg-[#10131e]/85 backdrop-blur-xl px-2 lg:px-8 py-2 sm:py-3 sticky top-0 z-40 transition-colors shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
           
           {/* Home Button, Dashboard Button & Brand Logo */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {!isDirectClientLink && (
               <button
                 type="button"
@@ -2279,10 +2279,10 @@ function MainApp() {
                   setCurrentView('home')
                   window.history.pushState({}, '', window.location.pathname)
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#1f2538] border border-white/[0.08] text-xs font-semibold text-gray-300 hover:text-white transition-all shadow-sm group"
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#1f2538] border border-white/[0.08] text-xs font-semibold text-gray-300 hover:text-white transition-all shadow-sm group"
                 title="חזור לדף הבית של CutSync"
               >
-                <Home className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+                <Home className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
                 <span className="hidden sm:inline">דף הבית</span>
               </button>
             )}
@@ -2294,10 +2294,10 @@ function MainApp() {
                   setCurrentView('dashboard')
                   window.history.pushState({}, '', window.location.pathname)
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:text-white transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:text-white transition-all shadow-sm"
                 title="חזור לדשבורד הפרויקטים"
               >
-                <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
+                <LayoutDashboard className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-400" />
                 <span className="hidden sm:inline">דשבורד פרויקטים</span>
               </button>
             )}
@@ -2312,10 +2312,10 @@ function MainApp() {
               }}
               title={isDirectClientLink ? currentProject.title : (mode === 'editor' ? "חזור לדשבורד" : "דף הבית")}
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30 flex-shrink-0">
                 <Scissors className="w-4 h-4 text-white" />
               </div>
-              <div className="hidden md:block">
+              <div className="hidden sm:block">
                 <div className="flex items-center gap-1.5">
                   <h1 className="text-sm font-bold tracking-normal text-white truncate max-w-[140px]">{currentProject.title}</h1>
                   {mode === 'editor' && !isDirectClientLink && (
@@ -2331,11 +2331,8 @@ function MainApp() {
                       <Pencil className="w-3 h-3" />
                     </button>
                   )}
-                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
+                  <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
                     Studio
-                  </span>
-                  <span className="hidden xl:inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
-                    by kaboodi
                   </span>
                 </div>
               </div>
@@ -2344,28 +2341,28 @@ function MainApp() {
 
           {/* Role Identity Badge (Strict Separation: No mode switching on the same screen) */}
           {mode === 'editor' ? (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-indigo-500/10 border border-indigo-500/30 text-xs font-semibold text-indigo-200 shadow-sm select-none">
+            <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-indigo-500/10 border border-indigo-500/30 text-xs font-semibold text-indigo-200 shadow-sm select-none flex-shrink-0">
               <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
               <span>סטודיו עריכה 🎬</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-purple-500/10 border border-purple-500/30 text-xs font-semibold text-purple-200 shadow-sm select-none">
+            <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-purple-500/10 border border-purple-500/30 text-xs font-semibold text-purple-200 shadow-sm select-none flex-shrink-0">
               <Eye className="w-3.5 h-3.5 text-purple-400" />
               <span>מרחב צפייה ומשוב 👤</span>
             </div>
           )}
 
           {/* Actions Bar */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {mode === 'editor' && (
               <>
                 <button
                   onClick={() => copySpecificClientLink(currentProject.id)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/40 text-xs text-emerald-300 font-semibold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-2 sm:px-3.5 py-1.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/40 text-xs text-emerald-300 font-semibold transition-all shadow-sm"
                   title="העתק קישור סקירה ישיר ונקי לשליחה ללקוח זה"
                 >
-                  <Link2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>העתק קישור ללקוח 🔗</span>
+                  <Link2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">העתק קישור ללקוח 🔗</span>
                 </button>
 
                 <input
@@ -2377,20 +2374,20 @@ function MainApp() {
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#20263a] border border-white/[0.08] text-xs text-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#20263a] border border-white/[0.08] text-xs text-gray-200 transition-colors"
                   title="העלה סרטון מקומי מהמחשב"
                 >
-                  <Upload className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="hidden md:inline">החלף סרטון</span>
+                  <Upload className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-400" />
+                  <span className="hidden lg:inline">החלף סרטון</span>
                 </button>
 
                 <button
                   onClick={exportPremiereCSV}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#20263a] border border-white/[0.08] text-xs text-indigo-300 transition-colors"
+                  className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#20263a] border border-white/[0.08] text-xs text-indigo-300 transition-colors"
                   title="ייצא קובץ מרקרים שנטען ישירות בפרמייר"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="hidden md:inline">מרקרים ל-Premiere</span>
+                  <FileSpreadsheet className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-400" />
+                  <span className="hidden lg:inline">מרקרים ל-Premiere</span>
                 </button>
                 {currentUser && (
                   <div
@@ -2398,15 +2395,15 @@ function MainApp() {
                       setAuthModalInitialTab('login')
                       setShowAuthModal(true)
                     }}
-                    className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#141826] border border-white/[0.08] cursor-pointer hover:border-purple-500/50 transition-all"
+                    className="flex items-center gap-2 px-1 sm:px-2.5 py-1 rounded-full bg-[#141826] border border-white/[0.08] cursor-pointer hover:border-purple-500/50 transition-all"
                     title="לחץ להחלפת משתמש"
                   >
                     <img
                       src={currentUser.avatar}
                       alt={currentUser.name}
-                      className="w-5 h-5 rounded-full object-cover"
+                      className="w-7 h-7 sm:w-5 sm:h-5 rounded-full object-cover"
                     />
-                    <span className="text-[11px] font-semibold text-gray-200 truncate max-w-[80px]">
+                    <span className="hidden lg:inline text-[11px] font-semibold text-gray-200 truncate max-w-[80px]">
                       {currentUser.name}
                     </span>
                   </div>
@@ -2417,7 +2414,7 @@ function MainApp() {
             {/* Sound FX Toggle (Dopamine) */}
             <button
               onClick={handleToggleSound}
-              className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+              className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center flex-shrink-0 ${
                 soundOn
                   ? 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:bg-purple-500/30 shadow-sm'
                   : 'bg-[#161a28]/80 border-white/[0.08] text-gray-500 hover:text-gray-300'
@@ -2430,7 +2427,7 @@ function MainApp() {
             {mode === 'client' ? (
               <button
                 onClick={shareViaWhatsApp}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 transition-all hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 transition-all hover:scale-105 active:scale-95 flex-shrink-0"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>סיימתי להעיר! ({comments.length})</span>
@@ -2438,10 +2435,11 @@ function MainApp() {
             ) : (
               <button
                 onClick={shareViaWhatsApp}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-950/40 transition-colors"
+                className="flex items-center gap-2 px-2 sm:px-3.5 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-950/40 transition-colors flex-shrink-0"
+                title="שתף סיכום בוואטסאפ"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>שתף סיכום בוואטסאפ</span>
+                <MessageCircle className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">שתף סיכום</span>
               </button>
             )}
           </div>
