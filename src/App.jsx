@@ -81,7 +81,8 @@ import {
   saveVersionApproval,
   uploadVideoToStorage,
   generateUUID,
-  isValidUUID
+  isValidUUID,
+  deleteProject
 } from './authService'
 import { supabase } from './lib/supabase'
 
@@ -605,6 +606,9 @@ function MainApp() {
     if (!projToDelete) return
     
     if (window.confirm(`האם אתה בטוח שברצונך למחוק את הפרויקט "${projToDelete.title}"?`)) {
+      // Background delete from Supabase
+      deleteProject(projectId)
+      
       setProjects(prev => {
         const remaining = prev.filter(p => p.id !== projectId)
         if (activeProjectId === projectId && remaining.length > 0) {

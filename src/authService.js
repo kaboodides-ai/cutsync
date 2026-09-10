@@ -228,8 +228,7 @@ export async function getUserProjects(userId) {
     return []
   }
   if (!projectRows || projectRows.length === 0) {
-    // New user — seed a starter project
-    return await seedStarterProject(userId)
+    return []
   }
 
   // Fetch versions + comments for all projects
@@ -514,6 +513,17 @@ export async function saveUserProjects(userId, projects) {
         })
       }
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Delete a specific project
+// ─────────────────────────────────────────────────────────────
+export async function deleteProject(projectId) {
+  if (!projectId) return
+  const { error } = await supabase.from('projects').delete().eq('id', projectId)
+  if (error) {
+    console.error('[CutSync] Error deleting project:', error)
   }
 }
 
