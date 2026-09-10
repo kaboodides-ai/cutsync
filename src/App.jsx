@@ -653,7 +653,7 @@ function MainApp() {
 
   // Save projects to Supabase whenever they change (debounced to avoid hammering)
   useEffect(() => {
-    if (!currentUser?.id || projects.length === 0) return
+    if (!currentUser?.id) return
     const timer = setTimeout(() => {
       saveUserProjects(currentUser.id, projects)
     }, 800)
