@@ -310,6 +310,10 @@ function MainApp() {
             }
           }
         } else if (event === 'SIGNED_OUT') {
+          console.warn('[CutSync] Supabase emitted SIGNED_OUT event!')
+          if (hasWelcomedRef.current) {
+            showToast('הסשן פג, נותקת מהמערכת', 'warning')
+          }
           setCurrentUser(null)
           setProjects([])
           setActiveProjectId(null)

@@ -17,29 +17,46 @@ if (!supabaseUrl || supabaseUrl.includes('YOUR_PROJECT_ID')) {
 const customStorage = {
   getItem: (key) => {
     if (typeof window === 'undefined') return null;
-    let val = window.localStorage.getItem(key);
-    if (!val) {
-      // Fallback to cookie
-      const cookies = document.cookie.split(';');
-      const cookie = cookies.find(c => c.trim().startsWith(key + '='));
-      if (cookie) {
-        val = decodeURIComponent(cookie.split('=')[1]);
-        // Restore to localStorage
-        window.localStorage.setItem(key, val);
+    try {
+      let val = window.localStorage.getItem(key);
+      if (!val) {
+        // Fallback to cookie
+        const cookies = document.cookie.split(';');
+        const cookie = cookies.find(c => c.trim().startsWith(key + '='));
+        if (cookie) {
+          const cookieVal = cookie.substring(cookie.indexOf('=') + 1);
+          val = decodeURIComponent(cookieVal);
+          // Restore to localStorage
+          window.localStorage.setItem(key, val);
+        }
       }
+      return val;
+    } catch (e) {
+      console.warn('Storage getItem error:', e);
+      return null;
     }
-    return val;
   },
   setItem: (key, value) => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(key, value);
-    // Also save to cookie (expires in 30 days)
-    document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+    try {
+      window.localStorage.setItem(key, value);
+      // Also save to cookie (expires in 30 days)
+      const encoded = encodeURIComponent(value);
+      if (encoded.length < 4000) { // Max cookie size is ~4KB
+        document.cookie = `${key}=${encoded}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+      }
+    } catch (e) {
+      console.warn('Storage setItem error:', e);
+    }
   },
   removeItem: (key) => {
     if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(key);
-    document.cookie = `${key}=; path=/; max-age=0; SameSite=Lax`;
+    try {
+      window.localStorage.removeItem(key);
+      document.cookie = `${key}=; path=/; max-age=0; SameSite=Lax`;
+    } catch (e) {
+      console.warn('Storage removeItem error:', e);
+    }
   }
 };
 
