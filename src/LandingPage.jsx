@@ -233,16 +233,20 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
         <div className="mt-16 w-full max-w-5xl rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-[#25304c]/80 via-[#161c2d]/90 to-[#0c0f18] border border-[#2d3a5a] shadow-2xl shadow-purple-950/70 relative">
           
           {/* Top Mockup Window Controls */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#232d44] text-xs text-gray-400 bg-[#101422] rounded-t-2xl">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500/80"></span>
-              <span className="w-3 h-3 rounded-full bg-amber-500/80"></span>
-              <span className="w-3 h-3 rounded-full bg-emerald-500/80"></span>
-              <span className="mr-3 font-mono text-[11px] text-gray-300 font-semibold">CutSync Studio — סרטון תדמית v1 (גרסה 1)</span>
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#232d44] text-xs text-gray-400 bg-[#101422] rounded-t-2xl gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80"></span>
+                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/80"></span>
+                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80"></span>
+              </div>
+              <span className="mr-2 sm:mr-3 font-mono text-[9px] sm:text-[11px] text-gray-300 font-semibold truncate leading-none pt-0.5">
+                CutSync Studio <span className="hidden sm:inline">— סרטון תדמית v1 (גרסה 1)</span>
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" /> אושר ע"י הלקוח
+            <div className="flex items-center flex-shrink-0">
+              <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] sm:text-[10px] font-bold flex items-center gap-1 whitespace-nowrap">
+                <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" /> אושר<span className="hidden sm:inline"> ע"י הלקוח</span>
               </span>
             </div>
           </div>
@@ -290,9 +294,9 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
                 <div className="absolute top-0 right-[25%] w-2.5 h-2.5 rounded-full bg-amber-400 -translate-y-[1px]"></div>
                 <div className="absolute top-0 right-[60%] w-2.5 h-2.5 rounded-full bg-emerald-400 -translate-y-[1px]"></div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-gray-300 font-mono">
-                <span>00:08 / 00:23</span>
-                <span className="text-emerald-400 font-sans font-bold">3 תיקונים רשומים בציר הזמן</span>
+              <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between text-[10px] sm:text-[11px] text-gray-300 gap-1.5 sm:gap-0 mt-1 sm:mt-0">
+                <span className="font-mono order-2 sm:order-1" dir="ltr">00:08 / 00:23</span>
+                <span className="text-emerald-400 font-sans font-bold order-1 sm:order-2">3 תיקונים רשומים בציר הזמן</span>
               </div>
             </div>
           </div>
