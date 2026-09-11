@@ -265,9 +265,9 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
             </div>
 
             {/* Simulated Annotations Over the Frame */}
-            <div className="absolute top-1/4 right-1/4 pointer-events-none animate-pulse">
-              <div className="w-32 h-32 rounded-full border-4 border-amber-400/80 shadow-lg shadow-amber-400/30 flex items-center justify-center">
-                <span className="text-[11px] font-bold text-amber-300 bg-black/60 px-2 py-0.5 rounded">להחליף שוט</span>
+            <div className="absolute top-[10%] right-[10%] sm:top-1/4 sm:right-1/4 pointer-events-none animate-pulse">
+              <div className="w-16 h-16 sm:w-32 sm:h-32 rounded-full border-2 sm:border-4 border-amber-400/80 shadow-lg shadow-amber-400/30 flex items-center justify-center">
+                <span className="text-[8px] sm:text-[11px] font-bold text-amber-300 bg-black/60 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">להחליף שוט</span>
               </div>
             </div>
 
