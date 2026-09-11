@@ -233,18 +233,18 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
         <div className="mt-16 w-full max-w-5xl rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-[#25304c]/80 via-[#161c2d]/90 to-[#0c0f18] border border-[#2d3a5a] shadow-2xl shadow-purple-950/70 relative">
           
           {/* Top Mockup Window Controls */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#232d44] text-xs text-gray-400 bg-[#101422] rounded-t-2xl gap-2">
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#232d44] text-xs text-gray-400 bg-[#101422] rounded-t-2xl gap-2" dir="ltr">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80"></span>
                 <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/80"></span>
                 <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80"></span>
               </div>
-              <span className="mr-2 sm:mr-3 font-mono text-[9px] sm:text-[11px] text-gray-300 font-semibold truncate leading-none pt-0.5">
+              <span className="ml-2 sm:ml-3 font-mono text-[9px] sm:text-[11px] text-gray-300 font-semibold truncate leading-none pt-0.5">
                 CutSync Studio <span className="hidden sm:inline">— סרטון תדמית v1 (גרסה 1)</span>
               </span>
             </div>
-            <div className="flex items-center flex-shrink-0">
+            <div className="flex items-center flex-shrink-0" dir="rtl">
               <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] sm:text-[10px] font-bold flex items-center gap-1 whitespace-nowrap">
                 <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" /> אושר<span className="hidden sm:inline"> ע"י הלקוח</span>
               </span>
@@ -256,11 +256,11 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
             {/* Background Simulated Frame */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#12182b] via-[#0e1424] to-[#070a12] flex items-center justify-center">
               <div className="w-full h-full flex flex-col items-center justify-center text-center p-8 opacity-90">
-                <div className="w-20 h-20 rounded-3xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-2xl shadow-purple-900/40">
-                  <Play className="w-9 h-9 fill-purple-400 ml-1" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform shadow-2xl shadow-purple-900/40">
+                  <Play className="w-7 h-7 sm:w-9 sm:h-9 fill-purple-400 ml-1" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">לחץ כאן כדי לפתוח את הסטודיו החי</h3>
-                <p className="text-xs text-gray-400 max-w-md">התנסה בכל הכלים: סימון וציור, הערות קוליות, אישור גרסאות וייצוא לפרמייר</p>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">לחץ כאן כדי לפתוח את הסטודיו החי</h3>
+                <p className="hidden sm:block text-xs text-gray-400 max-w-md">התנסה בכל הכלים: סימון וציור, הערות קוליות, אישור גרסאות וייצוא לפרמייר</p>
               </div>
             </div>
 
