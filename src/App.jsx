@@ -2345,40 +2345,11 @@ function MainApp() {
       <header className="border-b border-white/[0.08] bg-[#10131e]/85 backdrop-blur-xl px-2 lg:px-8 py-2 sm:py-3 sticky top-0 z-40 transition-colors shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
           
-          {/* Home Button, Dashboard Button & Brand Logo */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {!isDirectClientLink && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentView('home')
-                  window.history.pushState({}, '', window.location.pathname)
-                }}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#1f2538] border border-white/[0.08] text-xs font-semibold text-gray-300 hover:text-white transition-all shadow-sm group"
-                title="חזור לדף הבית של CutSync"
-              >
-                <Home className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline">דף הבית</span>
-              </button>
-            )}
-
-            {mode === 'editor' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentView('dashboard')
-                  window.history.pushState({}, '', window.location.pathname)
-                }}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 text-xs font-semibold text-indigo-300 hover:text-white transition-all shadow-sm"
-                title="חזור לדשבורד הפרויקטים"
-              >
-                <LayoutDashboard className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-400" />
-                <span className="hidden sm:inline">דשבורד פרויקטים</span>
-              </button>
-            )}
-
+          {/* Right Side: Navigation & Identity */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+            {/* CutSync Home Logo - Click to go back */}
             <div
-              className={`flex items-center gap-2 select-none ${isDirectClientLink ? 'cursor-default' : 'cursor-pointer'}`}
+              className={`flex items-center gap-2 select-none ${isDirectClientLink ? 'cursor-default' : 'cursor-pointer'} transition-transform active:scale-95`}
               onClick={() => {
                 if (!isDirectClientLink) {
                   if (mode === 'editor') setCurrentView('dashboard')
@@ -2390,106 +2361,47 @@ function MainApp() {
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30 flex-shrink-0">
                 <Scissors className="w-4 h-4 text-white" />
               </div>
-              <div className="hidden sm:block">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="text-sm font-bold tracking-normal text-white truncate max-w-[140px]">{currentProject.title}</h1>
-                  {mode === 'editor' && !isDirectClientLink && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setProjectToEditInStudio(currentProject)
-                      }}
-                      className="p-1 rounded-md text-gray-400 hover:text-purple-300 hover:bg-[#1a2337] transition-all cursor-pointer"
-                      title="ערוך שם פרויקט ולקוח"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                  )}
-                  <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
-                    Studio
-                  </span>
-                </div>
-              </div>
             </div>
+
+            {/* Separator */}
+            <div className="w-px h-6 bg-[#232d44] hidden sm:block"></div>
+
+            {/* Project Title */}
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold tracking-normal text-white truncate max-w-[150px] sm:max-w-[200px]">{currentProject.title}</h1>
+              {mode === 'editor' && !isDirectClientLink && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setProjectToEditInStudio(currentProject)
+                  }}
+                  className="p-1 rounded-md text-gray-400 hover:text-purple-300 hover:bg-[#1a2337] transition-all cursor-pointer"
+                  title="ערוך שם פרויקט ולקוח"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Role Badge */}
+            {mode === 'editor' ? (
+              <span className="hidden md:inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                סטודיו עריכה 🎬
+              </span>
+            ) : (
+              <span className="hidden md:inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                מרחב משוב 👤
+              </span>
+            )}
           </div>
 
-          {/* Role Identity Badge (Strict Separation: No mode switching on the same screen) */}
-          {mode === 'editor' ? (
-            <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-indigo-500/10 border border-indigo-500/30 text-xs font-semibold text-indigo-200 shadow-sm select-none flex-shrink-0">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
-              <span>סטודיו עריכה 🎬</span>
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-purple-500/10 border border-purple-500/30 text-xs font-semibold text-purple-200 shadow-sm select-none flex-shrink-0">
-              <Eye className="w-3.5 h-3.5 text-purple-400" />
-              <span>מרחב צפייה ומשוב 👤</span>
-            </div>
-          )}
-
-          {/* Actions Bar */}
+          {/* Left Side: Avatar & Sound */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {mode === 'editor' && (
-              <>
-                <button
-                  onClick={() => copySpecificClientLink(currentProject.id)}
-                  className="flex items-center gap-1.5 px-2 sm:px-3.5 py-1.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/40 text-xs text-emerald-300 font-semibold transition-all shadow-sm"
-                  title="העתק קישור סקירה ישיר ונקי לשליחה ללקוח זה"
-                >
-                  <Link2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">העתק קישור ללקוח 🔗</span>
-                </button>
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  accept="video/*"
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#20263a] border border-white/[0.08] text-xs text-gray-200 transition-colors"
-                  title="העלה סרטון מקומי מהמחשב"
-                >
-                  <Upload className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-400" />
-                  <span className="hidden lg:inline">החלף סרטון</span>
-                </button>
-
-                <button
-                  onClick={exportPremiereCSV}
-                  className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-[#161a28]/80 hover:bg-[#20263a] border border-white/[0.08] text-xs text-indigo-300 transition-colors"
-                  title="ייצא קובץ מרקרים שנטען ישירות בפרמייר"
-                >
-                  <FileSpreadsheet className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-400" />
-                  <span className="hidden lg:inline">מרקרים ל-Premiere</span>
-                </button>
-                {currentUser && (
-                  <div
-                    onClick={() => {
-                      setAuthModalInitialTab('login')
-                      setShowAuthModal(true)
-                    }}
-                    className="flex items-center gap-2 px-1 sm:px-2.5 py-1 rounded-full bg-[#141826] border border-white/[0.08] cursor-pointer hover:border-purple-500/50 transition-all"
-                    title="לחץ להחלפת משתמש"
-                  >
-                    <img
-                      src={currentUser.avatar}
-                      alt={currentUser.name}
-                      className="w-7 h-7 sm:w-5 sm:h-5 rounded-full object-cover"
-                    />
-                    <span className="hidden lg:inline text-[11px] font-semibold text-gray-200 truncate max-w-[80px]">
-                      {currentUser.name}
-                    </span>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Sound FX Toggle (Dopamine) */}
+            {/* Sound FX Toggle */}
             <button
               onClick={handleToggleSound}
-              className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center flex-shrink-0 ${
+              className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
                 soundOn
                   ? 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:bg-purple-500/30 shadow-sm'
                   : 'bg-[#161a28]/80 border-white/[0.08] text-gray-500 hover:text-gray-300'
@@ -2499,23 +2411,25 @@ function MainApp() {
               {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
 
-            {mode === 'client' ? (
-              <button
-                onClick={shareViaWhatsApp}
-                className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+            {/* User Avatar */}
+            {currentUser && (
+              <div
+                onClick={() => {
+                  setAuthModalInitialTab('login')
+                  setShowAuthModal(true)
+                }}
+                className="flex items-center gap-2 px-1 sm:px-2.5 py-1 rounded-full bg-[#141826] border border-white/[0.08] cursor-pointer hover:border-purple-500/50 transition-all"
+                title="לחץ להחלפת משתמש"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>סיימתי להעיר! ({comments.length})</span>
-              </button>
-            ) : (
-              <button
-                onClick={shareViaWhatsApp}
-                className="flex items-center gap-2 px-2 sm:px-3.5 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-950/40 transition-colors flex-shrink-0"
-                title="שתף סיכום בוואטסאפ"
-              >
-                <MessageCircle className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                <span className="hidden sm:inline">שתף סיכום</span>
-              </button>
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
+                />
+                <span className="hidden lg:inline text-[11px] font-semibold text-gray-200 truncate max-w-[100px]">
+                  {currentUser.name}
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -2614,6 +2528,22 @@ function MainApp() {
             {/* Upload New Version Button for Editor */}
             {mode === 'editor' && (
               <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept="video/*"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-gray-300 hover:text-white text-xs font-semibold transition-all"
+                  title="החלף את הסרטון בגרסה הנוכחית"
+                >
+                  <Upload className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="hidden sm:inline">החלף סרטון נוכחי</span>
+                </button>
+
                 <input
                   type="file"
                   ref={fileInputNewVersionRef}
@@ -3759,6 +3689,41 @@ function MainApp() {
         {/* Right Section: Interactive Checklist (5 cols) */}
         <section className="lg:col-span-5 flex flex-col gap-4">
           
+          {/* Quick Actions Bar for Editor/Client */}
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            {mode === 'editor' && (
+              <>
+                <button
+                  onClick={() => copySpecificClientLink(currentProject.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-xs text-emerald-300 font-semibold transition-all shadow-sm"
+                  title="העתק קישור סקירה ישיר ונקי לשליחה ללקוח זה"
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  <span>העתק קישור ללקוח</span>
+                </button>
+                <button
+                  onClick={exportPremiereCSV}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-xs text-indigo-300 font-semibold transition-all shadow-sm"
+                  title="ייצא קובץ מרקרים שנטען ישירות בפרמייר"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>מרקרים ל-Premiere</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={shareViaWhatsApp}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${
+                mode === 'client' 
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40' 
+                  : 'bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-gray-300 hover:text-white'
+              }`}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>{mode === 'client' ? `סיימתי להעיר! (${comments.length})` : 'שתף סיכום בוואטסאפ'}</span>
+            </button>
+          </div>
+
           {/* Header Card with Progress */}
           <div className="bg-[#121624]/90 backdrop-blur-md p-5 rounded-3xl border border-white/[0.07] shadow-xl">
             <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-2 mb-3.5">
