@@ -93,29 +93,25 @@ export async function registerWithEmail({ name, email, password }) {
 
   if (error) throw new Error(translateSupabaseError(error.message))
 
-  // If email confirmation is required, data.session will be null
+  // If email confirmation is disabled, data.session will already exist.
+  // If not, try immediate sign in just in case:
   if (!data.session) {
-    // Return a partial user so the UI can show "check your email"
+    try {
+      const { data: loginData } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password
+      })
+      if (loginData?.session && loginData?.user) {
+        const profile = await fetchProfile(loginData.user.id)
+        return shapeCutSyncUser(loginData.user, profile)
+      }
+    } catch {
+      // Fallback
+    }
+
     return { id: data.user?.id, name: cleanName, email: cleanEmail, provider: 'email', avatar: null, needsEmailConfirmation: true }
   }
 
-  const profile = await fetchProfile(data.user.id)
-  return shapeCutSyncUser(data.user, profile)
-}
-
-// ─────────────────────────────────────────────────────────────
-// Email — Verify 6-digit OTP (Signup)
-// ─────────────────────────────────────────────────────────────
-export async function verifyEmailOtp(email, token) {
-  const { data, error } = await supabase.auth.verifyOtp({
-    email: email.trim().toLowerCase(),
-    token: token.trim(),
-    type: 'signup'
-  })
-
-  if (error) throw new Error(translateSupabaseError(error.message))
-  
-  // Important: After verifyOtp, Supabase automatically establishes the session!
   const profile = await fetchProfile(data.user.id)
   return shapeCutSyncUser(data.user, profile)
 }
