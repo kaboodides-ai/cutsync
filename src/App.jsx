@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Play,
   Pause,
@@ -203,6 +204,7 @@ function MainApp() {
   const canvasRef = useRef(null)
   const playerContainerRef = useRef(null)
   const canvasSnapshotRef = useRef(null)
+  const fsCanvasRef = useRef(null) // canvas inside the fullscreen portal
 
   // Voice Recording State
   const [isRecording, setIsRecording] = useState(false)
@@ -621,20 +623,24 @@ function MainApp() {
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = 'hidden'
-      // iOS Safari ignores overflow:hidden — position:fixed prevents scroll
-      document.body.style.position = 'fixed'
-      document.body.style.width = '100%'
     } else {
       document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.width = ''
     }
     return () => {
       document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.width = ''
     }
   }, [isFullscreen])
+
+  // Sync drawings from main canvasRef to fsCanvasRef (fullscreen portal canvas)
+  useEffect(() => {
+    if (!isFullscreen) return
+    const src = canvasRef.current
+    const dst = fsCanvasRef.current
+    if (!src || !dst) return
+    const ctx = dst.getContext('2d')
+    ctx.clearRect(0, 0, dst.width, dst.height)
+    ctx.drawImage(src, 0, 0)
+  })
 
   // Version Approval & Reopen State
   const [showApprovalModal, setShowApprovalModal] = useState(false)
@@ -2706,153 +2712,11 @@ function MainApp() {
           {/* Video Player Container (Integrated) */}
           <div
             ref={playerContainerRef}
-            className={`bg-zinc-950 transition-all overflow-hidden relative select-none flex flex-col ${
-              isFullscreen
-                ? 'fixed inset-0 z-50 rounded-none border-none w-full h-[100dvh] bg-black justify-between'
-                : 'rounded-xl border border-zinc-800 shadow-sm'
-            }`}
+            className="bg-zinc-950 transition-all overflow-hidden relative select-none flex flex-col rounded-xl border border-zinc-800 shadow-sm"
           >
-            {/* Fullscreen Floating Top Controls */}
-            {isFullscreen && (
-              <>
-                {/* Top-Left: Exit Fullscreen Button */}
-                <div
-                  className="absolute top-3 left-3 sm:top-4 sm:left-4 z-40 flex items-center gap-2"
-                  style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-                >
-                  <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-white border border-zinc-700 shadow-2xl backdrop-blur-md text-xs font-semibold active:scale-95 cursor-pointer transition-all"
-                    title="צא ממסך מלא (F / Esc)"
-                  >
-                    <Minimize className="w-4 h-4 text-indigo-400" />
-                    <span>צא ממסך מלא</span>
-                  </button>
-                </div>
-
-                {/* Top-Right: Draw & Comments Buttons */}
-                <div
-                  className="absolute top-3 right-3 sm:top-4 sm:right-4 z-40 flex items-center gap-2"
-                  style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isDrawingMode && videoRef.current && !videoRef.current.paused) {
-                        videoRef.current.pause()
-                        setIsPlaying(false)
-                      }
-                      if (isDrawingMode) setTextInputState(null)
-                      setIsDrawingMode(!isDrawingMode)
-                    }}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold shadow-2xl backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
-                      isDrawingMode
-                        ? 'bg-amber-500 text-black shadow-amber-500/20 font-bold'
-                        : 'bg-zinc-900/90 text-zinc-200 border border-zinc-700 hover:bg-zinc-800'
-                    }`}
-                  >
-                    <PenTool className="w-3.5 h-3.5" />
-                    <span>{isDrawingMode ? 'סגור סימון ✕' : 'סמן על הפריים ✏️'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowFullscreenDrawer((prev) => !prev)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 shadow-2xl backdrop-blur-md text-xs font-semibold active:scale-95 cursor-pointer transition-all"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>הערות ({comments.length})</span>
-                  </button>
-                </div>
-
-                {/* Floating Drawing Palette (Fullscreen) */}
-                {isDrawingMode && (
-                  <div
-                    className="absolute top-16 right-3 left-3 sm:left-auto sm:right-4 z-40 max-w-lg bg-zinc-950/95 border border-zinc-800 rounded-xl p-2 shadow-2xl backdrop-blur-md flex items-center gap-1.5 overflow-x-auto"
-                    style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => { playPop(); setDrawTool('select'); setTextInputState(null) }}
-                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'select' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                      title="בחר והזז צורות"
-                    >
-                      <MousePointer className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playPop(); setDrawTool('pen'); setTextInputState(null) }}
-                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'pen' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                      title="עט חופשי"
-                    >
-                      <PenTool className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playPop(); setDrawTool('circle'); setTextInputState(null) }}
-                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'circle' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                      title="עיגול"
-                    >
-                      <Circle className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playPop(); setDrawTool('arrow'); setTextInputState(null) }}
-                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'arrow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                      title="חץ"
-                    >
-                      <ArrowUpRight className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playPop(); setDrawTool('text'); setTextInputState(null) }}
-                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'text' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                      title="טקסט"
-                    >
-                      <Type className="w-4 h-4" />
-                    </button>
-
-                    <div className="w-px h-5 bg-zinc-800 mx-0.5 flex-shrink-0" />
-
-                    {['#eab308', '#ef4444', '#3b82f6', '#10b981', '#ffffff'].map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => { playPop(); setDrawColor(color) }}
-                        className={`w-5 h-5 rounded-full transition-transform flex-shrink-0 cursor-pointer ${drawColor === color ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-zinc-950' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-
-                    <div className="w-px h-5 bg-zinc-800 mx-0.5 flex-shrink-0" />
-
-                    <button
-                      type="button"
-                      onClick={undoLastShape}
-                      disabled={shapes.length === 0}
-                      className="p-2 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 rounded-lg transition-colors cursor-pointer"
-                      title="בטל צורה אחרונה"
-                    >
-                      <Undo2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={clearCanvas}
-                      className="p-2 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
-                      title="נקה הכל"
-                    >
-                      <Eraser className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-
             {/* Video Canvas Container */}
-            <div className={`relative bg-black flex items-center justify-center group overflow-hidden select-none ${
-              isFullscreen ? 'absolute inset-0 w-full h-full z-0' : 'aspect-video w-full'
-            }`}>
+            <div className="relative bg-black flex items-center justify-center group overflow-hidden select-none aspect-video w-full">
+
               <video
                 ref={videoRef}
                 src={videoSrc}
@@ -3071,11 +2935,7 @@ function MainApp() {
 
             {/* Custom Interactive Player Controls */}
             <div
-              className={isFullscreen
-                ? 'absolute bottom-0 inset-x-0 z-30 bg-gradient-to-t from-black/95 via-black/80 to-transparent pt-10 pb-4 px-3 sm:px-6 flex flex-col gap-2 pointer-events-auto'
-                : 'p-3 bg-zinc-950 flex flex-col gap-2'
-              }
-              style={isFullscreen ? { paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' } : undefined}
+              className="p-3 bg-zinc-950 flex flex-col gap-2"
             >
               {/* Timeline with Modern Visual Progress & Markers */}
               <div
@@ -3770,10 +3630,378 @@ function MainApp() {
 
           </div> {/* End playerContainerRef */}
 
+          {/* ===== FULLSCREEN PORTAL — renders directly on document.body ===== */}
+          {isFullscreen && typeof document !== 'undefined' && createPortal(
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                background: '#000',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                touchAction: 'none',
+              }}
+            >
+              {/* Video fills entire screen */}
+              <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+                {/* Hidden real video syncs; this is the display clone */}
+                <video
+                  src={videoSrc}
+                  ref={(el) => {
+                    if (!el) {
+                      // Unmount cleanup
+                      if (el?._cleanup) el._cleanup()
+                      return
+                    }
+                    const main = videoRef.current
+                    if (!main) return
+                    // Initial sync
+                    el.currentTime = main.currentTime
+                    el.muted = main.muted
+                    el.volume = main.volume
+                    el.playbackRate = main.playbackRate
+                    if (!main.paused) el.play().catch(() => {})
+                    else el.pause()
+                    // Event listeners
+                    const onTimeUpdate = () => {
+                      if (Math.abs(el.currentTime - main.currentTime) > 0.3) {
+                        el.currentTime = main.currentTime
+                      }
+                    }
+                    const onPlay = () => el.play().catch(() => {})
+                    const onPause = () => el.pause()
+                    const onRateChange = () => { el.playbackRate = main.playbackRate }
+                    const onVolumeChange = () => { el.volume = main.volume; el.muted = main.muted }
+                    const onSeeked = () => { el.currentTime = main.currentTime }
+                    main.addEventListener('timeupdate', onTimeUpdate)
+                    main.addEventListener('play', onPlay)
+                    main.addEventListener('pause', onPause)
+                    main.addEventListener('ratechange', onRateChange)
+                    main.addEventListener('volumechange', onVolumeChange)
+                    main.addEventListener('seeked', onSeeked)
+                    el._cleanup = () => {
+                      main.removeEventListener('timeupdate', onTimeUpdate)
+                      main.removeEventListener('play', onPlay)
+                      main.removeEventListener('pause', onPause)
+                      main.removeEventListener('ratechange', onRateChange)
+                      main.removeEventListener('volumechange', onVolumeChange)
+                      main.removeEventListener('seeked', onSeeked)
+                    }
+                  }}
+                  playsInline
+                  webkit-playsinline="true"
+                  onClick={() => { if (!isDrawingMode) handlePlayPause() }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    display: 'block',
+                  }}
+                />
+
+
+                {/* Drawing Canvas overlay */}
+                <canvas
+                  ref={fsCanvasRef}
+                  width={960}
+                  height={540}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={(e) => {
+                    if (e.touches && e.touches.length > 0) {
+                      const touch = e.touches[0]
+                      handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY })
+                    }
+                  }}
+                  onTouchMove={(e) => {
+                    if (isDrawingMode && drawTool !== 'select') e.preventDefault()
+                    if (e.touches && e.touches.length > 0) {
+                      const touch = e.touches[0]
+                      handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY })
+                    }
+                  }}
+                  onTouchEnd={(e) => handleMouseUp(e)}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    zIndex: isDrawingMode ? 30 : (hasDrawing ? 20 : 0),
+                    pointerEvents: isDrawingMode ? 'auto' : 'none',
+                    cursor: isDrawingMode
+                      ? (drawTool === 'text' ? 'text' : drawTool === 'select' ? 'default' : 'crosshair')
+                      : 'default',
+                    touchAction: isDrawingMode ? 'none' : 'auto',
+                  }}
+                />
+
+
+                {/* Big play button overlay when paused */}
+                {!isPlaying && !isDrawingMode && (
+                  <button
+                    onClick={handlePlayPause}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 25,
+                      width: 72,
+                      height: 72,
+                      borderRadius: '50%',
+                      background: 'rgba(99,102,241,0.9)',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Play style={{ width: 32, height: 32, color: '#fff', fill: '#fff', marginLeft: 4 }} />
+                  </button>
+                )}
+
+                {/* === Floating Top Bar === */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 50,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  padding: `calc(env(safe-area-inset-top, 0px) + 12px) 12px 0`,
+                  pointerEvents: 'none',
+                }}>
+                  {/* Exit Button (top-left) */}
+                  <button
+                    onClick={toggleFullscreen}
+                    style={{ pointerEvents: 'auto' }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-white border border-zinc-700 shadow-2xl backdrop-blur-md text-xs font-semibold active:scale-95 cursor-pointer transition-all"
+                  >
+                    <Minimize className="w-4 h-4 text-indigo-400" />
+                    <span>צא ממסך מלא</span>
+                  </button>
+
+                  {/* Draw + Comments (top-right) */}
+                  <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
+                    <button
+                      onClick={() => {
+                        if (!isDrawingMode && videoRef.current && !videoRef.current.paused) {
+                          videoRef.current.pause()
+                          setIsPlaying(false)
+                        }
+                        if (isDrawingMode) setTextInputState(null)
+                        setIsDrawingMode(!isDrawingMode)
+                      }}
+                      className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold shadow-2xl backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
+                        isDrawingMode
+                          ? 'bg-amber-500 text-black font-bold'
+                          : 'bg-zinc-900/90 text-zinc-200 border border-zinc-700 hover:bg-zinc-800'
+                      }`}
+                    >
+                      <PenTool className="w-3.5 h-3.5" />
+                      <span>{isDrawingMode ? 'סגור ✕' : 'ציור ✏️'}</span>
+                    </button>
+                    <button
+                      onClick={() => setShowFullscreenDrawer((prev) => !prev)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 shadow-2xl backdrop-blur-md text-xs font-semibold active:scale-95 cursor-pointer transition-all"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>הערות ({comments.length})</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Drawing Palette (below top bar) */}
+                {isDrawingMode && (
+                  <div style={{
+                    position: 'absolute',
+                    top: `calc(env(safe-area-inset-top, 0px) + 60px)`,
+                    left: 12,
+                    right: 12,
+                    zIndex: 50,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'rgba(9,9,11,0.95)',
+                    border: '1px solid #27272a',
+                    borderRadius: 12,
+                    padding: '8px 10px',
+                    overflowX: 'auto',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                  }}>
+                    {[
+                      { tool: 'select', Icon: MousePointer, title: 'בחר' },
+                      { tool: 'pen', Icon: PenTool, title: 'עט' },
+                      { tool: 'circle', Icon: Circle, title: 'עיגול' },
+                      { tool: 'arrow', Icon: ArrowUpRight, title: 'חץ' },
+                      { tool: 'text', Icon: Type, title: 'טקסט' },
+                    ].map(({ tool, Icon, title }) => (
+                      <button
+                        key={tool}
+                        onClick={() => { playPop(); setDrawTool(tool); setTextInputState(null) }}
+                        title={title}
+                        style={{
+                          padding: 8,
+                          borderRadius: 8,
+                          border: 'none',
+                          background: drawTool === tool ? '#6366f1' : 'transparent',
+                          color: drawTool === tool ? '#fff' : '#a1a1aa',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Icon style={{ width: 16, height: 16 }} />
+                      </button>
+                    ))}
+
+                    <div style={{ width: 1, height: 20, background: '#27272a', flexShrink: 0 }} />
+
+                    {['#eab308', '#ef4444', '#3b82f6', '#10b981', '#ffffff'].map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => { playPop(); setDrawColor(color) }}
+                        style={{
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: color, border: 'none', cursor: 'pointer', flexShrink: 0,
+                          outline: drawColor === color ? '2px solid #6366f1' : 'none',
+                          outlineOffset: 2,
+                          transform: drawColor === color ? 'scale(1.25)' : 'scale(1)',
+                        }}
+                      />
+                    ))}
+
+                    <div style={{ width: 1, height: 20, background: '#27272a', flexShrink: 0 }} />
+
+                    <button
+                      onClick={undoLastShape}
+                      disabled={shapes.length === 0}
+                      title="בטל"
+                      style={{ padding: 8, borderRadius: 8, border: 'none', background: 'transparent', color: shapes.length === 0 ? '#52525b' : '#a1a1aa', cursor: shapes.length === 0 ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+                    >
+                      <Undo2 style={{ width: 16, height: 16 }} />
+                    </button>
+                    <button
+                      onClick={clearCanvas}
+                      title="נקה הכל"
+                      style={{ padding: 8, borderRadius: 8, border: 'none', background: 'transparent', color: '#a1a1aa', cursor: 'pointer', flexShrink: 0 }}
+                    >
+                      <Eraser style={{ width: 16, height: 16 }} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* === Bottom Controls Bar === */}
+              <div style={{
+                background: 'linear-gradient(to top, #000000f5 0%, #000000cc 70%, transparent 100%)',
+                padding: `12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)`,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                flexShrink: 0,
+              }}>
+                {/* Progress Bar */}
+                <div
+                  style={{ position: 'relative', width: '100%', height: 24, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                >
+                  <div style={{ position: 'relative', width: '100%', height: 6, background: '#27272a', borderRadius: 9999, overflow: 'hidden' }}>
+                    <div style={{
+                      position: 'absolute', top: 0, right: 0, height: '100%',
+                      background: '#6366f1', borderRadius: 9999,
+                      width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`
+                    }} />
+                  </div>
+                  {duration > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '50%', transform: 'translateY(-50%) translateX(50%)',
+                      right: `${(currentTime / duration) * 100}%`,
+                      width: 14, height: 14, borderRadius: '50%', background: '#fff', border: '2px solid #6366f1',
+                      pointerEvents: 'none', zIndex: 2,
+                    }} />
+                  )}
+                  <input
+                    type="range" dir="rtl" min="0" max={duration || 100} step="0.05" value={currentTime}
+                    onChange={(e) => seekTo(parseFloat(e.target.value))}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10, margin: 0 }}
+                  />
+                </div>
+
+                {/* Buttons Row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  {/* Left: Play, Step, Time */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      onClick={handlePlayPause}
+                      style={{ width: 40, height: 40, borderRadius: 10, background: '#6366f1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      {isPlaying
+                        ? <Pause style={{ width: 20, height: 20, color: '#fff' }} />
+                        : <Play style={{ width: 20, height: 20, color: '#fff', fill: '#fff', marginLeft: 2 }} />
+                      }
+                    </button>
+                    <button onClick={() => stepTime(-1)} style={{ padding: 8, borderRadius: 8, background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer' }}>
+                      <RotateCcw style={{ width: 20, height: 20 }} />
+                    </button>
+                    <button onClick={() => stepTime(1)} style={{ padding: 8, borderRadius: 8, background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer' }}>
+                      <RotateCw style={{ width: 20, height: 20 }} />
+                    </button>
+                    <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#a1a1aa', userSelect: 'none' }}>
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </span>
+                  </div>
+
+                  {/* Right: Speed, Mute, Exit */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      onClick={() => {
+                        const rates = [1, 1.25, 1.5, 2]
+                        const nextIdx = (rates.indexOf(playbackRate) + 1) % rates.length
+                        handleSpeedChange(rates[nextIdx])
+                      }}
+                      style={{ padding: '6px 10px', borderRadius: 8, background: '#18181b', border: '1px solid #27272a', color: '#d4d4d8', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      {playbackRate}x
+                    </button>
+                    <button
+                      onClick={toggleMute}
+                      style={{ padding: 8, borderRadius: 8, background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer' }}
+                    >
+                      {isMuted || volume === 0
+                        ? <VolumeX style={{ width: 20, height: 20, color: '#f87171' }} />
+                        : volume < 0.5
+                          ? <Volume1 style={{ width: 20, height: 20 }} />
+                          : <Volume2 style={{ width: 20, height: 20 }} />
+                      }
+                    </button>
+                    <button
+                      onClick={toggleFullscreen}
+                      style={{ padding: 8, borderRadius: 8, background: 'transparent', border: 'none', color: '#818cf8', cursor: 'pointer' }}
+                      title="צא ממסך מלא"
+                    >
+                      <Minimize style={{ width: 20, height: 20 }} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
         </section>
 
         {/* Right Section: Interactive Checklist (4 cols) */}
         <section className={`lg:col-span-4 flex flex-col gap-4 ${mobileTab === 'comments' ? 'flex' : 'hidden lg:flex'}`}>
+
           
           {/* Header Card with Progress & Actions */}
           <div className="bg-zinc-950/80 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col gap-3">
