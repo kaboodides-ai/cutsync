@@ -2470,152 +2470,87 @@ function MainApp() {
         {/* Left Section: Video Player & Timeline (7 cols) */}
         <section className="lg:col-span-7 flex flex-col gap-4">
           
-          {/* Version Stacking Switcher Bar */}
-          <div className="bg-zinc-900 p-2.5 rounded-xl border border-zinc-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 overflow-x-auto py-0.5">
-              <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium px-1 select-none">
-                <Layers className="w-3.5 h-3.5" />
-                <span>גרסאות:</span>
+          {/* Unified Workspace Header */}
+          <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            
+            {/* Left: Video Title & Active Version Info */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                <Video className="w-5 h-5 text-indigo-400" />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <h2 className="text-[15px] font-bold text-zinc-100 leading-tight">{videoTitle}</h2>
+                <div className="flex items-center gap-2 mt-0.5 text-xs">
+                  <span className="text-zinc-400 font-medium">{currentVersion.name}</span>
+                  {currentVersion.approved && (
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> מאושר
+                    </span>
+                  )}
+                  {currentVersion.approved && currentVersion.reopenRequested && (
+                    <span className="text-amber-400 flex items-center gap-1 animate-pulse">
+                      <Bell className="w-3.5 h-3.5" /> בקשת פתיחה
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Version Switcher & Editor Actions */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800">
                 {versions.map((ver) => {
                   const isActive = ver.id === activeVersionId
-                  const verTotal = ver.comments ? ver.comments.length : 0
                   return (
                     <button
                       key={ver.id}
                       onClick={() => switchVersion(ver.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
+                      className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors flex items-center gap-1.5 ${
                         isActive
-                          ? 'bg-zinc-100 text-zinc-900 shadow-sm'
-                          : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800/50'
+                          ? 'bg-zinc-800 text-zinc-100 shadow-sm'
+                          : 'text-zinc-500 hover:text-zinc-300'
                       }`}
                     >
-                      <span>{ver.name}</span>
-                      {ver.approved ? (
-                        ver.reopenRequested ? (
-                          <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 animate-pulse">
-                            <Bell className="w-2.5 h-2.5" />
-                            ממתין לפתיחה
-                          </span>
-                        ) : (
-                          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                            ✓ מאושרת
-                          </span>
-                        )
-                      ) : (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                          isActive ? 'bg-purple-950/60 text-purple-200' : 'bg-[#121520] text-gray-400'
-                        }`}>
-                          {verTotal} {verTotal === 1 ? 'הערה' : 'הערות'}
-                        </span>
-                      )}
-                      {isActive && (
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="גרסה פעילה"></span>
-                      )}
+                      {ver.name}
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>}
                     </button>
                   )
                 })}
               </div>
+
+              {mode === 'editor' && (
+                <div className="flex items-center gap-1.5 border-r border-zinc-800 pr-2 ml-1">
+                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="video/*" className="hidden" />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                    title="החלף סרטון בגרסה הנוכחית"
+                  >
+                    <Upload className="w-4 h-4" />
+                  </button>
+
+                  <input type="file" ref={fileInputNewVersionRef} onChange={handleUploadNewVersion} accept="video/*" className="hidden" />
+                  <button
+                    onClick={() => fileInputNewVersionRef.current?.click()}
+                    className="p-1.5 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
+                    title="העלה גרסה חדשה (V2, V3...)"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Upload New Version Button for Editor */}
-            {mode === 'editor' && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  accept="video/*"
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-gray-300 hover:text-white text-xs font-semibold transition-all"
-                  title="החלף את הסרטון בגרסה הנוכחית"
-                >
-                  <Upload className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="hidden sm:inline">החלף סרטון נוכחי</span>
-                </button>
-
-                <input
-                  type="file"
-                  ref={fileInputNewVersionRef}
-                  onChange={handleUploadNewVersion}
-                  accept="video/*"
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputNewVersionRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/25 border border-purple-500/35 text-purple-200 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
-                  title="העלה סרטון מתוקן חדש (V2, V3...)"
-                >
-                  <Plus className="w-3.5 h-3.5 text-purple-400" />
-                  <span>גרסה חדשה (V{versions.length + 1})</span>
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* Video Header Card & Player Container */}
+          {/* Video Player Container (Integrated) */}
           <div
             ref={playerContainerRef}
-            className={`bg-zinc-950 transition-all overflow-hidden relative select-none ${
+            className={`bg-zinc-950 transition-all overflow-hidden relative select-none flex flex-col ${
               isFullscreen
-                ? 'fixed inset-0 z-50 rounded-none border-none flex flex-col justify-between w-full h-[100dvh] bg-black'
+                ? 'fixed inset-0 z-50 rounded-none border-none w-full h-[100dvh] bg-black'
                 : 'rounded-xl border border-zinc-800 shadow-sm'
             }`}
           >
-            {/* Title Bar */}
-            <div className="px-4 py-3 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between text-xs text-zinc-300 z-10 flex-shrink-0">
-              <div className="flex items-center gap-2 font-medium truncate">
-                <Video className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                <span className="truncate text-zinc-100">{videoTitle} — <strong className="text-indigo-300 font-semibold">{currentVersion.name}</strong></span>
-                {currentVersion.approved && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 flex-shrink-0">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>אושר ע"י {currentVersion.approvedBy || 'הלקוח'} ✨</span>
-                  </span>
-                )}
-                {currentVersion.approved && currentVersion.reopenRequested && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 flex-shrink-0 animate-pulse">
-                    <Bell className="w-3 h-3" />
-                    <span>העורך ביקש לפתוח מחדש</span>
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {isFullscreen && (
-                  <button
-                    type="button"
-                    onClick={() => setShowFullscreenDrawer(!showFullscreenDrawer)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
-                      showFullscreenDrawer
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700'
-                    }`}
-                    title="רשימת תיקונים והערות במסך מלא"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>תיקונים ({comments.length})</span>
-                  </button>
-                )}
-                <span className="text-zinc-400 font-mono text-[11px] bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
-                {isFullscreen && (
-                  <button
-                    type="button"
-                    onClick={toggleFullscreen}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-semibold transition-colors"
-                    title="צא ממסך מלא (Esc / F)"
-                  >
-                    <Minimize className="w-3.5 h-3.5" />
-                    <span>צא ממסך מלא (Esc)</span>
-                  </button>
-                )}
-              </div>
-            </div>
 
             {/* Video Canvas Container */}
             <div className={`relative bg-black flex items-center justify-center group overflow-hidden select-none ${
@@ -3383,55 +3318,54 @@ function MainApp() {
                       return (
                         <div
                           key={comment.id}
-                          className={`bg-zinc-900 border rounded-xl p-3 text-[13px] flex flex-col gap-2 transition-all shadow-sm ${
+                          className={`bg-zinc-950 hover:bg-zinc-900 border rounded-xl p-3 flex flex-col gap-2 transition-colors shadow-sm ${
                             comment.completed
                               ? 'border-zinc-800 opacity-60'
                               : comment.urgent
                               ? 'border-red-500/30 bg-red-500/5'
-                              : 'border-zinc-700'
+                              : 'border-zinc-800'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                            {/* Status */}
+                            {mode === 'editor' ? (
+                              <button
+                                onClick={() => toggleCommentComplete(comment.id)}
+                                className="text-zinc-500 hover:text-emerald-400 transition-colors"
+                              >
+                                {comment.completed ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Circle className="w-4 h-4" />}
+                              </button>
+                            ) : (
+                              <div className="flex-shrink-0">
+                                {comment.completed ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Circle className="w-4 h-4 text-zinc-600" />}
+                              </div>
+                            )}
+
+                            <span className="font-semibold text-zinc-100">
+                              {comment.author === 'לקוח' || (!comment.author && mode === 'client') ? (currentProject.clientName || 'לקוח') : 'העורך'}
+                            </span>
+                            
+                            <span className="text-zinc-700">•</span>
+                            
                             <button
-                              type="button"
                               onClick={() => seekTo(comment.time, comment.drawing)}
-                              className="font-mono text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20 transition-colors"
-                              title="קפוץ לרגע זה בוידאו"
+                              className="font-mono font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
                             >
-                              ⏱️ {formatTime(comment.time)}
+                              {formatTime(comment.time)}
                             </button>
 
                             {cat && (
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-medium ${cat.color}`}>
-                                {cat.icon} {cat.label}
-                              </span>
+                              <>
+                                <span className="text-zinc-700">•</span>
+                                <span className="text-zinc-400">{cat.label}</span>
+                              </>
                             )}
 
-                            {comment.drawing && (
-                              <button
-                                type="button"
-                                onClick={() => seekTo(comment.time, comment.drawing)}
-                                className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-md font-medium flex items-center gap-1 hover:bg-amber-500/20 transition-colors"
-                                title="צפה בסימון על גבי הפריים"
-                              >
-                                <PenTool className="w-2.5 h-2.5" />
-                                <span>סימון</span>
-                              </button>
-                            )}
-
-                            {mode === 'editor' && (
-                              <button
-                                type="button"
-                                onClick={() => toggleCommentComplete(comment.id)}
-                                className="mr-auto text-zinc-400 hover:text-emerald-400 transition-colors"
-                                title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע'}
-                              >
-                                {comment.completed ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                ) : (
-                                  <Circle className="w-4 h-4" />
-                                )}
-                              </button>
+                            {comment.urgent && (
+                              <>
+                                <span className="text-zinc-700">•</span>
+                                <span className="font-semibold text-red-400">דחוף 🔥</span>
+                              </>
                             )}
                           </div>
 
@@ -3443,8 +3377,21 @@ function MainApp() {
                             <AudioCommentPlayer src={comment.audio} duration={comment.audioDuration} />
                           )}
 
+                          {comment.drawing && (
+                            <div className="flex items-center gap-3 mt-1">
+                              <button
+                                type="button"
+                                onClick={() => seekTo(comment.time, comment.drawing)}
+                                className="text-[11px] text-amber-500/80 hover:text-amber-400 font-medium flex items-center gap-1 transition-colors"
+                              >
+                                <PenTool className="w-3 h-3" />
+                                <span>הצג סימון</span>
+                              </button>
+                            </div>
+                          )}
+
                           {/* Threaded Discussion in Fullscreen Drawer */}
-                          <div className="pt-2 border-t border-zinc-800">
+                          <div className="pt-2 mt-1 border-t border-zinc-800">
                             <button
                               type="button"
                               onClick={() => toggleThread(comment.id)}
@@ -3524,250 +3471,190 @@ function MainApp() {
                 </div>
               </aside>
             )}
-          </div>
 
-          {/* Add Revision Box (Simple & Conversational) */}
-          <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 shadow-sm flex flex-col gap-3.5">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                <div>
-                  <h2 className="text-sm font-bold text-zinc-100">
-                    {mode === 'client' ? 'מה כדאי לשפר ברגע הזה? 💡' : 'הוספת הערה לפריים ✍️'}
-                  </h2>
-                  <p className="text-[12px] text-zinc-400 mt-0.5 font-medium">
-                    עצרת בנקודת הזמן {formatTime(currentTime)} — שתף את המחשבות שלך
-                  </p>
-                </div>
-              </div>
-
-              {/* Simple Clean Time Badge */}
-              <div className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1.5 rounded-md text-xs font-mono font-bold flex-shrink-0">
-                <Clock className="w-3.5 h-3.5 text-indigo-400" />
-                <span>פריים: {formatTime(currentTime)}</span>
-              </div>
-            </div>
-
-            <form onSubmit={handleAddComment} className="flex flex-col gap-3">
-              {/* Category tags */}
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    type="button"
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`text-[12px] px-3 py-1.5 rounded-md border transition-colors flex items-center gap-1.5 cursor-pointer ${
-                      selectedCategory === cat.id
-                        ? `${cat.color} font-semibold bg-zinc-800 border-zinc-700 shadow-sm`
-                        : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200'
-                    }`}
-                  >
-                    <span>{cat.icon}</span>
-                    <span>{cat.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Text Input */}
-              <div className="relative">
-                <textarea
-                  ref={commentTextareaRef}
-                  rows="2"
-                  value={newCommentText}
-                  onChange={(e) => setNewCommentText(e.target.value)}
-                  placeholder={
-                    hasDrawing
-                      ? 'סימנת על גבי הפריים! הסבר בקצרה מה תרצה שנשנה כאן...'
-                      : mode === 'client'
-                      ? 'כתוב כאן בחופשיות (למשל: "להגביר קצת את הווליום כאן", "לחתוך שנייה לפני", "להחליף כתובית")...'
-                      : 'כתוב מה נדרש לבצע ברגע זה בפרמייר...'
-                  }
-                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg p-3.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed transition-colors"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleAddComment()
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Voice Note Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900 p-2.5 rounded-lg border border-zinc-800">
-                <div className="flex items-center gap-2">
-                  {!isRecording && !recordedAudioData && (
-                    <button
-                      type="button"
-                      onClick={startRecording}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[12px] font-semibold transition-colors cursor-pointer"
-                    >
-                      <Mic className="w-3.5 h-3.5" />
-                      <span>הקלט הודעה קולית 🎙️</span>
-                    </button>
-                  )}
-
-                  {isRecording && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-md text-[12px] font-mono font-bold animate-pulse">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                        <span>מקליט... {formatTime(recordingDuration)}</span>
-                      </div>
+            {/* Inline Integrated Comment Bar */}
+            {!isFullscreen && (
+              <div className="px-4 pb-4 bg-zinc-950 border-t border-zinc-900 pt-3 flex flex-col gap-3">
+                <form onSubmit={handleAddComment} className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20 flex-shrink-0">
+                      {formatTime(currentTime)}
+                    </span>
+                    {CATEGORIES.map((cat) => (
                       <button
                         type="button"
-                        onClick={stopRecording}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-500 text-white text-[12px] font-bold transition-colors cursor-pointer"
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0 ${
+                          selectedCategory === cat.id
+                            ? `${cat.color} font-semibold bg-zinc-800 border-zinc-700 shadow-sm`
+                            : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-300'
+                        }`}
                       >
-                        <Square className="w-3 h-3 fill-current" />
-                        <span>סיים</span>
+                        <span>{cat.icon}</span>
+                        <span>{cat.label}</span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={cancelRecording}
-                        className="text-[12px] text-zinc-400 hover:text-zinc-200 px-2 py-1 cursor-pointer"
-                      >
-                        בטל
-                      </button>
-                    </div>
-                  )}
-
-                  {recordedAudioData && !isRecording && (
-                    <div className="flex items-center gap-2">
-                      <AudioCommentPlayer
-                        src={recordedAudioData}
-                        duration={recordingDuration}
-                        label="האזן להקלטה שלך"
+                    ))}
+                    <label className="flex items-center gap-1 text-[11px] text-zinc-400 cursor-pointer select-none font-medium ml-2">
+                      <input
+                        type="checkbox"
+                        checked={isUrgent}
+                        onChange={(e) => setIsUrgent(e.target.checked)}
+                        className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-0 w-3.5 h-3.5"
                       />
+                      <span>🔥 דחוף</span>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newCommentText}
+                      onChange={(e) => setNewCommentText(e.target.value)}
+                      placeholder={
+                        hasDrawing
+                          ? 'הוסף הסבר קצר לסימון שלך...'
+                          : 'כתוב מה צריך לתקן ברגע זה...'
+                      }
+                      className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors"
+                    />
+
+                    {/* Voice Node inline */}
+                    {!isRecording && !recordedAudioData && (
                       <button
                         type="button"
-                        onClick={cancelRecording}
-                        className="flex items-center gap-1 text-[12px] text-zinc-400 hover:text-red-400 bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1.5 rounded-md border border-zinc-700 transition-colors cursor-pointer"
-                        title="מחק והקלט שוב"
+                        onClick={startRecording}
+                        className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors cursor-pointer flex-shrink-0"
+                        title="הקלט הודעה קולית"
                       >
-                        <RotateCcw className="w-3.5 h-3.5 text-red-400" />
-                        <span>הקלט שוב</span>
+                        <Mic className="w-4 h-4" />
                       </button>
-                    </div>
-                  )}
-                </div>
+                    )}
 
-                <label className="flex items-center gap-2 text-[12px] text-zinc-400 cursor-pointer select-none font-medium">
-                  <input
-                    type="checkbox"
-                    checked={isUrgent}
-                    onChange={(e) => setIsUrgent(e.target.checked)}
-                    className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0"
-                  />
-                  <span>סמן כדחוף לטיפול 🔥</span>
-                </label>
-              </div>
+                    {isRecording && (
+                      <div className="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-2 rounded-lg text-xs font-mono font-bold animate-pulse flex-shrink-0">
+                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                        <span>{formatTime(recordingDuration)}</span>
+                        <button type="button" onClick={stopRecording} className="ml-1 bg-red-600 hover:bg-red-500 text-white px-2 py-0.5 rounded cursor-pointer">
+                          סיים
+                        </button>
+                      </div>
+                    )}
 
-              {/* Submit Button */}
-              <div className="flex items-center justify-end">
-                <button
-                  type="submit"
-                  disabled={!newCommentText.trim() && !recordedAudioData}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[13px] font-semibold transition-colors cursor-pointer shadow-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{mode === 'client' ? 'שלח הערה לפריים ✨' : 'הוסף משימה לפריים ✨'}</span>
-                </button>
+                    {recordedAudioData && !isRecording && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <AudioCommentPlayer src={recordedAudioData} duration={recordingDuration} label="הקלטה" />
+                        <button type="button" onClick={cancelRecording} className="p-2 text-zinc-400 hover:text-red-400 cursor-pointer">
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={!newCommentText.trim() && !recordedAudioData && !hasDrawing}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[13px] font-semibold transition-colors cursor-pointer shadow-sm flex-shrink-0"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="hidden sm:inline">הוסף הערה</span>
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
+            )}
+
+          </div> {/* End playerContainerRef */}
 
         </section>
 
         {/* Right Section: Interactive Checklist (5 cols) */}
         <section className="lg:col-span-5 flex flex-col gap-4">
           
-          {/* Quick Actions Bar for Editor/Client */}
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            {mode === 'editor' && (
-              <>
-                <button
-                  onClick={() => copySpecificClientLink(currentProject.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[12px] text-emerald-400 font-semibold transition-colors shadow-sm"
-                  title="העתק קישור סקירה ישיר ונקי לשליחה ללקוח זה"
-                >
-                  <Link2 className="w-3.5 h-3.5" />
-                  <span>העתק קישור ללקוח</span>
-                </button>
-                <button
-                  onClick={exportPremiereCSV}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[12px] text-indigo-400 font-semibold transition-colors shadow-sm"
-                  title="ייצא קובץ מרקרים שנטען ישירות בפרמייר"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>מרקרים ל-Premiere</span>
-                </button>
-              </>
-            )}
-            <button
-              onClick={shareViaWhatsApp}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold shadow-sm transition-colors ${
-                mode === 'client' 
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
-                  : 'bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white'
-              }`}
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>{mode === 'client' ? `סיימתי להעיר! (${comments.length})` : 'שתף סיכום בוואטסאפ'}</span>
-            </button>
-          </div>
-
-          {/* Header Card with Progress */}
-          <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 shadow-sm">
-            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-2 mb-3.5">
+          {/* Header Card with Progress & Actions */}
+          <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 shadow-sm flex flex-col gap-4">
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-2">
               <div>
                 <h2 className="text-[15px] font-bold text-zinc-100 flex items-center gap-2">
-                  <span>{mode === 'client' ? 'ההערות והבקשות שלך 💬' : 'משימות לביצוע בפרמייר 🎬'}</span>
-                  <span className={`text-[11px] px-2 py-0.5 rounded-md border font-semibold ${
-                    mode === 'client'
-                      ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                      : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                  }`}>
+                  <span>{mode === 'client' ? 'ההערות והבקשות שלך' : 'משימות לביצוע בפרמייר'}</span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-md border font-semibold bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
                     {comments.length}
                   </span>
                 </h2>
                 <p className="text-[12px] text-zinc-400 mt-1 font-medium">
                   {mode === 'client'
-                    ? 'לחיצה על כל הערה תקפיץ אותך לפריים המדויק בוידאו'
-                    : `נשארו עוד ${comments.length - completedCount} משימות פתוחות לביצוע`}
+                    ? 'לחיצה על הערה תקפיץ לזמן המדויק בוידאו'
+                    : `נשארו עוד ${comments.length - completedCount} משימות פתוחות`}
                 </p>
               </div>
 
-              {/* Quick Filter tabs */}
-              <div className="flex items-center bg-zinc-900 p-1 rounded-md border border-zinc-800 text-[12px]">
-                <button
-                  onClick={() => setActiveFilter('all')}
-                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                    activeFilter === 'all'
-                      ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  הכל ({comments.length})
-                </button>
-                <button
-                  onClick={() => setActiveFilter('pending')}
-                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                    activeFilter === 'pending'
-                      ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {mode === 'client' ? 'ממתין ⏳' : 'פתוח ⏳'} ({comments.length - completedCount})
-                </button>
-                <button
-                  onClick={() => setActiveFilter('completed')}
-                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                    activeFilter === 'completed'
-                      ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {mode === 'client' ? 'תוקן ✨' : 'בוצע ✨'} ({completedCount})
-                </button>
+              <div className="flex items-center gap-2">
+                {/* Quick Filter tabs */}
+                <div className="flex items-center bg-zinc-900 p-1 rounded-md border border-zinc-800 text-[12px]">
+                  <button
+                    onClick={() => setActiveFilter('all')}
+                    className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                      activeFilter === 'all'
+                        ? 'bg-zinc-800 text-zinc-100 font-medium shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    הכל ({comments.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter('pending')}
+                    className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                      activeFilter === 'pending'
+                        ? 'bg-zinc-800 text-zinc-100 font-medium shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    ממתין ({comments.length - completedCount})
+                  </button>
+                  <button
+                    onClick={() => setActiveFilter('completed')}
+                    className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                      activeFilter === 'completed'
+                        ? 'bg-zinc-800 text-zinc-100 font-medium shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    בוצע ({completedCount})
+                  </button>
+                </div>
+
+                {/* Overflow Actions */}
+                <div className="relative group">
+                  <button className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-700 cursor-pointer">
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                  <div className="absolute left-0 top-full mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden">
+                    {mode === 'editor' && (
+                      <>
+                        <button
+                          onClick={() => copySpecificClientLink(currentProject.id)}
+                          className="flex items-center gap-2 px-3 py-2 text-[12px] text-zinc-300 hover:text-emerald-400 hover:bg-zinc-800 transition-colors text-right w-full"
+                        >
+                          <Link2 className="w-3.5 h-3.5" />
+                          <span>העתק קישור ללקוח</span>
+                        </button>
+                        <button
+                          onClick={exportPremiereCSV}
+                          className="flex items-center gap-2 px-3 py-2 text-[12px] text-zinc-300 hover:text-indigo-400 hover:bg-zinc-800 transition-colors text-right w-full border-b border-zinc-800"
+                        >
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                          <span>יצא מרקרים ל-Premiere</span>
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={shareViaWhatsApp}
+                      className="flex items-center gap-2 px-3 py-2 text-[12px] text-zinc-300 hover:text-emerald-400 hover:bg-zinc-800 transition-colors text-right w-full"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>שתף בוואטסאפ</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -3828,7 +3715,7 @@ function MainApp() {
                 return (
                   <div
                     key={comment.id}
-                    className={`group bg-zinc-900 hover:bg-zinc-900/80 border rounded-xl p-4 transition-colors flex items-start gap-3.5 shadow-sm ${
+                    className={`group bg-zinc-950 hover:bg-zinc-900/80 border rounded-xl p-4 transition-colors flex items-start gap-3.5 shadow-sm ${
                       comment.completed
                         ? 'border-zinc-800 opacity-60'
                         : comment.urgent
@@ -3836,68 +3723,111 @@ function MainApp() {
                         : 'border-zinc-800'
                     }`}
                   >
-                    {/* Status: Interactive Checkbox for Editor, Status Badge for Client */}
+                    {/* Status Toggle */}
                     {mode === 'editor' ? (
                       <button
                         onClick={() => toggleCommentComplete(comment.id)}
-                        className="mt-0.5 text-zinc-400 hover:text-emerald-400 transition-all duration-200 active:scale-125 hover:scale-110 flex-shrink-0 cursor-pointer"
-                        title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע בפרמייר ✨'}
+                        className="mt-0.5 text-zinc-500 hover:text-emerald-400 transition-all duration-200 active:scale-125 flex-shrink-0 cursor-pointer"
+                        title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע בפרמייר'}
                       >
                         {comment.completed ? (
                           <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950/80 animate-in zoom-in-75 duration-200" />
                         ) : (
-                          <Circle className="w-5 h-5 hover:text-emerald-400 transition-colors" />
+                          <Circle className="w-5 h-5" />
                         )}
                       </button>
                     ) : (
                       <div className="mt-0.5 flex-shrink-0">
                         {comment.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-in zoom-in-75 duration-200" title="העורך סימן שזה תוקן" />
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-in zoom-in-75 duration-200" title="תוקן ע״י העורך" />
                         ) : (
-                          <Clock className="w-5 h-5 text-amber-400" title="ממתין לטיפול העורך" />
+                          <Circle className="w-5 h-5 text-zinc-600" title="ממתין לטיפול" />
                         )}
                       </div>
                     )}
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
+                      {/* Header row */}
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        {/* Author Identity Badge */}
-                        <span className={`text-[10px] px-2.5 py-0.5 rounded-md font-semibold border flex items-center gap-1 ${
-                          comment.author === 'לקוח' || (!comment.author && mode === 'client')
-                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                            : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                        }`}>
-                          <span>{comment.author === 'לקוח' || (!comment.author && mode === 'client') ? '👤' : '🎬'}</span>
-                          <span>{comment.author === 'לקוח' || (!comment.author && mode === 'client') ? (currentProject.clientName || 'לקוח') : 'העורך'}</span>
+                        <span className="text-[13px] font-semibold text-zinc-100">
+                          {comment.author === 'לקוח' || (!comment.author && mode === 'client') ? (currentProject.clientName || 'לקוח') : 'העורך'}
                         </span>
-
-                        {/* Timecode click jumps video */}
+                        
+                        <span className="text-zinc-700 text-[11px]">•</span>
+                        
                         <button
                           onClick={() => seekTo(comment.time, comment.drawing)}
-                          className="font-mono text-[11px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/20 transition-colors cursor-pointer"
-                          title="קפוץ לרגע זה בוידאו"
+                          className="font-mono text-[12px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
                         >
-                          ⏱️ {formatTime(comment.time)}
+                          {formatTime(comment.time)}
                         </button>
 
-                        {/* Category badge */}
                         {cat && (
-                          <span className={`text-[11px] px-2 py-0.5 rounded-md border font-medium ${cat.color}`}>
-                            {cat.icon} {cat.label}
-                          </span>
+                          <>
+                            <span className="text-zinc-700 text-[11px]">•</span>
+                            <span className="text-[12px] text-zinc-400">{cat.label}</span>
+                          </>
                         )}
+                        
+                        {comment.urgent && (
+                          <>
+                            <span className="text-zinc-700 text-[11px]">•</span>
+                            <span className="text-[11px] font-semibold text-red-400">דחוף 🔥</span>
+                          </>
+                        )}
+                      </div>
 
+                      {/* Main text */}
+                      <p className={`text-[14px] leading-relaxed mb-3 ${comment.completed ? 'line-through text-zinc-500' : 'text-zinc-200 font-normal'}`}>
+                        {comment.text}
+                      </p>
+
+                      {/* Attached Audio Voice Note */}
+                      {comment.audio && (
+                        <div className="mb-3">
+                          <AudioCommentPlayer
+                            src={comment.audio}
+                            duration={comment.audioDuration}
+                          />
+                        </div>
+                      )}
+
+                      {/* Footer Actions */}
+                      <div className="flex items-center gap-4 flex-wrap">
+                        {/* Emojis */}
+                        <div className="flex items-center gap-1">
+                          {['👍', '🔥', '👏', '💡', '❤️'].map((emoji) => {
+                            const count = comment.reactions?.[emoji] || 0
+                            return (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={(e) => handleAddReaction(comment.id, emoji, e)}
+                                className={`px-1.5 py-0.5 rounded text-[12px] transition-colors flex items-center gap-1 cursor-pointer ${
+                                  count > 0
+                                    ? 'bg-zinc-800 text-zinc-100 font-medium'
+                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                }`}
+                                title={`הגב עם ${emoji}`}
+                              >
+                                <span>{emoji}</span>
+                                {count > 0 && <span className="text-[10px] text-indigo-400">{count}</span>}
+                              </button>
+                            )
+                          })}
+                        </div>
+
+                        {/* Visual Actions (Drawing / Screenshot) */}
                         {comment.drawing && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-3 border-l border-zinc-800 pl-3">
                             <button
                               type="button"
                               onClick={() => seekTo(comment.time, comment.drawing)}
-                              className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md font-medium flex items-center gap-1 hover:bg-amber-500/20 transition-colors cursor-pointer"
-                              title="לחץ לצפייה בסימון על גבי הפריים"
+                              className="text-[12px] text-amber-500/80 hover:text-amber-400 font-medium flex items-center gap-1 transition-colors cursor-pointer"
                             >
-                              <PenTool className="w-2.5 h-2.5" />
-                              <span>סימון ויזואלי ✏️</span>
+                              <PenTool className="w-3.5 h-3.5" />
+                              <span>הצג סימון</span>
                             </button>
                             <button
                               type="button"
@@ -3905,97 +3835,34 @@ function MainApp() {
                                 e.stopPropagation()
                                 handleCaptureSnapshot(comment.time, comment.drawing)
                               }}
-                              className="text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-md font-medium flex items-center gap-1 hover:bg-teal-500/20 transition-colors cursor-pointer"
-                              title="הורד תמונת פריים עם הסימון (PNG)"
+                              className="text-[12px] text-teal-500/80 hover:text-teal-400 font-medium flex items-center gap-1 transition-colors cursor-pointer"
                             >
-                              <Camera className="w-2.5 h-2.5" />
-                              <span>שמור תמונה 📸</span>
+                              <Camera className="w-3.5 h-3.5" />
+                              <span>הורד תמונה</span>
                             </button>
                           </div>
                         )}
 
-                        {comment.urgent && (
-                          <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-md font-bold">
-                            דחוף 🔥
+                        {/* Thread Toggle Button */}
+                        <button
+                          type="button"
+                          onClick={() => toggleThread(comment.id)}
+                          className="flex items-center gap-1.5 text-[12px] text-zinc-500 hover:text-indigo-400 font-medium transition-colors cursor-pointer mr-auto"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>
+                            {(comment.replies?.length || 0) > 0
+                              ? `${comment.replies.length} תגובות`
+                              : 'השב'}
                           </span>
-                        )}
-
-                        {mode === 'client' && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold mr-auto ${
-                            comment.completed
-                              ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                              : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
-                          }`}>
-                            {comment.completed ? 'תוקן ע"י העורך 🙌' : 'ממתין לטיפול ⏳'}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className={`text-[13px] leading-relaxed ${comment.completed ? 'line-through text-zinc-500' : 'text-zinc-100 font-normal'}`}>
-                        {comment.text}
-                      </p>
-
-                      {/* Attached Audio Voice Note */}
-                      {comment.audio && (
-                        <AudioCommentPlayer
-                          src={comment.audio}
-                          duration={comment.audioDuration}
-                        />
-                      )}
-
-                      {/* Interactive Emoji Reaction Bar (Dopamine) */}
-                      <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-                        {['👍', '🔥', '👏', '💡', '❤️'].map((emoji) => {
-                          const count = comment.reactions?.[emoji] || 0
-                          return (
-                            <button
-                              key={emoji}
-                              type="button"
-                              onClick={(e) => handleAddReaction(comment.id, emoji, e)}
-                              className={`px-2.5 py-1 rounded-md text-[11px] transition-colors flex items-center gap-1 cursor-pointer ${
-                                count > 0
-                                  ? 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-300'
-                                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700'
-                              }`}
-                              title={`הגב עם ${emoji}`}
-                            >
-                              <span>{emoji}</span>
-                              {count > 0 && <span className="text-[10px] font-bold text-indigo-400">{count}</span>}
-                            </button>
-                          )
-                        })}
+                        </button>
                       </div>
 
                       {/* Threaded Discussion Section */}
-                      <div className="mt-3 pt-3 border-t border-zinc-800">
-                        {/* Toggle Button */}
-                        <div className="flex items-center justify-between">
-                          <button
-                            type="button"
-                            onClick={() => toggleThread(comment.id)}
-                            className="flex items-center gap-1.5 text-[12px] text-zinc-400 hover:text-indigo-400 font-medium transition-colors group/btn"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5 text-indigo-400 transition-transform" />
-                            <span>
-                              {(comment.replies?.length || 0) > 0
-                                ? `${comment.replies.length} תגובות בשיחה`
-                                : '💬 תגובות / שיחה על התיקון'}
-                            </span>
-                            <span className="text-[10px] text-zinc-500 font-mono">
-                              {expandedThreads[comment.id] ? '▲ סגור' : '▼ פתח'}
-                            </span>
-                          </button>
-
-                          {(comment.replies?.length || 0) > 0 && !expandedThreads[comment.id] && (
-                            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-md border border-indigo-500/20 font-medium">
-                              פעיל ({comment.replies.length})
-                            </span>
-                          )}
-                        </div>
-
+                      <div className="mt-3">
                         {/* Expanded Thread Drawer */}
                         {expandedThreads[comment.id] && (
-                          <div className="mt-3 bg-zinc-950 rounded-xl p-3 border border-zinc-800 flex flex-col gap-3 shadow-inner">
+                          <div className="mt-3 bg-zinc-900/50 rounded-xl p-3 border border-zinc-800/50 flex flex-col gap-3">
                             {/* Existing Replies */}
                             {Array.isArray(comment.replies) && comment.replies.length > 0 ? (
                               <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
