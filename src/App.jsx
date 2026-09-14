@@ -616,6 +616,7 @@ function MainApp() {
   // Interactive Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showFullscreenDrawer, setShowFullscreenDrawer] = useState(false)
+  const [mobileTab, setMobileTab] = useState('player') // 'player' | 'comments'
 
   useEffect(() => {
     if (isFullscreen) {
@@ -1690,6 +1691,10 @@ function MainApp() {
       videoRef.current.currentTime = timeInSec
       setCurrentTime(timeInSec)
     }
+    // Switch to player tab on mobile when seeking from comments
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setMobileTab('player')
+    }
     if (drawingData) {
       if (videoRef.current && !videoRef.current.paused) {
         videoRef.current.pause()
@@ -2569,10 +2574,38 @@ function MainApp() {
       )}
 
       {/* Main Workspace */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <main className={`flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 ${mode === 'client' ? 'pb-24 lg:pb-6' : ''}`}>
         
+        {/* Mobile Tab Switcher (< lg only) */}
+        <div className="lg:hidden col-span-1 flex bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 select-none shadow-sm">
+          <button
+            type="button"
+            onClick={() => setMobileTab('player')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              mobileTab === 'player'
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Video className="w-4 h-4 text-indigo-400" />
+            <span>נגן והוספת הערה</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab('comments')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              mobileTab === 'comments'
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4 text-indigo-400" />
+            <span>הערות ומשימות ({comments.length})</span>
+          </button>
+        </div>
+
         {/* Left Section: Video Player & Timeline (8 cols) */}
-        <section className="lg:col-span-8 flex flex-col gap-4">
+        <section className={`lg:col-span-8 flex flex-col gap-4 ${mobileTab === 'player' ? 'flex' : 'hidden lg:flex'}`}>
           
           {/* Unified Workspace Header */}
           <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -2675,14 +2708,150 @@ function MainApp() {
             ref={playerContainerRef}
             className={`bg-zinc-950 transition-all overflow-hidden relative select-none flex flex-col ${
               isFullscreen
-                ? 'fixed inset-0 z-50 rounded-none border-none w-full h-[100dvh] bg-black'
+                ? 'fixed inset-0 z-50 rounded-none border-none w-full h-[100dvh] bg-black justify-between'
                 : 'rounded-xl border border-zinc-800 shadow-sm'
             }`}
           >
+            {/* Fullscreen Floating Top Controls */}
+            {isFullscreen && (
+              <>
+                {/* Top-Left: Exit Fullscreen Button */}
+                <div
+                  className="absolute top-3 left-3 sm:top-4 sm:left-4 z-40 flex items-center gap-2"
+                  style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-white border border-zinc-700 shadow-2xl backdrop-blur-md text-xs font-semibold active:scale-95 cursor-pointer transition-all"
+                    title="צא ממסך מלא (F / Esc)"
+                  >
+                    <Minimize className="w-4 h-4 text-indigo-400" />
+                    <span>צא ממסך מלא</span>
+                  </button>
+                </div>
+
+                {/* Top-Right: Draw & Comments Buttons */}
+                <div
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 z-40 flex items-center gap-2"
+                  style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isDrawingMode && videoRef.current && !videoRef.current.paused) {
+                        videoRef.current.pause()
+                        setIsPlaying(false)
+                      }
+                      if (isDrawingMode) setTextInputState(null)
+                      setIsDrawingMode(!isDrawingMode)
+                    }}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold shadow-2xl backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
+                      isDrawingMode
+                        ? 'bg-amber-500 text-black shadow-amber-500/20 font-bold'
+                        : 'bg-zinc-900/90 text-zinc-200 border border-zinc-700 hover:bg-zinc-800'
+                    }`}
+                  >
+                    <PenTool className="w-3.5 h-3.5" />
+                    <span>{isDrawingMode ? 'סגור סימון ✕' : 'סמן על הפריים ✏️'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowFullscreenDrawer((prev) => !prev)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 shadow-2xl backdrop-blur-md text-xs font-semibold active:scale-95 cursor-pointer transition-all"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>הערות ({comments.length})</span>
+                  </button>
+                </div>
+
+                {/* Floating Drawing Palette (Fullscreen) */}
+                {isDrawingMode && (
+                  <div
+                    className="absolute top-16 right-3 left-3 sm:left-auto sm:right-4 z-40 max-w-lg bg-zinc-950/95 border border-zinc-800 rounded-xl p-2 shadow-2xl backdrop-blur-md flex items-center gap-1.5 overflow-x-auto"
+                    style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => { playPop(); setDrawTool('select'); setTextInputState(null) }}
+                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'select' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                      title="בחר והזז צורות"
+                    >
+                      <MousePointer className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { playPop(); setDrawTool('pen'); setTextInputState(null) }}
+                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'pen' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                      title="עט חופשי"
+                    >
+                      <PenTool className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { playPop(); setDrawTool('circle'); setTextInputState(null) }}
+                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'circle' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                      title="עיגול"
+                    >
+                      <Circle className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { playPop(); setDrawTool('arrow'); setTextInputState(null) }}
+                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'arrow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                      title="חץ"
+                    >
+                      <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { playPop(); setDrawTool('text'); setTextInputState(null) }}
+                      className={`p-2 rounded-lg transition-colors cursor-pointer ${drawTool === 'text' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                      title="טקסט"
+                    >
+                      <Type className="w-4 h-4" />
+                    </button>
+
+                    <div className="w-px h-5 bg-zinc-800 mx-0.5 flex-shrink-0" />
+
+                    {['#eab308', '#ef4444', '#3b82f6', '#10b981', '#ffffff'].map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => { playPop(); setDrawColor(color) }}
+                        className={`w-5 h-5 rounded-full transition-transform flex-shrink-0 cursor-pointer ${drawColor === color ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-zinc-950' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+
+                    <div className="w-px h-5 bg-zinc-800 mx-0.5 flex-shrink-0" />
+
+                    <button
+                      type="button"
+                      onClick={undoLastShape}
+                      disabled={shapes.length === 0}
+                      className="p-2 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 rounded-lg transition-colors cursor-pointer"
+                      title="בטל צורה אחרונה"
+                    >
+                      <Undo2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearCanvas}
+                      className="p-2 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                      title="נקה הכל"
+                    >
+                      <Eraser className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
 
             {/* Video Canvas Container */}
             <div className={`relative bg-black flex items-center justify-center group overflow-hidden select-none ${
-              isFullscreen ? 'flex-1 min-h-0 w-full' : 'aspect-video'
+              isFullscreen ? 'absolute inset-0 w-full h-full z-0' : 'aspect-video w-full'
             }`}>
               <video
                 ref={videoRef}
@@ -2902,8 +3071,11 @@ function MainApp() {
 
             {/* Custom Interactive Player Controls */}
             <div
-              className="p-3 bg-zinc-950 flex flex-col gap-2"
-              style={isFullscreen ? { paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' } : undefined}
+              className={isFullscreen
+                ? 'absolute bottom-0 inset-x-0 z-30 bg-gradient-to-t from-black/95 via-black/80 to-transparent pt-10 pb-4 px-3 sm:px-6 flex flex-col gap-2 pointer-events-auto'
+                : 'p-3 bg-zinc-950 flex flex-col gap-2'
+              }
+              style={isFullscreen ? { paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' } : undefined}
             >
               {/* Timeline with Modern Visual Progress & Markers */}
               <div
@@ -3009,21 +3181,21 @@ function MainApp() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={handlePlayPause}
-                      className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-sm transition-colors active:scale-95"
+                      className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-sm transition-colors active:scale-95 cursor-pointer"
                       title="רווח (Space) להפעלה/עצירה"
                     >
                       {isPlaying ? <Pause className="w-5 h-5 sm:w-4 sm:h-4" /> : <Play className="w-5 h-5 sm:w-4 sm:h-4 ml-0.5" />}
                     </button>
                     <button
                       onClick={() => stepTime(-1)}
-                      className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+                      className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
                       title="שנייה אחורה (J / 1s)"
                     >
                       <RotateCcw className="w-5 h-5 sm:w-4 sm:h-4" />
                     </button>
                     <button
                       onClick={() => stepTime(1)}
-                      className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+                      className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors cursor-pointer"
                       title="שנייה קדימה (L / 1s)"
                     >
                       <RotateCw className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -3037,12 +3209,27 @@ function MainApp() {
 
                 {/* Right: Playback Speed, Snapshot, Shortcuts, Mute & Fullscreen */}
                 <div className="flex items-center justify-end w-full sm:w-auto gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                  <div className="flex items-center bg-zinc-900 rounded-md p-0.5 border border-zinc-800 text-[11px] flex-shrink-0">
+                  {/* Mobile Single Speed Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rates = [1, 1.25, 1.5, 2]
+                      const nextIdx = (rates.indexOf(playbackRate) + 1) % rates.length
+                      handleSpeedChange(rates[nextIdx])
+                    }}
+                    className="sm:hidden px-2.5 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-semibold text-zinc-300 active:scale-95 transition-all flex-shrink-0 cursor-pointer"
+                    title="מהירות ניגון (לחץ להחלפה)"
+                  >
+                    {playbackRate}x
+                  </button>
+
+                  {/* Desktop Playback Speed Group */}
+                  <div className="hidden sm:flex items-center bg-zinc-900 rounded-md p-0.5 border border-zinc-800 text-[11px] flex-shrink-0">
                     {[1, 1.25, 1.5, 2].map((rate) => (
                       <button
                         key={rate}
                         onClick={() => handleSpeedChange(rate)}
-                        className={`px-2 py-0.5 rounded-[4px] transition-colors ${
+                        className={`px-2 py-0.5 rounded-[4px] transition-colors cursor-pointer ${
                           playbackRate === rate
                             ? 'bg-zinc-700 text-white font-semibold shadow-sm'
                             : 'text-zinc-400 hover:text-zinc-200'
@@ -3063,11 +3250,11 @@ function MainApp() {
                     <Camera className="w-4 h-4" />
                   </button>
 
-                  {/* Shortcuts Help Modal Button */}
+                  {/* Shortcuts Help Modal Button - Desktop only */}
                   <button
                     type="button"
                     onClick={() => setShowShortcutsModal(true)}
-                    className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+                    className="hidden sm:inline-flex p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
                     title="קיצורי מקלדת לעורכים (?)"
                   >
                     <Keyboard className="w-4 h-4" />
@@ -3096,7 +3283,7 @@ function MainApp() {
                       step="0.05"
                       value={isMuted ? 0 : volume}
                       onChange={handleVolumeChange}
-                      className="w-14 sm:w-20 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all"
+                      className="hidden sm:block w-14 sm:w-20 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all"
                       title={`עוצמת שמע: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
                     />
                   </div>
@@ -3112,286 +3299,161 @@ function MainApp() {
                 </div>
               </div>
 
-              {/* Drawing Toolbar Toggle & Tools */}
-              <div className="pt-2.5 border-t border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isDrawingMode && videoRef.current && !videoRef.current.paused) {
-                        videoRef.current.pause()
-                        setIsPlaying(false)
-                      }
-                      if (isDrawingMode) {
-                        setTextInputState(null)
-                      }
-                      setIsDrawingMode(!isDrawingMode)
-                    }}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors ${
-                      isDrawingMode
-                        ? 'bg-amber-500 text-black shadow-sm'
-                        : 'bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
-                    }`}
-                  >
-                    <PenTool className="w-3.5 h-3.5" />
-                    <span>{isDrawingMode ? 'סגור סימון ✕' : 'סמן על גבי הסרטון ✏️'}</span>
-                  </button>
-
-                  {isDrawingMode && (
-                    <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-md border border-zinc-800">
-                      {/* Tool selection */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playPop()
-                          setDrawTool('select')
-                          setTextInputState(null)
-                        }}
-                        className={`p-1.5 rounded transition-colors ${drawTool === 'select' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                        title="בחר והזז צורות (Pointer)"
-                      >
-                        <MousePointer className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playPop()
-                          setDrawTool('pen')
-                          setTextInputState(null)
-                        }}
-                        className={`p-1.5 rounded transition-colors ${drawTool === 'pen' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                        title="עט חופשי"
-                      >
-                        <PenTool className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playPop()
-                          setDrawTool('circle')
-                          setTextInputState(null)
-                        }}
-                        className={`p-1.5 rounded transition-colors ${drawTool === 'circle' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                        title="עיגול נמתח"
-                      >
-                        <Circle className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playPop()
-                          setDrawTool('arrow')
-                          setTextInputState(null)
-                        }}
-                        className={`p-1.5 rounded transition-colors ${drawTool === 'arrow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                        title="חץ נמתח"
-                      >
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playPop()
-                          setDrawTool('text')
-                          setTextInputState(null)
-                        }}
-                        className={`p-1.5 rounded transition-colors ${drawTool === 'text' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
-                        title="טקסט על גבי הפריים"
-                      >
-                        <Type className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Color palette */}
-                      <div className="flex items-center gap-1.5 border-r border-zinc-700 pr-2 mr-1">
-                        {[
-                          { color: '#eab308', name: 'צהוב' },
-                          { color: '#ef4444', name: 'אדום' },
-                          { color: '#10b981', name: 'ירוק' },
-                          { color: '#3b82f6', name: 'כחול' }
-                        ].map((c) => (
-                          <button
-                            key={c.color}
-                            type="button"
-                            onClick={() => {
-                              setDrawColor(c.color)
-                              if (selectedShapeId) {
-                                setShapes((prev) =>
-                                  prev.map((s) => (s.id === selectedShapeId ? { ...s, color: c.color } : s))
-                                )
-                              }
-                            }}
-                            style={{ backgroundColor: c.color }}
-                            className={`w-3.5 h-3.5 rounded-full transition-transform ${drawColor === c.color ? 'scale-125 ring-2 ring-white shadow-sm' : 'hover:scale-110'}`}
-                            title={c.name}
-                          />
-                        ))}
-                      </div>
-
-                      {/* Delete selected shape */}
-                      {selectedShapeId && (
-                        <button
-                          type="button"
-                          onClick={deleteSelectedShape}
-                          className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors ml-1"
-                          title="מחק צורה נבחרת (Delete)"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {/* Undo last shape */}
-                      <button
-                        type="button"
-                        onClick={undoLastShape}
-                        disabled={shapes.length === 0}
-                        className="p-1.5 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none rounded transition-colors ml-1"
-                        title="בטל צורה אחרונה (Undo)"
-                      >
-                        <Undo2 className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Clear canvas */}
-                      <button
-                        type="button"
-                        onClick={clearCanvas}
-                        className="p-1.5 text-zinc-400 hover:text-red-400 rounded transition-colors"
-                        title="נקה הכל"
-                      >
-                        <Eraser className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {hasDrawing && (
-                  <span className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-medium">
-                    <span>✨</span>
-                    <span>יש סימון שמור ברגע זה</span>
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Fullscreen Quick Comment Bar (Docked at bottom in Fullscreen) */}
-            {isFullscreen && (
-              <div className="bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-3 flex flex-col gap-3 shadow-lg flex-shrink-0 z-30">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xs font-mono font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1.5 rounded-md border border-indigo-500/20">
-                      ⏱️ פריים: {formatTime(currentTime)}
-                    </span>
-                    <span className="text-[13px] text-zinc-300 font-medium">
-                      {mode === 'client' ? 'הוסף תיקון לפריים זה:' : 'הוסף משימה לפריים זה:'}
-                    </span>
-                  </div>
-
-                  {/* Category picker */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        type="button"
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors flex items-center gap-1.5 ${
-                          selectedCategory === cat.id
-                            ? `${cat.color} font-medium bg-zinc-800 border-zinc-700 shadow-sm`
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
-                        }`}
-                      >
-                        <span>{cat.icon}</span>
-                        <span className="hidden sm:inline">{cat.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Form Input + Shortcuts */}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    handleAddComment()
-                  }}
-                  className="flex items-center gap-3"
-                >
-                  <input
-                    type="text"
-                    value={newCommentText}
-                    onChange={(e) => setNewCommentText(e.target.value)}
-                    placeholder={
-                      hasDrawing
-                        ? 'רשמת סימון על הפריים! הוסף הסבר קצר (למשל: "להחליף את הפונט שמסומן")...'
-                        : 'כתוב מה צריך לתקן ברגע הזה... (Enter לשליחה)'
-                    }
-                    className="flex-1 bg-zinc-900 border border-zinc-700 focus:border-indigo-500 rounded-lg px-3.5 py-2.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-
-                  {/* Voice recording */}
-                  {!isRecording && !recordedAudioData && (
+              {/* Drawing Toolbar Toggle & Tools (Normal Mode Only - Fullscreen has floating top palette) */}
+              {!isFullscreen && (
+                <div className="pt-2.5 border-t border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
-                      onClick={startRecording}
-                      className="flex items-center gap-1 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold flex-shrink-0 transition-all hover:scale-105"
-                      title="הקלט הודעה קולית לפריים זה"
+                      onClick={() => {
+                        if (!isDrawingMode && videoRef.current && !videoRef.current.paused) {
+                          videoRef.current.pause()
+                          setIsPlaying(false)
+                        }
+                        if (isDrawingMode) {
+                          setTextInputState(null)
+                        }
+                        setIsDrawingMode(!isDrawingMode)
+                      }}
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors cursor-pointer ${
+                        isDrawingMode
+                          ? 'bg-amber-500 text-black shadow-sm'
+                          : 'bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+                      }`}
                     >
-                      <Mic className="w-3.5 h-3.5 text-red-400" />
-                      <span className="hidden md:inline">הקלט קולית</span>
+                      <PenTool className="w-3.5 h-3.5" />
+                      <span>{isDrawingMode ? 'סגור סימון ✕' : 'סמן על גבי הסרטון ✏️'}</span>
                     </button>
+
+                    {isDrawingMode && (
+                      <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-md border border-zinc-800 overflow-x-auto max-w-full">
+                        {/* Tool selection */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playPop()
+                            setDrawTool('select')
+                            setTextInputState(null)
+                          }}
+                          className={`p-1.5 rounded transition-colors cursor-pointer ${drawTool === 'select' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                          title="בחר והזז צורות (Pointer)"
+                        >
+                          <MousePointer className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playPop()
+                            setDrawTool('pen')
+                            setTextInputState(null)
+                          }}
+                          className={`p-1.5 rounded transition-colors cursor-pointer ${drawTool === 'pen' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                          title="עט חופשי"
+                        >
+                          <PenTool className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playPop()
+                            setDrawTool('circle')
+                            setTextInputState(null)
+                          }}
+                          className={`p-1.5 rounded transition-colors cursor-pointer ${drawTool === 'circle' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                          title="עיגול נמתח"
+                        >
+                          <Circle className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playPop()
+                            setDrawTool('arrow')
+                            setTextInputState(null)
+                          }}
+                          className={`p-1.5 rounded transition-colors cursor-pointer ${drawTool === 'arrow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                          title="חץ נמתח"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playPop()
+                            setDrawTool('text')
+                            setTextInputState(null)
+                          }}
+                          className={`p-1.5 rounded transition-colors cursor-pointer ${drawTool === 'text' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+                          title="טקסט על גבי הפריים"
+                        >
+                          <Type className="w-3.5 h-3.5" />
+                        </button>
+
+                        <div className="w-px h-4 bg-zinc-800 mx-1"></div>
+
+                        {/* Colors */}
+                        <div className="flex items-center gap-1">
+                          {['#eab308', '#ef4444', '#3b82f6', '#10b981', '#ffffff'].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => {
+                                playPop()
+                                setDrawColor(c)
+                              }}
+                              className={`w-4 h-4 rounded-full transition-transform cursor-pointer ${drawColor === c ? 'scale-125 ring-2 ring-indigo-500 ring-offset-1 ring-offset-zinc-900' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
+
+                        <div className="w-px h-4 bg-zinc-800 mx-1"></div>
+
+                        {/* Delete selected shape */}
+                        {selectedShapeId && (
+                          <button
+                            type="button"
+                            onClick={deleteSelectedShape}
+                            className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors ml-1 cursor-pointer"
+                            title="מחק צורה נבחרת (Delete)"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        {/* Undo last shape */}
+                        <button
+                          type="button"
+                          onClick={undoLastShape}
+                          disabled={shapes.length === 0}
+                          className="p-1.5 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none rounded transition-colors ml-1 cursor-pointer"
+                          title="בטל צורה אחרונה (Undo)"
+                        >
+                          <Undo2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Clear canvas */}
+                        <button
+                          type="button"
+                          onClick={clearCanvas}
+                          className="p-1.5 text-zinc-400 hover:text-red-400 rounded transition-colors cursor-pointer"
+                          title="נקה הכל"
+                        >
+                          <Eraser className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {hasDrawing && (
+                    <span className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-medium">
+                      <span>✨</span>
+                      <span>יש סימון שמור ברגע זה</span>
+                    </span>
                   )}
-
-                  {isRecording && (
-                    <div className="flex items-center gap-1.5 bg-red-950/80 text-red-300 border border-red-500/50 px-2.5 py-1.5 rounded-xl text-xs flex-shrink-0 animate-pulse">
-                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                      <span className="font-mono font-bold">{formatTime(recordingDuration)}</span>
-                      <button
-                        type="button"
-                        onClick={stopRecording}
-                        className="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded"
-                      >
-                        סיים
-                      </button>
-                    </div>
-                  )}
-
-                  {recordedAudioData && !isRecording && (
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <AudioCommentPlayer
-                        src={recordedAudioData}
-                        duration={recordingDuration}
-                        label="הקלטה"
-                      />
-                      <button
-                        type="button"
-                        onClick={cancelRecording}
-                        className="text-xs text-gray-400 hover:text-red-400 p-1"
-                        title="בטל והקלט שוב"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5 text-red-400" />
-                      </button>
-                    </div>
-                  )}
-
-                  <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none flex-shrink-0 hidden sm:flex">
-                    <input
-                      type="checkbox"
-                      checked={isUrgent}
-                      onChange={(e) => setIsUrgent(e.target.checked)}
-                      className="rounded border-[#2e3752] bg-[#1b2031] text-purple-600 focus:ring-0"
-                    />
-                    <span>🔥 דחוף</span>
-                  </label>
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={!newCommentText.trim() && !recordedAudioData && !hasDrawing}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-purple-900/40 transition-all active:scale-95 flex-shrink-0"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>הוסף תיקון</span>
-                  </button>
-                </form>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
 
             {/* Fullscreen Revisions Side Drawer */}
             {isFullscreen && showFullscreenDrawer && (
@@ -3711,7 +3773,7 @@ function MainApp() {
         </section>
 
         {/* Right Section: Interactive Checklist (4 cols) */}
-        <section className="lg:col-span-4 flex flex-col gap-4">
+        <section className={`lg:col-span-4 flex flex-col gap-4 ${mobileTab === 'comments' ? 'flex' : 'hidden lg:flex'}`}>
           
           {/* Header Card with Progress & Actions */}
           <div className="bg-zinc-950/80 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col gap-3">
@@ -4367,6 +4429,31 @@ function MainApp() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Sticky Action Bar for Client (< lg) */}
+      {mode === 'client' && !isFullscreen && (
+        <div
+          className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-zinc-950/95 border-t border-zinc-800 p-3 flex items-center justify-between gap-3 shadow-2xl backdrop-blur-md"
+          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
+        >
+          <button
+            type="button"
+            onClick={shareViaWhatsApp}
+            className="flex-1 py-2.5 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+          >
+            <Send className="w-3.5 h-3.5 text-indigo-400" />
+            <span>עדכן בוואטסאפ 💬</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowApprovalModal(true)}
+            className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>אשר גרסה זו סופית! ✅</span>
+          </button>
+        </div>
+      )}
 
       {/* Version Approval Confirmation Modal */}
       {showApprovalModal && (

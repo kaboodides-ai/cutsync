@@ -90,10 +90,10 @@ export default function ProjectsDashboard({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-base font-black text-zinc-100 font-mono tracking-tight">CutSync</span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                     by kaboodi
                   </span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-zinc-900 text-zinc-300 border border-zinc-800">
+                  <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-bold rounded-md bg-zinc-900 text-zinc-300 border border-zinc-800">
                     דשבורד עורך
                   </span>
                 </div>
@@ -102,13 +102,14 @@ export default function ProjectsDashboard({
           </div>
 
           {/* Actions: New Project CTA & User Profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={onOpenNewProjectModal}
-              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg text-[13px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[12px] sm:text-[13px] font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
-              <span>פרויקט סקירה חדש 🚀</span>
+              <span className="hidden xs:inline sm:inline">פרויקט חדש 🚀</span>
+              <span className="xs:hidden sm:hidden">חדש 🚀</span>
             </button>
 
             {/* User Profile Pill & Dropdown */}
