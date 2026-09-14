@@ -530,33 +530,81 @@ function MainApp() {
 
   // Routing & View states ('home' | 'dashboard' | 'studio')
   const [currentView, setCurrentView] = useState(() => {
+    // When someone enters the bare base URL without query parameters,
+    // ALWAYS start at the home screen (Landing Page).
     const params = new URLSearchParams(window.location.search)
     const viewParam = params.get('view')
-    if (viewParam === 'client' || viewParam === 'editor' || viewParam === 'studio') {
+    const projParam = params.get('project')
+    if (viewParam === 'client' || viewParam === 'editor' || viewParam === 'studio' || projParam) {
       return 'studio'
     }
     if (viewParam === 'dashboard') {
       return 'dashboard'
     }
-    return localStorage.getItem('cutsync_current_view') || 'home'
+    return 'home'
   })
-
-  useEffect(() => {
-    localStorage.setItem('cutsync_current_view', currentView)
-  }, [currentView])
-
-  const isDirectClientLink = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'client'
 
   const [mode, setMode] = useState(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('view') === 'editor') return 'editor'
     if (params.get('view') === 'client') return 'client'
-    return localStorage.getItem('cutsync_mode') || 'editor'
+    return 'editor'
   })
 
+  // Synchronize browser URL with currentView & support browser Back/Forward
   useEffect(() => {
-    localStorage.setItem('cutsync_mode', mode)
-  }, [mode])
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search)
+      const viewParam = params.get('view')
+      const projParam = params.get('project')
+      if (viewParam === 'client') {
+        setMode('client')
+        setCurrentView('studio')
+      } else if (viewParam === 'editor' || viewParam === 'studio' || projParam) {
+        setMode('editor')
+        setCurrentView('studio')
+      } else if (viewParam === 'dashboard') {
+        setCurrentView('dashboard')
+      } else {
+        setCurrentView('home')
+      }
+      if (projParam) {
+        setActiveProjectId(projParam)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  // Keep browser URL in sync with current view and project
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const currentViewParam = params.get('view')
+    const currentProjParam = params.get('project')
+
+    if (currentView === 'home') {
+      if (window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+      localStorage.removeItem('cutsync_current_view')
+    } else if (currentView === 'dashboard') {
+      if (currentViewParam !== 'dashboard' || currentProjParam) {
+        window.history.pushState({}, '', `${window.location.pathname}?view=dashboard`)
+      }
+    } else if (currentView === 'studio' && activeProjectId) {
+      const targetMode = mode === 'client' ? 'client' : 'editor'
+      if (currentProjParam !== activeProjectId || currentViewParam !== targetMode) {
+        window.history.pushState(
+          {},
+          '',
+          `${window.location.pathname}?project=${activeProjectId}&view=${targetMode}`
+        )
+      }
+    }
+  }, [currentView, activeProjectId, mode])
+
+  const isDirectClientLink = mode === 'client' || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'client')
   const [activeFilter, setActiveFilter] = useState('all') // 'all' | 'pending' | 'completed'
   const [copied, setCopied] = useState(false)
   const [hoveredMarker, setHoveredMarker] = useState(null)
