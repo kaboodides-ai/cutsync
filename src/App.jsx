@@ -2468,8 +2468,8 @@ function MainApp() {
       {/* Main Workspace */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Section: Video Player & Timeline (7 cols) */}
-        <section className="lg:col-span-7 flex flex-col gap-4">
+        {/* Left Section: Video Player & Timeline (8 cols) */}
+        <section className="lg:col-span-8 flex flex-col gap-4">
           
           {/* Unified Workspace Header */}
           <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -3475,10 +3475,10 @@ function MainApp() {
 
             {/* Inline Integrated Comment Bar */}
             {!isFullscreen && (
-              <div className="px-4 pb-4 bg-zinc-950 border-t border-zinc-900 pt-3 flex flex-col gap-3">
+              <div className="px-4 pb-4 bg-zinc-950 flex flex-col gap-2">
                 <form onSubmit={handleAddComment} className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                    <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20 flex-shrink-0">
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    <span className="text-[11px] font-mono font-bold text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 flex-shrink-0">
                       {formatTime(currentTime)}
                     </span>
                     {CATEGORIES.map((cat) => (
@@ -3486,9 +3486,9 @@ function MainApp() {
                         type="button"
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.id)}
-                        className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0 ${
+                        className={`text-[11px] px-2 py-0.5 rounded border transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0 ${
                           selectedCategory === cat.id
-                            ? `${cat.color} font-semibold bg-zinc-800 border-zinc-700 shadow-sm`
+                            ? `${cat.color} font-medium bg-zinc-800 border-zinc-700`
                             : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-300'
                         }`}
                       >
@@ -3496,14 +3496,14 @@ function MainApp() {
                         <span>{cat.label}</span>
                       </button>
                     ))}
-                    <label className="flex items-center gap-1 text-[11px] text-zinc-400 cursor-pointer select-none font-medium ml-2">
+                    <label className="flex items-center gap-1 text-[11px] text-zinc-400 cursor-pointer select-none font-medium ml-2 hover:text-zinc-300 transition-colors">
                       <input
                         type="checkbox"
                         checked={isUrgent}
                         onChange={(e) => setIsUrgent(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-0 w-3.5 h-3.5"
+                        className="rounded border-zinc-700 bg-zinc-900 text-red-500 focus:ring-0 w-3 h-3"
                       />
-                      <span>🔥 דחוף</span>
+                      <span>דחוף</span>
                     </label>
                   </div>
                   
@@ -3514,10 +3514,10 @@ function MainApp() {
                       onChange={(e) => setNewCommentText(e.target.value)}
                       placeholder={
                         hasDrawing
-                          ? 'הוסף הסבר קצר לסימון שלך...'
+                          ? 'הוסף הסבר לסימון...'
                           : 'כתוב מה צריך לתקן ברגע זה...'
                       }
-                      className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors"
+                      className="flex-1 bg-zinc-900/50 hover:bg-zinc-900 border border-transparent hover:border-zinc-800 focus:border-zinc-700 focus:bg-zinc-900 rounded-md px-3 py-1.5 text-[12px] text-zinc-100 placeholder-zinc-500 focus:outline-none transition-all"
                     />
 
                     {/* Voice Node inline */}
@@ -3525,7 +3525,7 @@ function MainApp() {
                       <button
                         type="button"
                         onClick={startRecording}
-                        className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors cursor-pointer flex-shrink-0"
+                        className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors cursor-pointer flex-shrink-0"
                         title="הקלט הודעה קולית"
                       >
                         <Mic className="w-4 h-4" />
@@ -3533,10 +3533,10 @@ function MainApp() {
                     )}
 
                     {isRecording && (
-                      <div className="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-2 rounded-lg text-xs font-mono font-bold animate-pulse flex-shrink-0">
-                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      <div className="flex items-center gap-2 bg-red-500/10 text-red-400 px-2 py-1 rounded-md text-[11px] font-mono animate-pulse flex-shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                         <span>{formatTime(recordingDuration)}</span>
-                        <button type="button" onClick={stopRecording} className="ml-1 bg-red-600 hover:bg-red-500 text-white px-2 py-0.5 rounded cursor-pointer">
+                        <button type="button" onClick={stopRecording} className="ml-1 text-zinc-300 hover:text-white cursor-pointer px-1">
                           סיים
                         </button>
                       </div>
@@ -3545,8 +3545,8 @@ function MainApp() {
                     {recordedAudioData && !isRecording && (
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <AudioCommentPlayer src={recordedAudioData} duration={recordingDuration} label="הקלטה" />
-                        <button type="button" onClick={cancelRecording} className="p-2 text-zinc-400 hover:text-red-400 cursor-pointer">
-                          <RotateCcw className="w-4 h-4" />
+                        <button type="button" onClick={cancelRecording} className="p-1 text-zinc-500 hover:text-red-400 cursor-pointer">
+                          <RotateCcw className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     )}
@@ -3554,10 +3554,10 @@ function MainApp() {
                     <button
                       type="submit"
                       disabled={!newCommentText.trim() && !recordedAudioData && !hasDrawing}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[13px] font-semibold transition-colors cursor-pointer shadow-sm flex-shrink-0"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-white text-[12px] font-medium transition-colors cursor-pointer flex-shrink-0"
                     >
-                      <Plus className="w-4 h-4" />
-                      <span className="hidden sm:inline">הוסף הערה</span>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">שלח</span>
                     </button>
                   </div>
                 </form>
@@ -3568,20 +3568,20 @@ function MainApp() {
 
         </section>
 
-        {/* Right Section: Interactive Checklist (5 cols) */}
-        <section className="lg:col-span-5 flex flex-col gap-4">
+        {/* Right Section: Interactive Checklist (4 cols) */}
+        <section className="lg:col-span-4 flex flex-col gap-4">
           
           {/* Header Card with Progress & Actions */}
-          <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 shadow-sm flex flex-col gap-4">
-            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-2">
+          <div className="bg-zinc-950/80 p-4 rounded-xl border border-zinc-800 shadow-sm flex flex-col gap-3">
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 xl:gap-2">
               <div>
-                <h2 className="text-[15px] font-bold text-zinc-100 flex items-center gap-2">
+                <h2 className="text-[14px] font-bold text-zinc-100 flex items-center gap-2">
                   <span>{mode === 'client' ? 'ההערות והבקשות שלך' : 'משימות לביצוע בפרמייר'}</span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-md border font-semibold bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded border font-semibold bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
                     {comments.length}
                   </span>
                 </h2>
-                <p className="text-[12px] text-zinc-400 mt-1 font-medium">
+                <p className="text-[11px] text-zinc-400 mt-0.5 font-medium">
                   {mode === 'client'
                     ? 'לחיצה על הערה תקפיץ לזמן המדויק בוידאו'
                     : `נשארו עוד ${comments.length - completedCount} משימות פתוחות`}
@@ -3590,7 +3590,7 @@ function MainApp() {
 
               <div className="flex items-center gap-2">
                 {/* Quick Filter tabs */}
-                <div className="flex items-center bg-zinc-900 p-1 rounded-md border border-zinc-800 text-[12px]">
+                <div className="flex items-center bg-zinc-900 p-0.5 rounded-md border border-zinc-800 text-[11px]">
                   <button
                     onClick={() => setActiveFilter('all')}
                     className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
@@ -3705,10 +3705,9 @@ function MainApp() {
           {/* List of Revisions */}
           <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto max-h-[480px] pr-1">
             {filteredComments.length === 0 ? (
-              <div className="bg-zinc-950 border border-dashed border-zinc-800 rounded-xl p-8 text-center flex flex-col items-center justify-center gap-3 text-zinc-500">
-                <Sparkles className="w-8 h-8 text-indigo-400/50" />
-                <p className="text-[13px] font-medium">אין כרגע הערות בקטגוריה זו</p>
-                <p className="text-[12px] text-zinc-500">עצור את הסרטון בכל רגע והוסף הערה בטופס</p>
+              <div className="bg-zinc-950 border border-dashed border-zinc-800 rounded-xl p-6 text-center flex flex-col items-center justify-center gap-2 text-zinc-500">
+                <Sparkles className="w-6 h-6 text-indigo-400/50" />
+                <p className="text-[12px] font-medium">אין כרגע הערות בקטגוריה זו</p>
               </div>
             ) : (
               filteredComments.map((comment) => {
@@ -3716,7 +3715,7 @@ function MainApp() {
                 return (
                   <div
                     key={comment.id}
-                    className={`group bg-zinc-950 hover:bg-zinc-900/80 border rounded-xl p-4 transition-colors flex items-start gap-3.5 shadow-sm ${
+                    className={`group bg-zinc-950 hover:bg-zinc-900/80 border rounded-xl p-3.5 transition-colors flex items-start gap-3 shadow-sm ${
                       comment.completed
                         ? 'border-zinc-800 opacity-60'
                         : comment.urgent
@@ -3732,17 +3731,17 @@ function MainApp() {
                         title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע בפרמייר'}
                       >
                         {comment.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400 fill-emerald-950/80 animate-in zoom-in-75 duration-200" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-950/80 animate-in zoom-in-75 duration-200" />
                         ) : (
-                          <Circle className="w-5 h-5" />
+                          <Circle className="w-4 h-4" />
                         )}
                       </button>
                     ) : (
                       <div className="mt-0.5 flex-shrink-0">
                         {comment.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-in zoom-in-75 duration-200" title="תוקן ע״י העורך" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 animate-in zoom-in-75 duration-200" title="תוקן ע״י העורך" />
                         ) : (
-                          <Circle className="w-5 h-5 text-zinc-600" title="ממתין לטיפול" />
+                          <Circle className="w-4 h-4 text-zinc-600" title="ממתין לטיפול" />
                         )}
                       </div>
                     )}
@@ -3750,8 +3749,8 @@ function MainApp() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* Header row */}
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <span className="text-[13px] font-semibold text-zinc-100">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className="text-[12px] font-semibold text-zinc-100">
                           {comment.author === 'לקוח' || (!comment.author && mode === 'client') ? (currentProject.clientName || 'לקוח') : 'העורך'}
                         </span>
                         
@@ -3759,34 +3758,34 @@ function MainApp() {
                         
                         <button
                           onClick={() => seekTo(comment.time, comment.drawing)}
-                          className="font-mono text-[12px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+                          className="font-mono text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
                         >
                           {formatTime(comment.time)}
                         </button>
 
                         {cat && (
                           <>
-                            <span className="text-zinc-700 text-[11px]">•</span>
-                            <span className="text-[12px] text-zinc-400">{cat.label}</span>
+                            <span className="text-zinc-700 text-[10px]">•</span>
+                            <span className="text-[11px] text-zinc-400">{cat.label}</span>
                           </>
                         )}
                         
                         {comment.urgent && (
                           <>
-                            <span className="text-zinc-700 text-[11px]">•</span>
-                            <span className="text-[11px] font-semibold text-red-400">דחוף 🔥</span>
+                            <span className="text-zinc-700 text-[10px]">•</span>
+                            <span className="text-[10px] font-semibold text-red-400">דחוף 🔥</span>
                           </>
                         )}
                       </div>
 
                       {/* Main text */}
-                      <p className={`text-[14px] leading-relaxed mb-3 ${comment.completed ? 'line-through text-zinc-500' : 'text-zinc-200 font-normal'}`}>
+                      <p className={`text-[13px] leading-snug mb-2.5 ${comment.completed ? 'line-through text-zinc-500' : 'text-zinc-200 font-normal'}`}>
                         {comment.text}
                       </p>
 
                       {/* Attached Audio Voice Note */}
                       {comment.audio && (
-                        <div className="mb-3">
+                        <div className="mb-2.5">
                           <AudioCommentPlayer
                             src={comment.audio}
                             duration={comment.audioDuration}
@@ -3795,7 +3794,7 @@ function MainApp() {
                       )}
 
                       {/* Footer Actions */}
-                      <div className="flex items-center gap-4 flex-wrap">
+                      <div className="flex items-center gap-3 flex-wrap">
                         {/* Emojis */}
                         <div className="flex items-center gap-1">
                           {['👍', '🔥', '👏', '💡', '❤️'].map((emoji) => {
@@ -3805,10 +3804,10 @@ function MainApp() {
                                 key={emoji}
                                 type="button"
                                 onClick={(e) => handleAddReaction(comment.id, emoji, e)}
-                                className={`px-1.5 py-0.5 rounded text-[12px] transition-colors flex items-center gap-1 cursor-pointer ${
+                                className={`px-1.5 py-0.5 rounded text-[12px] transition-all flex items-center gap-1 cursor-pointer ${
                                   count > 0
                                     ? 'bg-zinc-800 text-zinc-100 font-medium'
-                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                    : 'text-zinc-500 hover:bg-zinc-800/50 grayscale hover:grayscale-0 opacity-40 hover:opacity-100'
                                 }`}
                                 title={`הגב עם ${emoji}`}
                               >
