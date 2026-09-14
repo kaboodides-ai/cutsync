@@ -4,6 +4,7 @@ import {
   Pause,
   RotateCcw,
   RotateCw,
+  Volume1,
   Volume2,
   VolumeX,
   Maximize,
@@ -480,11 +481,24 @@ function MainApp() {
   const [duration, setDuration] = useState(0)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('cutsync_player_volume')
+    return saved !== null ? parseFloat(saved) : 1
+  })
+  const prevVolumeRef = useRef(1)
   const [videoLoadError, setVideoLoadError] = useState(false)
 
   useEffect(() => {
     setVideoLoadError(false)
   }, [videoSrc])
+
+  // Sync volume and mute state with video element
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = isMuted ? 0 : volume
+      videoRef.current.muted = isMuted
+    }
+  }, [videoSrc, isMuted, volume])
 
   // Drawing Markup State
   const [isDrawingMode, setIsDrawingMode] = useState(false)
@@ -1601,6 +1615,8 @@ function MainApp() {
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration)
+      videoRef.current.volume = isMuted ? 0 : volume
+      videoRef.current.muted = isMuted
     }
   }
 
@@ -1647,6 +1663,38 @@ function MainApp() {
     if (videoRef.current) {
       videoRef.current.playbackRate = rate
       setPlaybackRate(rate)
+    }
+  }
+
+  const toggleMute = () => {
+    if (!videoRef.current) return
+    if (isMuted) {
+      const targetVol = volume > 0 ? volume : (prevVolumeRef.current > 0 ? prevVolumeRef.current : 0.8)
+      videoRef.current.muted = false
+      videoRef.current.volume = targetVol
+      setIsMuted(false)
+      setVolume(targetVol)
+    } else {
+      prevVolumeRef.current = volume > 0 ? volume : 0.8
+      videoRef.current.muted = true
+      setIsMuted(true)
+    }
+  }
+
+  const handleVolumeChange = (e) => {
+    const newVol = parseFloat(e.target.value)
+    setVolume(newVol)
+    localStorage.setItem('cutsync_player_volume', String(newVol))
+    if (videoRef.current) {
+      videoRef.current.volume = newVol
+      if (newVol === 0) {
+        videoRef.current.muted = true
+        setIsMuted(true)
+      } else {
+        videoRef.current.muted = false
+        setIsMuted(false)
+        prevVolumeRef.current = newVol
+      }
     }
   }
 
@@ -2971,32 +3019,47 @@ function MainApp() {
                   <button
                     type="button"
                     onClick={() => setShowShortcutsModal(true)}
-                    className="p-2 rounded-xl text-gray-400 hover:text-purple-300 hover:bg-white/[0.06] transition-colors cursor-pointer"
+                    className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
                     title="קיצורי מקלדת לעורכים (?)"
                   >
                     <Keyboard className="w-4 h-4" />
                   </button>
 
-                  <button
-                    onClick={() => {
-                      if (videoRef.current) {
-                        videoRef.current.muted = !isMuted
-                        setIsMuted(!isMuted)
-                      }
-                    }}
-                    className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
-                    title={isMuted ? 'בטל השתקה' : 'השתק'}
-                  >
-                    {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
-                  </button>
+                  {/* Volume Slider & Mute Control */}
+                  <div className="flex items-center gap-1.5 bg-zinc-900 px-2 py-1.5 rounded-lg border border-zinc-800 flex-shrink-0" dir="ltr">
+                    <button
+                      type="button"
+                      onClick={toggleMute}
+                      className="text-zinc-400 hover:text-zinc-100 transition-colors cursor-pointer flex items-center justify-center"
+                      title={isMuted || volume === 0 ? 'בטל השתקה' : 'השתק'}
+                    >
+                      {isMuted || volume === 0 ? (
+                        <VolumeX className="w-4 h-4 text-red-400" />
+                      ) : volume < 0.5 ? (
+                        <Volume1 className="w-4 h-4 text-zinc-300" />
+                      ) : (
+                        <Volume2 className="w-4 h-4 text-zinc-300" />
+                      )}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
+                      className="w-14 sm:w-20 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400 transition-all"
+                      title={`עוצמת שמע: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+                    />
+                  </div>
 
                   <button
                     type="button"
                     onClick={toggleFullscreen}
-                    className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                    className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
                     title={isFullscreen ? 'צא ממסך מלא (F / Esc)' : 'מסך מלא אינטראקטיבי (F)'}
                   >
-                    {isFullscreen ? <Minimize className="w-4 h-4 text-purple-400" /> : <Maximize className="w-4 h-4" />}
+                    {isFullscreen ? <Minimize className="w-4 h-4 text-indigo-400" /> : <Maximize className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
