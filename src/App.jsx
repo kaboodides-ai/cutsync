@@ -205,7 +205,7 @@ function MainApp() {
   const playerContainerRef = useRef(null)
   const canvasSnapshotRef = useRef(null)
   const fsCanvasRef = useRef(null) // canvas inside the fullscreen portal
-  const fsVideoRef = useRef(null) // video inside the fullscreen portal
+  const fsVideoDisplayRef = useRef(null) // canvas for mirroring video in fullscreen
 
   // Voice Recording State
   const [isRecording, setIsRecording] = useState(false)
@@ -643,44 +643,26 @@ function MainApp() {
     ctx.drawImage(src, 0, 0)
   })
 
-  // Sync main video state to portal video
+  // Draw main video to portal canvas to avoid autoplay/sync issues
   useEffect(() => {
     const main = videoRef.current
-    const fs = fsVideoRef.current
-    if (!isFullscreen || !main || !fs) return
+    const displayCanvas = fsVideoDisplayRef.current
+    if (!isFullscreen || !main || !displayCanvas) return
     
-    fs.currentTime = main.currentTime
-    fs.muted = main.muted
-    fs.volume = main.volume
-    fs.playbackRate = main.playbackRate
-    if (!main.paused) fs.play().catch(() => {})
+    const ctx = displayCanvas.getContext('2d')
+    let animationId
     
-    const onTimeUpdate = () => {
-      if (Math.abs(fs.currentTime - main.currentTime) > 0.3) {
-        fs.currentTime = main.currentTime
+    const loop = () => {
+      if (main.readyState >= 2) {
+        if (displayCanvas.width !== main.videoWidth) displayCanvas.width = main.videoWidth
+        if (displayCanvas.height !== main.videoHeight) displayCanvas.height = main.videoHeight
+        ctx.drawImage(main, 0, 0, displayCanvas.width, displayCanvas.height)
       }
+      animationId = requestAnimationFrame(loop)
     }
-    const onPlay = () => fs.play().catch(() => {})
-    const onPause = () => fs.pause()
-    const onRateChange = () => { fs.playbackRate = main.playbackRate }
-    const onVolumeChange = () => { fs.volume = main.volume; fs.muted = main.muted }
-    const onSeeked = () => { fs.currentTime = main.currentTime }
     
-    main.addEventListener('timeupdate', onTimeUpdate)
-    main.addEventListener('play', onPlay)
-    main.addEventListener('pause', onPause)
-    main.addEventListener('ratechange', onRateChange)
-    main.addEventListener('volumechange', onVolumeChange)
-    main.addEventListener('seeked', onSeeked)
-    
-    return () => {
-      main.removeEventListener('timeupdate', onTimeUpdate)
-      main.removeEventListener('play', onPlay)
-      main.removeEventListener('pause', onPause)
-      main.removeEventListener('ratechange', onRateChange)
-      main.removeEventListener('volumechange', onVolumeChange)
-      main.removeEventListener('seeked', onSeeked)
-    }
+    loop()
+    return () => cancelAnimationFrame(animationId)
   }, [isFullscreen])
 
   // Version Approval & Reopen State
@@ -1513,13 +1495,8 @@ function MainApp() {
     if (!videoRef.current) return
     if (isPlaying) {
       videoRef.current.pause()
-      if (fsVideoRef.current) fsVideoRef.current.pause()
     } else {
       const playPromise = videoRef.current.play()
-      if (fsVideoRef.current) {
-        const fsPlayPromise = fsVideoRef.current.play()
-        if (fsPlayPromise !== undefined) fsPlayPromise.catch(() => {})
-      }
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
           console.warn('Video play prevented or source issue:', err)
@@ -3693,11 +3670,8 @@ function MainApp() {
               {/* Video fills entire screen */}
               <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
                 {/* Hidden real video syncs; this is the display clone */}
-                <video
-                  src={videoSrc}
-                  ref={fsVideoRef}
-                  playsInline
-                  webkit-playsinline="true"
+                <canvas
+                  ref={fsVideoDisplayRef}
                   onClick={() => { if (!isDrawingMode) handlePlayPause() }}
                   style={{
                     width: '100%',
