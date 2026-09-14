@@ -2530,14 +2530,38 @@ function MainApp() {
                     <Upload className="w-4 h-4" />
                   </button>
 
-                  <input type="file" ref={fileInputNewVersionRef} onChange={handleUploadNewVersion} accept="video/*" className="hidden" />
-                  <button
-                    onClick={() => fileInputNewVersionRef.current?.click()}
-                    className="p-1.5 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
-                    title="העלה גרסה חדשה (V2, V3...)"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
+                  {/* Upload New Version Menu */}
+                  <div className="relative group">
+                    <button
+                      className="p-1.5 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors cursor-pointer"
+                      title="הוסף גרסה"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+
+                    <div className="absolute left-0 top-full pt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl flex flex-col p-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 p-1 rounded-md">
+                            <Layers className="w-4 h-4" />
+                          </div>
+                          <h3 className="text-[13px] font-bold text-zinc-100">הוספת גרסה V{versions.length + 1}</h3>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 mb-3 leading-relaxed">
+                          העלאת קובץ וידאו חדש תיצור גרסה מתקדמת ותשמור את כל ההערות הקודמות ב-{currentVersion.name}.
+                        </p>
+                        
+                        <input type="file" ref={fileInputNewVersionRef} onChange={handleUploadNewVersion} accept="video/*" className="hidden" />
+                        <button
+                          onClick={() => fileInputNewVersionRef.current?.click()}
+                          className="flex items-center justify-center gap-2 px-3 py-2 text-[12px] text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors font-medium shadow-sm w-full cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>בחר סרטון ל-V{versions.length + 1}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
