@@ -2333,16 +2333,10 @@ function MainApp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0e17] text-gray-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-purple-500/30 selection:text-purple-200">
-      {/* Warm ambient background lighting (Subtle atmospheric depth, removes robotic sterility) */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] right-[15%] w-[480px] h-[480px] rounded-full bg-purple-600/[0.07] blur-[130px]" />
-        <div className="absolute top-[25%] left-[-8%] w-[420px] h-[420px] rounded-full bg-indigo-600/[0.06] blur-[140px]" />
-        <div className="absolute bottom-[10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-emerald-600/[0.04] blur-[150px]" />
-      </div>
-
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
+      
       {/* Top Navigation */}
-      <header className="border-b border-white/[0.08] bg-[#10131e]/85 backdrop-blur-xl px-2 lg:px-8 py-2 sm:py-3 sticky top-0 z-40 transition-colors shadow-sm">
+      <header className="border-b border-zinc-900 bg-zinc-950/90 backdrop-blur-xl px-2 lg:px-8 py-2 sm:py-3 sticky top-0 z-40 transition-colors shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
           
           {/* Right Side: Navigation & Identity */}
@@ -2358,17 +2352,17 @@ function MainApp() {
               }}
               title={isDirectClientLink ? currentProject.title : (mode === 'editor' ? "חזור לדשבורד" : "דף הבית")}
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-900/30 flex-shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
                 <Scissors className="w-4 h-4 text-white" />
               </div>
             </div>
 
             {/* Separator */}
-            <div className="w-px h-6 bg-[#232d44] hidden sm:block"></div>
+            <div className="w-px h-5 bg-zinc-800 hidden sm:block"></div>
 
             {/* Project Title */}
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold tracking-normal text-white truncate max-w-[150px] sm:max-w-[200px]">{currentProject.title}</h1>
+              <h1 className="text-sm font-semibold tracking-normal text-zinc-100 truncate max-w-[150px] sm:max-w-[200px]">{currentProject.title}</h1>
               {mode === 'editor' && !isDirectClientLink && (
                 <button
                   type="button"
@@ -2376,21 +2370,21 @@ function MainApp() {
                     e.stopPropagation()
                     setProjectToEditInStudio(currentProject)
                   }}
-                  className="p-1 rounded-md text-gray-400 hover:text-purple-300 hover:bg-[#1a2337] transition-all cursor-pointer"
+                  className="p-1.5 rounded-md text-zinc-500 hover:text-indigo-400 hover:bg-zinc-900 transition-colors cursor-pointer"
                   title="ערוך שם פרויקט ולקוח"
                 >
-                  <Pencil className="w-3 h-3" />
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
             {/* Role Badge */}
             {mode === 'editor' ? (
-              <span className="hidden md:inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-medium rounded-md bg-zinc-900 text-zinc-400 border border-zinc-800">
                 סטודיו עריכה 🎬
               </span>
             ) : (
-              <span className="hidden md:inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+              <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-medium rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 מרחב משוב 👤
               </span>
             )}
@@ -2401,10 +2395,10 @@ function MainApp() {
             {/* Sound FX Toggle */}
             <button
               onClick={handleToggleSound}
-              className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${
+              className={`p-2 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
                 soundOn
-                  ? 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:bg-purple-500/30 shadow-sm'
-                  : 'bg-[#161a28]/80 border-white/[0.08] text-gray-500 hover:text-gray-300'
+                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
               }`}
               title={soundOn ? 'צלילי משוב פעילים 🔊 (לחץ להשתקה)' : 'צלילי משוב מושתקים 🔇 (לחץ להפעלה)'}
             >
@@ -2418,7 +2412,7 @@ function MainApp() {
                   setAuthModalInitialTab('login')
                   setShowAuthModal(true)
                 }}
-                className="flex items-center gap-2 px-1 sm:px-2.5 py-1 rounded-full bg-[#141826] border border-white/[0.08] cursor-pointer hover:border-purple-500/50 transition-all"
+                className="flex items-center gap-2 px-1 sm:px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 cursor-pointer hover:border-zinc-700 transition-colors"
                 title="לחץ להחלפת משתמש"
               >
                 <img
@@ -2426,7 +2420,7 @@ function MainApp() {
                   alt={currentUser.name}
                   className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
                 />
-                <span className="hidden lg:inline text-[11px] font-semibold text-gray-200 truncate max-w-[100px]">
+                <span className="hidden lg:inline text-[11px] font-medium text-zinc-300 truncate max-w-[100px]">
                   {currentUser.name}
                 </span>
               </div>
@@ -2437,7 +2431,7 @@ function MainApp() {
 
       {/* Client Personalized Welcome Banner */}
       {mode === 'client' ? (
-        <div className="bg-gradient-to-r from-purple-950/30 via-[#131726]/60 to-indigo-950/30 border-b border-purple-500/20 px-4 py-3 text-xs text-purple-200/90">
+        <div className="bg-indigo-500/5 border-b border-indigo-500/10 px-4 py-3 text-xs text-indigo-200/90">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <span className="flex h-2.5 w-2.5 relative flex-shrink-0">
@@ -2448,22 +2442,22 @@ function MainApp() {
                 שלום <strong>{currentProject.clientName || 'שותף יקר'}</strong> 👋 הגרסה החדשה של <strong>"{currentProject.title}"</strong> מוכנה לצפייה! צפה בכיף, עצור בכל נקודה כדי להשאיר הערה, לצייר על המסך או להקליט. בסיום אשר את הגרסה בקליק.
               </span>
             </div>
-            <span className="text-[11px] text-purple-300 font-semibold bg-purple-500/15 px-3 py-1 rounded-full border border-purple-400/25 hidden md:inline flex-shrink-0">
+            <span className="text-[11px] text-emerald-400 font-medium bg-emerald-500/10 px-3 py-1 rounded-md border border-emerald-500/20 hidden md:inline flex-shrink-0">
               ✨ צפייה ומשוב ללקוח
             </span>
           </div>
         </div>
       ) : (
         /* Mode Guidance Banner for Editor */
-        <div className="bg-gradient-to-r from-indigo-950/30 via-[#121626]/60 to-purple-950/30 border-b border-indigo-500/20 px-4 py-2.5 text-xs text-indigo-200/90">
+        <div className="bg-zinc-900/50 border-b border-zinc-800/50 px-4 py-2.5 text-xs text-zinc-300">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 flex-shrink-0"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-zinc-500 flex-shrink-0"></span>
               <span className="leading-relaxed">
                 <strong>סטודיו עריכה:</strong> פרויקט <strong>"{currentProject.title}"</strong>. כל ההערות והסימונים של הלקוח מסונכרנים כאן לפי פריים. שיהיה סשן עריכה נעים! 🎬
               </span>
             </div>
-            <span className="text-[11px] text-indigo-300 font-semibold bg-indigo-500/15 px-3 py-0.5 rounded-full border border-indigo-400/25 hidden sm:inline whitespace-nowrap">
+            <span className="text-[11px] text-zinc-400 font-medium bg-zinc-800 px-3 py-0.5 rounded-md border border-zinc-700 hidden sm:inline whitespace-nowrap">
               {completedCount === comments.length && comments.length > 0 ? '✨ כל המשימות הושלמו!' : `הושלמו ${completedCount} מתוך ${comments.length}`}
             </span>
           </div>
@@ -2477,11 +2471,11 @@ function MainApp() {
         <section className="lg:col-span-7 flex flex-col gap-4">
           
           {/* Version Stacking Switcher Bar */}
-          <div className="bg-[#121624]/90 backdrop-blur-md p-3 rounded-2xl border border-white/[0.07] shadow-xl flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-zinc-900 p-2.5 rounded-xl border border-zinc-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 overflow-x-auto py-0.5">
-              <div className="flex items-center gap-1.5 text-xs text-gray-300 font-semibold px-1 select-none">
-                <Layers className="w-4 h-4 text-purple-400" />
-                <span>גרסאות סרטון:</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium px-1 select-none">
+                <Layers className="w-3.5 h-3.5" />
+                <span>גרסאות:</span>
               </div>
               <div className="flex items-center gap-2">
                 {versions.map((ver) => {
@@ -2491,10 +2485,10 @@ function MainApp() {
                     <button
                       key={ver.id}
                       onClick={() => switchVersion(ver.id)}
-                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
                         isActive
-                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-950/40 ring-2 ring-purple-400/40 scale-[1.02]'
-                          : 'bg-[#171b29]/80 text-gray-300 hover:text-white hover:bg-[#202538] border border-white/[0.06]'
+                          ? 'bg-zinc-100 text-zinc-900 shadow-sm'
+                          : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800/50'
                       }`}
                     >
                       <span>{ver.name}</span>
@@ -2566,26 +2560,26 @@ function MainApp() {
           {/* Video Header Card & Player Container */}
           <div
             ref={playerContainerRef}
-            className={`bg-[#111420] transition-all overflow-hidden relative select-none ${
+            className={`bg-zinc-950 transition-all overflow-hidden relative select-none ${
               isFullscreen
-                ? 'fixed inset-0 z-50 rounded-none border-none flex flex-col justify-between w-full h-[100dvh] bg-[#080a10]'
-                : 'rounded-3xl border border-white/[0.08] shadow-2xl shadow-black/70'
+                ? 'fixed inset-0 z-50 rounded-none border-none flex flex-col justify-between w-full h-[100dvh] bg-black'
+                : 'rounded-xl border border-zinc-800 shadow-sm'
             }`}
           >
             {/* Title Bar */}
-            <div className="px-4 py-3 bg-[#151926]/95 border-b border-white/[0.07] flex items-center justify-between text-xs text-gray-300 z-10 flex-shrink-0">
+            <div className="px-4 py-3 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between text-xs text-zinc-300 z-10 flex-shrink-0">
               <div className="flex items-center gap-2 font-medium truncate">
-                <Video className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                <span className="truncate text-gray-200">{videoTitle} — <strong className="text-purple-300 font-bold">{currentVersion.name}</strong></span>
+                <Video className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                <span className="truncate text-zinc-100">{videoTitle} — <strong className="text-indigo-300 font-semibold">{currentVersion.name}</strong></span>
                 {currentVersion.approved && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 flex-shrink-0">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 flex-shrink-0">
+                    <CheckCircle2 className="w-3 h-3" />
                     <span>אושר ע"י {currentVersion.approvedBy || 'הלקוח'} ✨</span>
                   </span>
                 )}
                 {currentVersion.approved && currentVersion.reopenRequested && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 flex-shrink-0 animate-pulse">
-                    <Bell className="w-3 h-3 text-amber-400" />
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 flex-shrink-0 animate-pulse">
+                    <Bell className="w-3 h-3" />
                     <span>העורך ביקש לפתוח מחדש</span>
                   </span>
                 )}
@@ -2595,25 +2589,25 @@ function MainApp() {
                   <button
                     type="button"
                     onClick={() => setShowFullscreenDrawer(!showFullscreenDrawer)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
                       showFullscreenDrawer
-                        ? 'bg-purple-600 text-white shadow-md'
-                        : 'bg-[#232a3f] text-gray-300 hover:text-white hover:bg-[#2e3752]'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700'
                     }`}
                     title="רשימת תיקונים והערות במסך מלא"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                    <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
                     <span>תיקונים ({comments.length})</span>
                   </button>
                 )}
-                <span className="text-gray-400 font-mono text-[11px] bg-[#111420] px-2 py-0.5 rounded border border-[#2b334a]">
+                <span className="text-zinc-400 font-mono text-[11px] bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
                 {isFullscreen && (
                   <button
                     type="button"
                     onClick={toggleFullscreen}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold transition-colors"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-semibold transition-colors"
                     title="צא ממסך מלא (Esc / F)"
                   >
                     <Minimize className="w-3.5 h-3.5" />
@@ -2651,34 +2645,31 @@ function MainApp() {
 
               {/* Empty / Error State Overlay */}
               {(!videoSrc || videoLoadError) && (
-                <div className="absolute inset-0 bg-[#0c101a]/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center z-40 gap-6 text-white overflow-hidden">
+                <div className="absolute inset-0 bg-zinc-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-40 gap-6 text-white overflow-hidden">
                   
-                  {/* Glow effect */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
-
                   {/* Icon & Title */}
                   <div className="flex flex-col items-center gap-4 relative z-10">
-                    <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-tr from-purple-600/20 to-indigo-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-2 shadow-2xl shadow-purple-900/30">
+                    <div className="w-16 h-16 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-2">
                       {videoLoadError && videoSrc ? (
-                        <AlertCircle className="w-10 h-10 text-amber-400" />
+                        <AlertCircle className="w-8 h-8 text-amber-500" />
                       ) : (
-                        <Sparkles className="w-10 h-10" />
+                        <Sparkles className="w-8 h-8" />
                       )}
                     </div>
                     {videoLoadError && videoSrc ? (
-                      <h3 className="text-2xl font-extrabold text-white tracking-tight">אופס, הסרטון הזה לא זמין כרגע 🙈</h3>
+                      <h3 className="text-xl font-bold text-zinc-100 tracking-tight">אופס, הסרטון הזה לא זמין כרגע</h3>
                     ) : (
-                      <h3 className="text-2xl font-extrabold text-white tracking-tight">בואו נתחיל לעבוד! 🎬</h3>
+                      <h3 className="text-xl font-bold text-zinc-100 tracking-tight">בואו נתחיל לעבוד!</h3>
                     )}
                     
                     {mode === 'editor' ? (
-                      <p className="text-sm text-gray-300 max-w-[420px] leading-relaxed">
+                      <p className="text-[13px] text-zinc-400 max-w-[420px] leading-relaxed">
                         {videoLoadError && videoSrc 
                           ? 'נראה שהקישור שבור, פג תוקף, או שהסרטון נשמר זמנית ונמחק ברענון הדף. בחר סרטון חדש כדי להמשיך לעבוד על הפרויקט.'
                           : 'העלה סרטון למערכת, קבל קישור מהיר ללקוח, ותתחיל לאסוף הערות לתיקונים בצורה חכמה ומסודרת.'}
                       </p>
                     ) : (
-                      <p className="text-sm text-gray-300 max-w-md leading-relaxed">
+                      <p className="text-[13px] text-zinc-400 max-w-md leading-relaxed">
                         הסרטון לא זמין כרגע. אנא פנה לעורך הסרטון כדי לקבל קישור מעודכן.
                       </p>
                     )}
@@ -2692,11 +2683,10 @@ function MainApp() {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="group relative flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-xl shadow-purple-900/40 w-full sm:w-auto justify-center overflow-hidden"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[13px] font-semibold text-white transition-colors shadow-sm w-full sm:w-auto justify-center"
                       >
-                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-                        <Upload className="w-5 h-5 relative z-10" />
-                        <span className="relative z-10">העלה סרטון מהמחשב</span>
+                        <Upload className="w-4 h-4" />
+                        <span>העלה סרטון מהמחשב</span>
                       </button>
 
                       {/* Add URL Button */}
@@ -2711,9 +2701,9 @@ function MainApp() {
                             setVideoLoadError(false)
                           }
                         }}
-                        className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 hover:border-white/10 text-sm font-semibold text-gray-200 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                        className="flex items-center gap-2.5 px-6 py-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-600 text-[13px] font-semibold text-zinc-300 transition-colors shadow-sm w-full sm:w-auto justify-center"
                       >
-                        <Link2 className="w-5 h-5 text-indigo-400" />
+                        <Link2 className="w-4 h-4 text-indigo-400" />
                         <span>קישור ישיר (URL)</span>
                       </button>
 
@@ -2726,9 +2716,9 @@ function MainApp() {
                           )
                           setVideoLoadError(false)
                         }}
-                        className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#131723] hover:bg-[#1a2133] border border-[#2b334a] hover:border-[#384260] text-sm font-semibold text-gray-400 hover:text-gray-200 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                        className="flex items-center gap-2.5 px-6 py-2.5 rounded-lg bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 text-[13px] font-semibold text-zinc-400 hover:text-zinc-200 transition-colors shadow-sm w-full sm:w-auto justify-center"
                       >
-                        <Film className="w-5 h-5" />
+                        <Film className="w-4 h-4" />
                         <span>סרטון דוגמה</span>
                       </button>
 
@@ -2791,11 +2781,11 @@ function MainApp() {
                     transform: 'translate(-10%, -50%)',
                     zIndex: 40
                   }}
-                  className="bg-[#0f1422]/95 backdrop-blur-md border-2 rounded-xl p-2 shadow-2xl flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150"
+                  className="bg-zinc-950/95 backdrop-blur-md border rounded-lg p-2 shadow-lg flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono">
                       טקסט
                     </span>
                     <input
@@ -2813,13 +2803,13 @@ function MainApp() {
                         }
                       }}
                       placeholder="כתוב הערה על הפריים..."
-                      className="bg-[#090c15] text-white text-xs px-2.5 py-1.5 rounded-lg border border-[#2b354e] focus:outline-none focus:ring-1 focus:ring-purple-500 min-w-[190px]"
+                      className="bg-zinc-900 text-zinc-100 text-xs px-2.5 py-1.5 rounded-md border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 min-w-[190px]"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={commitTextOverlay}
-                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition-colors shadow-sm active:scale-95 flex items-center gap-1"
                     title="אשר והוסף לפריים (Enter)"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -2828,7 +2818,7 @@ function MainApp() {
                   <button
                     type="button"
                     onClick={() => setTextInputState(null)}
-                    className="p-1.5 rounded-lg bg-[#1c2234] hover:bg-[#252e46] text-gray-400 hover:text-white text-xs transition-colors"
+                    className="p-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition-colors"
                     title="ביטול (Esc)"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -2840,7 +2830,7 @@ function MainApp() {
               {!isPlaying && !isDrawingMode && !hasDrawing && (
                 <button
                   onClick={handlePlayPause}
-                  className="absolute w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-500 text-white flex items-center justify-center shadow-xl shadow-purple-900/50 backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 z-20"
+                  className="absolute w-16 h-16 rounded-full bg-indigo-600/90 hover:bg-indigo-500 text-white flex items-center justify-center shadow-md backdrop-blur-sm transition-transform hover:scale-105 active:scale-95 z-20"
                 >
                   <Play className="w-8 h-8 fill-current ml-1" />
                 </button>
@@ -2849,7 +2839,7 @@ function MainApp() {
 
             {/* Custom Interactive Player Controls */}
             <div
-              className="p-3 bg-[#161a28] flex flex-col gap-2"
+              className="p-3 bg-zinc-950 flex flex-col gap-2"
               style={isFullscreen ? { paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' } : undefined}
             >
               {/* Timeline with Modern Visual Progress & Markers */}
@@ -2868,10 +2858,10 @@ function MainApp() {
                 onMouseLeave={() => setTimelineHover(null)}
               >
                 {/* Visual Track Container */}
-                <div className="relative w-full h-2 group-hover:h-2.5 bg-[#23293c] rounded-full overflow-hidden transition-all pointer-events-none">
+                <div className="relative w-full h-1.5 group-hover:h-2 bg-zinc-800 rounded-full overflow-hidden transition-all pointer-events-none">
                   {/* Purple-Indigo Progress Fill */}
                   <div
-                    className="absolute top-0 h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-600 rounded-full transition-all duration-75"
+                    className="absolute top-0 h-full bg-indigo-500 rounded-full transition-all duration-75"
                     style={{ right: 0, left: 'auto', width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
                   />
                 </div>
@@ -2880,7 +2870,7 @@ function MainApp() {
                 {duration > 0 && (
                   <div
                     style={{ right: `${(currentTime / duration) * 100}%` }}
-                    className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md shadow-purple-950 border-2 border-purple-600 pointer-events-none transition-transform group-hover:scale-125 z-20"
+                    className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-sm border border-indigo-600 pointer-events-none transition-transform group-hover:scale-110 z-20"
                   />
                 )}
 
@@ -2888,7 +2878,7 @@ function MainApp() {
                 {timelineHover && duration > 0 && (
                   <div
                     style={{ right: `${timelineHover.percent}%` }}
-                    className="absolute bottom-7 translate-x-1/2 bg-[#0d101a] border border-[#2f3954] text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg shadow-xl pointer-events-none z-40 whitespace-nowrap animate-in fade-in duration-100"
+                    className="absolute bottom-7 translate-x-1/2 bg-zinc-900 border border-zinc-800 text-zinc-100 text-[11px] font-mono font-medium px-2 py-0.5 rounded-md shadow-md pointer-events-none z-40 whitespace-nowrap animate-in fade-in duration-100"
                   >
                     {formatTime(timelineHover.time)}
                   </div>
@@ -2924,22 +2914,22 @@ function MainApp() {
                         style={{ right: `${rightPercent}%` }}
                         className={`absolute top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 rounded-full z-40 transition-transform ${
                           comment.completed
-                            ? 'bg-emerald-400 ring-2 ring-emerald-950'
-                            : 'bg-amber-400 ring-2 ring-amber-950 animate-pulse'
-                        } hover:scale-150 cursor-pointer shadow-md`}
+                            ? 'bg-emerald-400 ring-2 ring-zinc-900'
+                            : 'bg-amber-400 ring-2 ring-zinc-900 animate-pulse'
+                        } hover:scale-150 cursor-pointer shadow-sm`}
                       >
                         {/* Tooltip on hover */}
                         {isHovered && (
-                          <div dir="rtl" className="absolute bottom-6 right-1/2 translate-x-1/2 bg-[#0c0e17] text-white text-[11px] py-1 px-2.5 rounded-xl shadow-2xl border border-[#2d364e] whitespace-nowrap z-50 pointer-events-none flex items-center gap-1.5">
-                            <span className="font-mono text-purple-300 font-bold bg-purple-950/60 px-1.5 py-0.5 rounded">
+                          <div dir="rtl" className="absolute bottom-6 right-1/2 translate-x-1/2 bg-zinc-900 text-zinc-100 text-[11px] py-1 px-2.5 rounded-md shadow-md border border-zinc-800 whitespace-nowrap z-50 pointer-events-none flex items-center gap-1.5">
+                            <span className="font-mono text-indigo-300 font-semibold bg-indigo-500/10 px-1.5 py-0.5 rounded">
                               {formatTime(comment.time)}
                             </span>
-                            <span className="text-gray-200">
+                            <span className="text-zinc-400">
                               {comment.author === 'לקוח' ? '👤 לקוח:' : '🎬 עורך:'}
                             </span>
                             {comment.drawing && '🎨 '}
                             {comment.audio && '🎙️ '}
-                            <span className="max-w-[140px] truncate text-gray-300">
+                            <span className="max-w-[140px] truncate text-zinc-300">
                               {comment.text}
                             </span>
                           </div>
@@ -2956,43 +2946,43 @@ function MainApp() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={handlePlayPause}
-                      className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center shadow-md shadow-purple-900/40 transition-all active:scale-95"
+                      className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-sm transition-colors active:scale-95"
                       title="רווח (Space) להפעלה/עצירה"
                     >
                       {isPlaying ? <Pause className="w-5 h-5 sm:w-4 sm:h-4" /> : <Play className="w-5 h-5 sm:w-4 sm:h-4 ml-0.5" />}
                     </button>
                     <button
                       onClick={() => stepTime(-1)}
-                      className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                      className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
                       title="שנייה אחורה (J / 1s)"
                     >
                       <RotateCcw className="w-5 h-5 sm:w-4 sm:h-4" />
                     </button>
                     <button
                       onClick={() => stepTime(1)}
-                      className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                      className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
                       title="שנייה קדימה (L / 1s)"
                     >
                       <RotateCw className="w-5 h-5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                   
-                  <span className="text-xs sm:text-sm font-mono text-gray-300 font-semibold px-2">
+                  <span className="text-xs sm:text-[13px] font-mono text-zinc-400 font-medium px-2">
                     {formatTime(currentTime)} / {formatTime(duration)}
                   </span>
                 </div>
 
                 {/* Right: Playback Speed, Snapshot, Shortcuts, Mute & Fullscreen */}
                 <div className="flex items-center justify-end w-full sm:w-auto gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                  <div className="flex items-center bg-[#181d2a]/80 rounded-xl p-0.5 border border-white/[0.06] text-[11px] flex-shrink-0">
+                  <div className="flex items-center bg-zinc-900 rounded-md p-0.5 border border-zinc-800 text-[11px] flex-shrink-0">
                     {[1, 1.25, 1.5, 2].map((rate) => (
                       <button
                         key={rate}
                         onClick={() => handleSpeedChange(rate)}
-                        className={`px-2 py-0.5 rounded-lg transition-all ${
+                        className={`px-2 py-0.5 rounded-[4px] transition-colors ${
                           playbackRate === rate
-                            ? 'bg-purple-600 text-white font-bold shadow-sm'
-                            : 'text-gray-400 hover:text-gray-200'
+                            ? 'bg-zinc-700 text-white font-semibold shadow-sm'
+                            : 'text-zinc-400 hover:text-zinc-200'
                         }`}
                       >
                         {rate}x
@@ -3004,7 +2994,7 @@ function MainApp() {
                   <button
                     type="button"
                     onClick={() => handleCaptureSnapshot(currentTime, hasDrawing ? canvasRef.current : null)}
-                    className="p-2 rounded-xl text-gray-400 hover:text-pink-400 hover:bg-white/[0.06] transition-colors cursor-pointer"
+                    className="p-2 rounded-lg text-zinc-400 hover:text-indigo-400 hover:bg-zinc-800 transition-colors cursor-pointer"
                     title="צילום והורדת פריים (S) 📸"
                   >
                     <Camera className="w-4 h-4" />
@@ -3045,7 +3035,7 @@ function MainApp() {
               </div>
 
               {/* Drawing Toolbar Toggle & Tools */}
-              <div className="pt-2.5 border-t border-white/[0.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
+              <div className="pt-2.5 border-t border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                   <button
                     type="button"
@@ -3059,10 +3049,10 @@ function MainApp() {
                       }
                       setIsDrawingMode(!isDrawingMode)
                     }}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors ${
                       isDrawingMode
-                        ? 'bg-amber-400 text-black shadow-md shadow-amber-900/30'
-                        : 'bg-[#181d2a]/80 text-gray-300 hover:text-white hover:bg-[#22293c] border border-white/[0.06]'
+                        ? 'bg-amber-500 text-black shadow-sm'
+                        : 'bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
                     }`}
                   >
                     <PenTool className="w-3.5 h-3.5" />
@@ -3070,7 +3060,7 @@ function MainApp() {
                   </button>
 
                   {isDrawingMode && (
-                    <div className="flex items-center gap-1 bg-[#1a1f2e] p-1 rounded-lg border border-[#2b334a]">
+                    <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-md border border-zinc-800">
                       {/* Tool selection */}
                       <button
                         type="button"
@@ -3079,7 +3069,7 @@ function MainApp() {
                           setDrawTool('select')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded transition-colors ${drawTool === 'select' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1.5 rounded transition-colors ${drawTool === 'select' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
                         title="בחר והזז צורות (Pointer)"
                       >
                         <MousePointer className="w-3.5 h-3.5" />
@@ -3091,7 +3081,7 @@ function MainApp() {
                           setDrawTool('pen')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded transition-colors ${drawTool === 'pen' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1.5 rounded transition-colors ${drawTool === 'pen' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
                         title="עט חופשי"
                       >
                         <PenTool className="w-3.5 h-3.5" />
@@ -3103,7 +3093,7 @@ function MainApp() {
                           setDrawTool('circle')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded transition-colors ${drawTool === 'circle' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1.5 rounded transition-colors ${drawTool === 'circle' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
                         title="עיגול נמתח"
                       >
                         <Circle className="w-3.5 h-3.5" />
@@ -3115,7 +3105,7 @@ function MainApp() {
                           setDrawTool('arrow')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded transition-colors ${drawTool === 'arrow' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1.5 rounded transition-colors ${drawTool === 'arrow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
                         title="חץ נמתח"
                       >
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -3127,19 +3117,19 @@ function MainApp() {
                           setDrawTool('text')
                           setTextInputState(null)
                         }}
-                        className={`p-1 rounded transition-colors ${drawTool === 'text' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`p-1.5 rounded transition-colors ${drawTool === 'text' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
                         title="טקסט על גבי הפריים"
                       >
                         <Type className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Color palette */}
-                      <div className="flex items-center gap-1 border-r border-[#2b334a] pr-1.5 mr-1">
+                      <div className="flex items-center gap-1.5 border-r border-zinc-700 pr-2 mr-1">
                         {[
                           { color: '#eab308', name: 'צהוב' },
                           { color: '#ef4444', name: 'אדום' },
                           { color: '#10b981', name: 'ירוק' },
-                          { color: '#38bdf8', name: 'תכלת' }
+                          { color: '#3b82f6', name: 'כחול' }
                         ].map((c) => (
                           <button
                             key={c.color}
@@ -3153,7 +3143,7 @@ function MainApp() {
                               }
                             }}
                             style={{ backgroundColor: c.color }}
-                            className={`w-3.5 h-3.5 rounded-full transition-transform ${drawColor === c.color ? 'scale-125 ring-2 ring-white' : 'hover:scale-110'}`}
+                            className={`w-3.5 h-3.5 rounded-full transition-transform ${drawColor === c.color ? 'scale-125 ring-2 ring-white shadow-sm' : 'hover:scale-110'}`}
                             title={c.name}
                           />
                         ))}
@@ -3164,7 +3154,7 @@ function MainApp() {
                         <button
                           type="button"
                           onClick={deleteSelectedShape}
-                          className="p-1 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                          className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors ml-1"
                           title="מחק צורה נבחרת (Delete)"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -3176,7 +3166,7 @@ function MainApp() {
                         type="button"
                         onClick={undoLastShape}
                         disabled={shapes.length === 0}
-                        className="p-1 text-gray-400 hover:text-gray-200 disabled:opacity-30 disabled:pointer-events-none rounded transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none rounded transition-colors ml-1"
                         title="בטל צורה אחרונה (Undo)"
                       >
                         <Undo2 className="w-3.5 h-3.5" />
@@ -3186,7 +3176,7 @@ function MainApp() {
                       <button
                         type="button"
                         onClick={clearCanvas}
-                        className="p-1 text-gray-400 hover:text-red-400 rounded transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-red-400 rounded transition-colors"
                         title="נקה הכל"
                       >
                         <Eraser className="w-3.5 h-3.5" />
@@ -3196,7 +3186,7 @@ function MainApp() {
                 </div>
 
                 {hasDrawing && (
-                  <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-medium">
                     <span>✨</span>
                     <span>יש סימון שמור ברגע זה</span>
                   </span>
@@ -3206,28 +3196,28 @@ function MainApp() {
 
             {/* Fullscreen Quick Comment Bar (Docked at bottom in Fullscreen) */}
             {isFullscreen && (
-              <div className="bg-[#121624]/95 backdrop-blur-md border-t border-[#232c42] p-3 flex flex-col gap-2 shadow-2xl flex-shrink-0 z-30">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-purple-300 bg-purple-950/70 px-2.5 py-1 rounded-lg border border-purple-500/30">
+              <div className="bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-3 flex flex-col gap-3 shadow-lg flex-shrink-0 z-30">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-mono font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1.5 rounded-md border border-indigo-500/20">
                       ⏱️ פריים: {formatTime(currentTime)}
                     </span>
-                    <span className="text-xs text-gray-300 font-medium">
+                    <span className="text-[13px] text-zinc-300 font-medium">
                       {mode === 'client' ? 'הוסף תיקון לפריים זה:' : 'הוסף משימה לפריים זה:'}
                     </span>
                   </div>
 
                   {/* Category picker */}
-                  <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+                  <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
                     {CATEGORIES.map((cat) => (
                       <button
                         type="button"
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.id)}
-                        className={`text-[11px] px-2 py-0.5 rounded-md border transition-all flex items-center gap-1 ${
+                        className={`text-[12px] px-2.5 py-1 rounded-md border transition-colors flex items-center gap-1.5 ${
                           selectedCategory === cat.id
-                            ? `${cat.color} font-bold ring-1 ring-white/20 shadow-sm`
-                            : 'bg-[#1b2031] text-gray-400 border-[#2a3248] hover:border-gray-500'
+                            ? `${cat.color} font-medium bg-zinc-800 border-zinc-700 shadow-sm`
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
                         }`}
                       >
                         <span>{cat.icon}</span>
@@ -3243,7 +3233,7 @@ function MainApp() {
                     e.preventDefault()
                     handleAddComment()
                   }}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-3"
                 >
                   <input
                     type="text"
@@ -3254,7 +3244,7 @@ function MainApp() {
                         ? 'רשמת סימון על הפריים! הוסף הסבר קצר (למשל: "להחליף את הפונט שמסומן")...'
                         : 'כתוב מה צריך לתקן ברגע הזה... (Enter לשליחה)'
                     }
-                    className="flex-1 bg-[#1a1f30] border border-[#2e3752] focus:border-purple-500 rounded-xl px-3 py-2 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    className="flex-1 bg-zinc-900 border border-zinc-700 focus:border-indigo-500 rounded-lg px-3.5 py-2.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
 
                   {/* Voice recording */}
@@ -3327,19 +3317,19 @@ function MainApp() {
 
             {/* Fullscreen Revisions Side Drawer */}
             {isFullscreen && showFullscreenDrawer && (
-              <aside className="absolute top-0 right-0 bottom-0 w-80 sm:w-96 bg-[#121624]/95 backdrop-blur-xl border-l border-[#273047] z-40 flex flex-col shadow-2xl select-text">
+              <aside className="absolute top-0 right-0 bottom-0 w-80 sm:w-96 bg-zinc-950/95 backdrop-blur-xl border-l border-zinc-800 z-40 flex flex-col shadow-2xl select-text">
                 {/* Drawer Header */}
-                <div className="p-3.5 border-b border-[#232b40] flex items-center justify-between">
+                <div className="p-3.5 border-b border-zinc-800 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-purple-400" />
-                    <h3 className="text-xs font-bold text-gray-100">
+                    <MessageSquare className="w-4 h-4 text-indigo-400" />
+                    <h3 className="text-[13px] font-bold text-zinc-100">
                       רשימת תיקונים ({comments.length})
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowFullscreenDrawer(false)}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#1f2537] transition-colors"
+                    className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                     title="סגור פאנל (Esc)"
                   >
                     <X className="w-4 h-4" />
@@ -3347,33 +3337,33 @@ function MainApp() {
                 </div>
 
                 {/* Filter tabs */}
-                <div className="flex items-center gap-1 p-2 bg-[#161a29] border-b border-[#22293e] text-xs">
+                <div className="flex items-center gap-1 p-2 bg-zinc-900 border-b border-zinc-800 text-[12px]">
                   <button
                     onClick={() => setActiveFilter('all')}
-                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                    className={`px-2.5 py-1.5 rounded-md transition-colors ${
                       activeFilter === 'all'
-                        ? 'bg-purple-600 text-white font-medium'
-                        : 'text-gray-400 hover:text-gray-200'
+                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
                     }`}
                   >
                     הכל ({comments.length})
                   </button>
                   <button
                     onClick={() => setActiveFilter('pending')}
-                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                    className={`px-2.5 py-1.5 rounded-md transition-colors ${
                       activeFilter === 'pending'
-                        ? 'bg-purple-600 text-white font-medium'
-                        : 'text-gray-400 hover:text-gray-200'
+                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
                     }`}
                   >
                     ממתין ({comments.length - completedCount})
                   </button>
                   <button
                     onClick={() => setActiveFilter('completed')}
-                    className={`px-2.5 py-1 rounded-md transition-colors ${
+                    className={`px-2.5 py-1.5 rounded-md transition-colors ${
                       activeFilter === 'completed'
-                        ? 'bg-purple-600 text-white font-medium'
-                        : 'text-gray-400 hover:text-gray-200'
+                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
                     }`}
                   >
                     תוקן ({completedCount})
@@ -3383,8 +3373,8 @@ function MainApp() {
                 {/* Comments List */}
                 <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5">
                   {filteredComments.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500 text-xs flex flex-col items-center justify-center gap-2">
-                      <Sparkles className="w-6 h-6 text-purple-400/50" />
+                    <div className="p-6 text-center text-zinc-500 text-xs flex flex-col items-center justify-center gap-2">
+                      <Sparkles className="w-6 h-6 text-indigo-400/50" />
                       <span>אין הערות בקטגוריה זו</span>
                     </div>
                   ) : (
@@ -3393,26 +3383,26 @@ function MainApp() {
                       return (
                         <div
                           key={comment.id}
-                          className={`bg-[#181d2c] border rounded-xl p-2.5 text-xs flex flex-col gap-1.5 transition-all shadow-sm ${
+                          className={`bg-zinc-900 border rounded-xl p-3 text-[13px] flex flex-col gap-2 transition-all shadow-sm ${
                             comment.completed
-                              ? 'border-[#22293d] opacity-60'
+                              ? 'border-zinc-800 opacity-60'
                               : comment.urgent
-                              ? 'border-red-500/40 bg-red-950/15'
-                              : 'border-[#28324a]'
+                              ? 'border-red-500/30 bg-red-500/5'
+                              : 'border-zinc-700'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-1 flex-wrap">
+                          <div className="flex items-center justify-between gap-1.5 flex-wrap">
                             <button
                               type="button"
                               onClick={() => seekTo(comment.time, comment.drawing)}
-                              className="font-mono text-xs font-bold text-purple-400 hover:text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-500/30 transition-colors"
+                              className="font-mono text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20 transition-colors"
                               title="קפוץ לרגע זה בוידאו"
                             >
                               ⏱️ {formatTime(comment.time)}
                             </button>
 
                             {cat && (
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${cat.color}`}>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-medium ${cat.color}`}>
                                 {cat.icon} {cat.label}
                               </span>
                             )}
@@ -3421,7 +3411,7 @@ function MainApp() {
                               <button
                                 type="button"
                                 onClick={() => seekTo(comment.time, comment.drawing)}
-                                className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 hover:bg-amber-500/30"
+                                className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-md font-medium flex items-center gap-1 hover:bg-amber-500/20 transition-colors"
                                 title="צפה בסימון על גבי הפריים"
                               >
                                 <PenTool className="w-2.5 h-2.5" />
@@ -3433,7 +3423,7 @@ function MainApp() {
                               <button
                                 type="button"
                                 onClick={() => toggleCommentComplete(comment.id)}
-                                className="mr-auto text-gray-400 hover:text-emerald-400"
+                                className="mr-auto text-zinc-400 hover:text-emerald-400 transition-colors"
                                 title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע'}
                               >
                                 {comment.completed ? (
@@ -3445,7 +3435,7 @@ function MainApp() {
                             )}
                           </div>
 
-                          <p className={`text-xs leading-relaxed ${comment.completed ? 'line-through text-gray-400' : 'text-gray-200'}`}>
+                          <p className={`text-[13px] leading-relaxed ${comment.completed ? 'line-through text-zinc-500' : 'text-zinc-200'}`}>
                             {comment.text}
                           </p>
 
@@ -3454,13 +3444,13 @@ function MainApp() {
                           )}
 
                           {/* Threaded Discussion in Fullscreen Drawer */}
-                          <div className="pt-1 border-t border-[#232b40]">
+                          <div className="pt-2 border-t border-zinc-800">
                             <button
                               type="button"
                               onClick={() => toggleThread(comment.id)}
-                              className="text-[10px] text-gray-400 hover:text-purple-300 flex items-center gap-1"
+                              className="text-[11px] text-zinc-400 hover:text-indigo-400 flex items-center gap-1.5 transition-colors font-medium"
                             >
-                              <MessageSquare className="w-3 h-3 text-purple-400" />
+                              <MessageSquare className="w-3 h-3 text-indigo-400" />
                               <span>
                                 {(comment.replies?.length || 0) > 0
                                   ? `${comment.replies.length} תגובות בשיחה`
@@ -3469,16 +3459,16 @@ function MainApp() {
                             </button>
 
                             {expandedThreads[comment.id] && (
-                              <div className="mt-1.5 bg-[#10131f] rounded-lg p-2 border border-[#22293d] flex flex-col gap-1.5">
+                              <div className="mt-2 bg-zinc-950 rounded-lg p-2 border border-zinc-800 flex flex-col gap-2">
                                 {Array.isArray(comment.replies) && comment.replies.length > 0 && (
-                                  <div className="flex flex-col gap-1 max-h-28 overflow-y-auto">
+                                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-1">
                                     {comment.replies.map((reply) => (
-                                      <div key={reply.id} className="p-1.5 rounded bg-[#161a28] text-[10px]">
-                                        <div className="flex items-center justify-between text-gray-400 mb-0.5">
-                                          <span className="font-bold text-purple-300">{reply.author}</span>
+                                      <div key={reply.id} className="p-2 rounded-md bg-zinc-900 text-[11px]">
+                                        <div className="flex items-center justify-between text-zinc-500 mb-1">
+                                          <span className="font-semibold text-indigo-300">{reply.author}</span>
                                           <span className="font-mono">{formatReplyTime(reply.createdAt)}</span>
                                         </div>
-                                        <p className="text-gray-200">{reply.text}</p>
+                                        <p className="text-zinc-300">{reply.text}</p>
                                       </div>
                                     ))}
                                   </div>
@@ -3489,7 +3479,7 @@ function MainApp() {
                                     e.preventDefault()
                                     handleAddReply(comment.id)
                                   }}
-                                  className="flex items-center gap-1"
+                                  className="flex items-center gap-1.5"
                                 >
                                   <input
                                     type="text"
@@ -3501,13 +3491,14 @@ function MainApp() {
                                       }))
                                     }
                                     placeholder="השב..."
-                                    className="flex-1 bg-[#181d2c] border border-[#2c354e] rounded px-2 py-1 text-[10px] text-gray-100 focus:outline-none"
+                                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded-md px-2.5 py-1.5 text-[11px] text-zinc-100 focus:outline-none focus:border-indigo-500 transition-colors"
                                   />
                                   <button
                                     type="submit"
                                     disabled={!(replyInputs[comment.id] || '').trim()}
-                                    className="p-1 rounded bg-purple-600 text-white text-[10px]"
+                                    className="p-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
+
                                     <Send className="w-2.5 h-2.5" />
                                   </button>
                                 </form>
@@ -3536,23 +3527,23 @@ function MainApp() {
           </div>
 
           {/* Add Revision Box (Simple & Conversational) */}
-          <div className="bg-[#121624]/90 backdrop-blur-md p-5 rounded-3xl border border-white/[0.07] shadow-xl flex flex-col gap-3.5">
+          <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 shadow-sm flex flex-col gap-3.5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
                 <div>
-                  <h2 className="text-sm font-bold text-gray-100">
+                  <h2 className="text-sm font-bold text-zinc-100">
                     {mode === 'client' ? 'מה כדאי לשפר ברגע הזה? 💡' : 'הוספת הערה לפריים ✍️'}
                   </h2>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="text-[12px] text-zinc-400 mt-0.5 font-medium">
                     עצרת בנקודת הזמן {formatTime(currentTime)} — שתף את המחשבות שלך
                   </p>
                 </div>
               </div>
 
               {/* Simple Clean Time Badge */}
-              <div className="flex items-center gap-1.5 bg-[#171b29] text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl text-xs font-mono font-bold shadow-inner flex-shrink-0">
-                <Clock className="w-3.5 h-3.5 text-purple-400" />
+              <div className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1.5 rounded-md text-xs font-mono font-bold flex-shrink-0">
+                <Clock className="w-3.5 h-3.5 text-indigo-400" />
                 <span>פריים: {formatTime(currentTime)}</span>
               </div>
             </div>
@@ -3565,10 +3556,10 @@ function MainApp() {
                     type="button"
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`text-xs px-3 py-1 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
+                    className={`text-[12px] px-3 py-1.5 rounded-md border transition-colors flex items-center gap-1.5 cursor-pointer ${
                       selectedCategory === cat.id
-                        ? `${cat.color} font-semibold ring-1 ring-white/20 shadow-sm scale-[1.02]`
-                        : 'bg-[#171b29]/80 text-gray-400 border-white/[0.06] hover:border-white/[0.15] hover:text-gray-200'
+                        ? `${cat.color} font-semibold bg-zinc-800 border-zinc-700 shadow-sm`
+                        : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-200'
                     }`}
                   >
                     <span>{cat.icon}</span>
@@ -3591,7 +3582,7 @@ function MainApp() {
                       ? 'כתוב כאן בחופשיות (למשל: "להגביר קצת את הווליום כאן", "לחתוך שנייה לפני", "להחליף כתובית")...'
                       : 'כתוב מה נדרש לבצע ברגע זה בפרמייר...'
                   }
-                  className="w-full bg-[#161a28] border border-white/[0.08] focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-2xl p-3.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none resize-none leading-relaxed transition-all"
+                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg p-3.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed transition-colors"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
@@ -3602,29 +3593,29 @@ function MainApp() {
               </div>
 
               {/* Voice Note Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2 bg-[#161a28]/70 p-2.5 rounded-2xl border border-white/[0.06]">
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900 p-2.5 rounded-lg border border-zinc-800">
                 <div className="flex items-center gap-2">
                   {!isRecording && !recordedAudioData && (
                     <button
                       type="button"
                       onClick={startRecording}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[12px] font-semibold transition-colors cursor-pointer"
                     >
-                      <Mic className="w-3.5 h-3.5 text-red-400" />
+                      <Mic className="w-3.5 h-3.5" />
                       <span>הקלט הודעה קולית 🎙️</span>
                     </button>
                   )}
 
                   {isRecording && (
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 bg-red-950/70 text-red-300 border border-red-500/50 px-3 py-1.5 rounded-xl text-xs font-mono font-bold animate-pulse">
+                      <div className="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-md text-[12px] font-mono font-bold animate-pulse">
                         <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
                         <span>מקליט... {formatTime(recordingDuration)}</span>
                       </div>
                       <button
                         type="button"
                         onClick={stopRecording}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-md shadow-red-950/40 cursor-pointer"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-500 text-white text-[12px] font-bold transition-colors cursor-pointer"
                       >
                         <Square className="w-3 h-3 fill-current" />
                         <span>סיים</span>
@@ -3632,7 +3623,7 @@ function MainApp() {
                       <button
                         type="button"
                         onClick={cancelRecording}
-                        className="text-xs text-gray-400 hover:text-gray-200 px-2 py-1 cursor-pointer"
+                        className="text-[12px] text-zinc-400 hover:text-zinc-200 px-2 py-1 cursor-pointer"
                       >
                         בטל
                       </button>
@@ -3649,7 +3640,7 @@ function MainApp() {
                       <button
                         type="button"
                         onClick={cancelRecording}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-400 bg-[#1e2436] hover:bg-red-950/40 px-2.5 py-1.5 rounded-xl border border-white/[0.08] transition-colors cursor-pointer"
+                        className="flex items-center gap-1 text-[12px] text-zinc-400 hover:text-red-400 bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1.5 rounded-md border border-zinc-700 transition-colors cursor-pointer"
                         title="מחק והקלט שוב"
                       >
                         <RotateCcw className="w-3.5 h-3.5 text-red-400" />
@@ -3659,12 +3650,12 @@ function MainApp() {
                   )}
                 </div>
 
-                <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
+                <label className="flex items-center gap-2 text-[12px] text-zinc-400 cursor-pointer select-none font-medium">
                   <input
                     type="checkbox"
                     checked={isUrgent}
                     onChange={(e) => setIsUrgent(e.target.checked)}
-                    className="rounded border-[#2e3752] bg-[#1b2031] text-purple-600 focus:ring-0"
+                    className="rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-0"
                   />
                   <span>סמן כדחוף לטיפול 🔥</span>
                 </label>
@@ -3675,7 +3666,7 @@ function MainApp() {
                 <button
                   type="submit"
                   disabled={!newCommentText.trim() && !recordedAudioData}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-purple-900/40 transition-all active:scale-95 cursor-pointer"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[13px] font-semibold transition-colors cursor-pointer shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
                   <span>{mode === 'client' ? 'שלח הערה לפריים ✨' : 'הוסף משימה לפריים ✨'}</span>
@@ -3695,7 +3686,7 @@ function MainApp() {
               <>
                 <button
                   onClick={() => copySpecificClientLink(currentProject.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-xs text-emerald-300 font-semibold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[12px] text-emerald-400 font-semibold transition-colors shadow-sm"
                   title="העתק קישור סקירה ישיר ונקי לשליחה ללקוח זה"
                 >
                   <Link2 className="w-3.5 h-3.5" />
@@ -3703,7 +3694,7 @@ function MainApp() {
                 </button>
                 <button
                   onClick={exportPremiereCSV}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-xs text-indigo-300 font-semibold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[12px] text-indigo-400 font-semibold transition-colors shadow-sm"
                   title="ייצא קובץ מרקרים שנטען ישירות בפרמייר"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -3713,10 +3704,10 @@ function MainApp() {
             )}
             <button
               onClick={shareViaWhatsApp}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold shadow-sm transition-colors ${
                 mode === 'client' 
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40' 
-                  : 'bg-[#1e2538] hover:bg-[#27324c] border border-white/5 text-gray-300 hover:text-white'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
+                  : 'bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white'
               }`}
             >
               <MessageCircle className="w-3.5 h-3.5" />
@@ -3725,20 +3716,20 @@ function MainApp() {
           </div>
 
           {/* Header Card with Progress */}
-          <div className="bg-[#121624]/90 backdrop-blur-md p-5 rounded-3xl border border-white/[0.07] shadow-xl">
+          <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 shadow-sm">
             <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-2 mb-3.5">
               <div>
-                <h2 className="text-base font-bold text-gray-100 flex items-center gap-2">
+                <h2 className="text-[15px] font-bold text-zinc-100 flex items-center gap-2">
                   <span>{mode === 'client' ? 'ההערות והבקשות שלך 💬' : 'משימות לביצוע בפרמייר 🎬'}</span>
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold ${
+                  <span className={`text-[11px] px-2 py-0.5 rounded-md border font-semibold ${
                     mode === 'client'
-                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
-                      : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                      ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                      : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
                   }`}>
                     {comments.length}
                   </span>
                 </h2>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[12px] text-zinc-400 mt-1 font-medium">
                   {mode === 'client'
                     ? 'לחיצה על כל הערה תקפיץ אותך לפריים המדויק בוידאו'
                     : `נשארו עוד ${comments.length - completedCount} משימות פתוחות לביצוע`}
@@ -3746,33 +3737,33 @@ function MainApp() {
               </div>
 
               {/* Quick Filter tabs */}
-              <div className="flex items-center bg-[#171b29] p-1 rounded-xl border border-white/[0.06] text-xs">
+              <div className="flex items-center bg-zinc-900 p-1 rounded-md border border-zinc-800 text-[12px]">
                 <button
                   onClick={() => setActiveFilter('all')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
                     activeFilter === 'all'
-                      ? mode === 'client' ? 'bg-purple-600 text-white font-semibold shadow-sm' : 'bg-indigo-600 text-white font-semibold shadow-sm'
-                      : 'text-gray-400 hover:text-gray-200'
+                      ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   הכל ({comments.length})
                 </button>
                 <button
                   onClick={() => setActiveFilter('pending')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
                     activeFilter === 'pending'
-                      ? mode === 'client' ? 'bg-purple-600 text-white font-semibold shadow-sm' : 'bg-indigo-600 text-white font-semibold shadow-sm'
-                      : 'text-gray-400 hover:text-gray-200'
+                      ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   {mode === 'client' ? 'ממתין ⏳' : 'פתוח ⏳'} ({comments.length - completedCount})
                 </button>
                 <button
                   onClick={() => setActiveFilter('completed')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
                     activeFilter === 'completed'
-                      ? mode === 'client' ? 'bg-purple-600 text-white font-semibold shadow-sm' : 'bg-indigo-600 text-white font-semibold shadow-sm'
-                      : 'text-gray-400 hover:text-gray-200'
+                      ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   {mode === 'client' ? 'תוקן ✨' : 'בוצע ✨'} ({completedCount})
@@ -3783,20 +3774,18 @@ function MainApp() {
             {/* Progress bar with Dopamine Counter */}
             {comments.length > 0 && (
               <div className="mt-2">
-                <div className="flex justify-between text-[11px] text-gray-400 mb-1.5 font-medium">
+                <div className="flex justify-between text-[11px] text-zinc-400 mb-2 font-semibold">
                   <span>{mode === 'client' ? 'התקדמות התיקונים על ידי העורך' : 'קצב השלמת המשימות בפרמייר'}</span>
-                  <span className="font-mono font-bold text-white bg-[#171b29] px-2.5 py-0.5 rounded-full border border-white/[0.08]">
+                  <span className="font-mono font-bold text-zinc-100 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800">
                     {Math.round((completedCount / comments.length) * 100)}% ({completedCount}/{comments.length})
                   </span>
                 </div>
-                <div className="w-full h-2 bg-[#171b29] rounded-full overflow-hidden border border-white/[0.06] shadow-inner">
+                <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
                   <div
                     className={`h-full transition-all duration-500 rounded-full ${
                       completedCount === comments.length
-                        ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-green-300 shadow-md shadow-emerald-500/50 animate-pulse'
-                        : mode === 'client'
-                        ? 'bg-gradient-to-r from-purple-500 to-emerald-400'
-                        : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400'
+                        ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50'
+                        : 'bg-emerald-500'
                     }`}
                     style={{ width: `${(completedCount / comments.length) * 100}%` }}
                   />
@@ -3804,8 +3793,8 @@ function MainApp() {
 
                 {/* 100% Celebration Banner */}
                 {completedCount === comments.length && comments.length > 0 && (
-                  <div className="mt-3 p-3 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-[#102422] to-teal-950/70 border border-emerald-500/50 flex items-center justify-between text-xs animate-in zoom-in-95 shadow-lg shadow-emerald-950/40">
-                    <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                  <div className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-[12px] animate-in zoom-in-95">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold">
                       <span className="text-base animate-bounce">🏆</span>
                       <span>כל {comments.length} התיקונים הושלמו ב-100%! איזה כיף!</span>
                     </div>
@@ -3828,10 +3817,10 @@ function MainApp() {
           {/* List of Revisions */}
           <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto max-h-[480px] pr-1">
             {filteredComments.length === 0 ? (
-              <div className="bg-[#121624]/60 border border-dashed border-white/[0.1] rounded-3xl p-8 text-center flex flex-col items-center justify-center gap-3 text-gray-400">
-                <Sparkles className="w-8 h-8 text-purple-400/60" />
-                <p className="text-sm font-medium">אין כרגע הערות בקטגוריה זו</p>
-                <p className="text-xs text-gray-500">עצור את הסרטון בכל רגע והוסף הערה בטופס</p>
+              <div className="bg-zinc-950 border border-dashed border-zinc-800 rounded-xl p-8 text-center flex flex-col items-center justify-center gap-3 text-zinc-500">
+                <Sparkles className="w-8 h-8 text-indigo-400/50" />
+                <p className="text-[13px] font-medium">אין כרגע הערות בקטגוריה זו</p>
+                <p className="text-[12px] text-zinc-500">עצור את הסרטון בכל רגע והוסף הערה בטופס</p>
               </div>
             ) : (
               filteredComments.map((comment) => {
@@ -3839,19 +3828,19 @@ function MainApp() {
                 return (
                   <div
                     key={comment.id}
-                    className={`group bg-[#151926]/90 hover:bg-[#191e2e] border rounded-2xl p-4 transition-all flex items-start gap-3.5 shadow-sm ${
+                    className={`group bg-zinc-900 hover:bg-zinc-900/80 border rounded-xl p-4 transition-colors flex items-start gap-3.5 shadow-sm ${
                       comment.completed
-                        ? 'border-white/[0.04] opacity-60'
+                        ? 'border-zinc-800 opacity-60'
                         : comment.urgent
-                        ? 'border-red-500/40 bg-red-950/15'
-                        : 'border-white/[0.07]'
+                        ? 'border-red-500/30 bg-red-500/5'
+                        : 'border-zinc-800'
                     }`}
                   >
                     {/* Status: Interactive Checkbox for Editor, Status Badge for Client */}
                     {mode === 'editor' ? (
                       <button
                         onClick={() => toggleCommentComplete(comment.id)}
-                        className="mt-0.5 text-gray-400 hover:text-emerald-400 transition-all duration-200 active:scale-125 hover:scale-110 flex-shrink-0 cursor-pointer"
+                        className="mt-0.5 text-zinc-400 hover:text-emerald-400 transition-all duration-200 active:scale-125 hover:scale-110 flex-shrink-0 cursor-pointer"
                         title={comment.completed ? 'סמן כלא בוצע' : 'סמן כבוצע בפרמייר ✨'}
                       >
                         {comment.completed ? (
@@ -3874,10 +3863,10 @@ function MainApp() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         {/* Author Identity Badge */}
-                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border flex items-center gap-1 ${
+                        <span className={`text-[10px] px-2.5 py-0.5 rounded-md font-semibold border flex items-center gap-1 ${
                           comment.author === 'לקוח' || (!comment.author && mode === 'client')
-                            ? 'bg-purple-500/15 text-purple-200 border-purple-500/25'
-                            : 'bg-indigo-500/15 text-indigo-200 border-indigo-500/25'
+                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                            : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
                         }`}>
                           <span>{comment.author === 'לקוח' || (!comment.author && mode === 'client') ? '👤' : '🎬'}</span>
                           <span>{comment.author === 'לקוח' || (!comment.author && mode === 'client') ? (currentProject.clientName || 'לקוח') : 'העורך'}</span>
@@ -3886,7 +3875,7 @@ function MainApp() {
                         {/* Timecode click jumps video */}
                         <button
                           onClick={() => seekTo(comment.time, comment.drawing)}
-                          className="font-mono text-xs font-bold text-purple-300 hover:text-white bg-purple-950/40 hover:bg-purple-900/60 px-2.5 py-0.5 rounded-lg border border-purple-500/30 transition-colors cursor-pointer"
+                          className="font-mono text-[11px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/20 transition-colors cursor-pointer"
                           title="קפוץ לרגע זה בוידאו"
                         >
                           ⏱️ {formatTime(comment.time)}
@@ -3894,7 +3883,7 @@ function MainApp() {
 
                         {/* Category badge */}
                         {cat && (
-                          <span className={`text-[11px] px-2 py-0.5 rounded-lg border font-medium ${cat.color}`}>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-md border font-medium ${cat.color}`}>
                             {cat.icon} {cat.label}
                           </span>
                         )}
@@ -3904,7 +3893,7 @@ function MainApp() {
                             <button
                               type="button"
                               onClick={() => seekTo(comment.time, comment.drawing)}
-                              className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-lg font-medium flex items-center gap-1 hover:bg-amber-500/25 transition-colors cursor-pointer"
+                              className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md font-medium flex items-center gap-1 hover:bg-amber-500/20 transition-colors cursor-pointer"
                               title="לחץ לצפייה בסימון על גבי הפריים"
                             >
                               <PenTool className="w-2.5 h-2.5" />
@@ -3916,7 +3905,7 @@ function MainApp() {
                                 e.stopPropagation()
                                 handleCaptureSnapshot(comment.time, comment.drawing)
                               }}
-                              className="text-[10px] bg-pink-500/15 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded-lg font-medium flex items-center gap-1 hover:bg-pink-500/25 transition-colors cursor-pointer"
+                              className="text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-md font-medium flex items-center gap-1 hover:bg-teal-500/20 transition-colors cursor-pointer"
                               title="הורד תמונת פריים עם הסימון (PNG)"
                             >
                               <Camera className="w-2.5 h-2.5" />
@@ -3926,23 +3915,23 @@ function MainApp() {
                         )}
 
                         {comment.urgent && (
-                          <span className="text-[10px] bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-lg font-bold">
+                          <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-md font-bold">
                             דחוף 🔥
                           </span>
                         )}
 
                         {mode === 'client' && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-lg font-semibold mr-auto ${
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-semibold mr-auto ${
                             comment.completed
-                              ? 'text-emerald-300 bg-emerald-500/15 border border-emerald-500/25'
-                              : 'text-amber-300 bg-amber-500/15 border border-amber-500/25'
+                              ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                              : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
                           }`}>
                             {comment.completed ? 'תוקן ע"י העורך 🙌' : 'ממתין לטיפול ⏳'}
                           </span>
                         )}
                       </div>
 
-                      <p className={`text-sm leading-relaxed ${comment.completed ? 'line-through text-gray-400' : 'text-gray-100 font-normal'}`}>
+                      <p className={`text-[13px] leading-relaxed ${comment.completed ? 'line-through text-zinc-500' : 'text-zinc-100 font-normal'}`}>
                         {comment.text}
                       </p>
 
@@ -3955,7 +3944,7 @@ function MainApp() {
                       )}
 
                       {/* Interactive Emoji Reaction Bar (Dopamine) */}
-                      <div className="flex items-center gap-1 mt-2.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 mt-3 flex-wrap">
                         {['👍', '🔥', '👏', '💡', '❤️'].map((emoji) => {
                           const count = comment.reactions?.[emoji] || 0
                           return (
@@ -3963,42 +3952,42 @@ function MainApp() {
                               key={emoji}
                               type="button"
                               onClick={(e) => handleAddReaction(comment.id, emoji, e)}
-                              className={`px-2.5 py-0.5 rounded-lg text-xs transition-all flex items-center gap-1 active:scale-125 cursor-pointer ${
+                              className={`px-2.5 py-1 rounded-md text-[11px] transition-colors flex items-center gap-1 cursor-pointer ${
                                 count > 0
-                                  ? 'bg-purple-500/25 border border-purple-500/40 text-purple-200 shadow-sm'
-                                  : 'bg-[#182030]/80 hover:bg-[#202a40] text-gray-400 hover:text-white border border-white/[0.06]'
+                                  ? 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-300'
+                                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700'
                               }`}
                               title={`הגב עם ${emoji}`}
                             >
                               <span>{emoji}</span>
-                              {count > 0 && <span className="text-[10px] font-bold text-purple-300">{count}</span>}
+                              {count > 0 && <span className="text-[10px] font-bold text-indigo-400">{count}</span>}
                             </button>
                           )
                         })}
                       </div>
 
                       {/* Threaded Discussion Section */}
-                      <div className="mt-2.5 pt-2 border-t border-[#22283a]">
+                      <div className="mt-3 pt-3 border-t border-zinc-800">
                         {/* Toggle Button */}
                         <div className="flex items-center justify-between">
                           <button
                             type="button"
                             onClick={() => toggleThread(comment.id)}
-                            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-300 font-medium transition-colors group/btn"
+                            className="flex items-center gap-1.5 text-[12px] text-zinc-400 hover:text-indigo-400 font-medium transition-colors group/btn"
                           >
-                            <MessageSquare className="w-3.5 h-3.5 text-purple-400 group-hover/btn:scale-110 transition-transform" />
+                            <MessageSquare className="w-3.5 h-3.5 text-indigo-400 transition-transform" />
                             <span>
                               {(comment.replies?.length || 0) > 0
                                 ? `${comment.replies.length} תגובות בשיחה`
                                 : '💬 תגובות / שיחה על התיקון'}
                             </span>
-                            <span className="text-[10px] text-gray-500 font-mono">
+                            <span className="text-[10px] text-zinc-500 font-mono">
                               {expandedThreads[comment.id] ? '▲ סגור' : '▼ פתח'}
                             </span>
                           </button>
 
                           {(comment.replies?.length || 0) > 0 && !expandedThreads[comment.id] && (
-                            <span className="text-[10px] bg-purple-500/10 text-purple-300 px-1.5 py-0.5 rounded-full border border-purple-500/20">
+                            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-md border border-indigo-500/20 font-medium">
                               פעיל ({comment.replies.length})
                             </span>
                           )}
@@ -4006,7 +3995,7 @@ function MainApp() {
 
                         {/* Expanded Thread Drawer */}
                         {expandedThreads[comment.id] && (
-                          <div className="mt-2.5 bg-[#10131f] rounded-xl p-3 border border-[#232b40] flex flex-col gap-2.5 shadow-inner">
+                          <div className="mt-3 bg-zinc-950 rounded-xl p-3 border border-zinc-800 flex flex-col gap-3 shadow-inner">
                             {/* Existing Replies */}
                             {Array.isArray(comment.replies) && comment.replies.length > 0 ? (
                               <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
@@ -4015,24 +4004,24 @@ function MainApp() {
                                   return (
                                     <div
                                       key={reply.id}
-                                      className={`p-2 rounded-lg border text-xs flex flex-col gap-1 transition-all ${
+                                      className={`p-2.5 rounded-lg border text-[12px] flex flex-col gap-1 transition-colors ${
                                         isEditor
-                                          ? 'bg-[#151928] border-indigo-500/30 text-indigo-100'
-                                          : 'bg-[#181528] border-purple-500/30 text-purple-100'
+                                          ? 'bg-zinc-900 border-indigo-500/20 text-indigo-100'
+                                          : 'bg-zinc-900 border-indigo-500/20 text-indigo-100'
                                       }`}
                                     >
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1.5">
                                           <span
-                                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                                            className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${
                                               isEditor
-                                                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-                                                : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                                                ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                                                : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
                                             }`}
                                           >
                                             {isEditor ? '🎬 עורך' : '👤 לקוח'}
                                           </span>
-                                          <span className="text-[10px] text-gray-400 font-mono">
+                                          <span className="text-[10px] text-zinc-500 font-mono">
                                             {formatReplyTime(reply.createdAt)}
                                           </span>
                                         </div>
@@ -4040,14 +4029,14 @@ function MainApp() {
                                         <button
                                           type="button"
                                           onClick={() => handleDeleteReply(comment.id, reply.id)}
-                                          className="text-gray-500 hover:text-red-400 transition-colors p-0.5"
+                                          className="text-zinc-500 hover:text-red-400 transition-colors p-0.5"
                                           title="מחק תגובה"
                                         >
                                           <Trash2 className="w-3 h-3" />
                                         </button>
                                       </div>
 
-                                      <p className="text-gray-200 text-xs whitespace-pre-wrap leading-relaxed">
+                                      <p className="text-zinc-300 text-[12px] whitespace-pre-wrap leading-relaxed">
                                         {reply.text}
                                       </p>
                                     </div>
@@ -4055,13 +4044,13 @@ function MainApp() {
                                 })}
                               </div>
                             ) : (
-                              <p className="text-[11px] text-gray-400 italic">
+                              <p className="text-[11px] text-zinc-500 italic">
                                 אין עדיין תגובות לתיקון זה. אפשר לשאול שאלה או להשאיר עדכון ישירות כאן במקום בוואטסאפ:
                               </p>
                             )}
 
                             {/* Quick suggested responses */}
-                            <div className="flex flex-wrap gap-1 pt-0.5">
+                            <div className="flex flex-wrap gap-1.5 pt-0.5">
                               {(mode === 'client'
                                 ? ['מעולה, תודה!', 'עדיף קצר יותר', 'סומך על הטעם שלך', 'אפשר עוד אופציה?']
                                 : ['תוקן, תבדוק עכשיו ✓', 'לאיזה צבע להחליף?', 'צריך עוד פירוט', 'בוצע בגרסה הבאה']
@@ -4070,7 +4059,7 @@ function MainApp() {
                                   key={sIdx}
                                   type="button"
                                   onClick={() => handleAddReply(comment.id, suggestion)}
-                                  className="text-[10px] px-2 py-0.5 rounded-full bg-[#1b2133] hover:bg-[#252c42] text-gray-300 hover:text-white border border-[#2d364f] transition-all"
+                                  className="text-[10px] px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-zinc-100 border border-zinc-700 transition-colors"
                                 >
                                   + {suggestion}
                                 </button>
@@ -4083,7 +4072,7 @@ function MainApp() {
                                 e.preventDefault()
                                 handleAddReply(comment.id)
                               }}
-                              className="flex items-center gap-1.5 pt-1"
+                              className="flex items-center gap-2 pt-1"
                             >
                               <input
                                 type="text"
@@ -4099,16 +4088,12 @@ function MainApp() {
                                     ? 'השב כלקוח (למשל: "התכוונתי לצבע צהוב זוהר")...'
                                     : 'השב כעורך (למשל: "תוקן, תבדוק עכשיו ב-00:04")...'
                                 }
-                                className="flex-1 bg-[#161a29] border border-[#2c354e] focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                className="flex-1 bg-zinc-900 border border-zinc-700 focus:border-indigo-500 rounded-lg px-3 py-2 text-[12px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                               />
                               <button
                                 type="submit"
                                 disabled={!(replyInputs[comment.id] || '').trim()}
-                                className={`p-2 rounded-lg text-white text-xs font-semibold flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                                  mode === 'client'
-                                    ? 'bg-purple-600 hover:bg-purple-500 shadow-sm shadow-purple-950/50'
-                                    : 'bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-950/50'
-                                }`}
+                                className="p-2.5 rounded-lg text-white text-[12px] font-semibold flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-500 shadow-sm"
                                 title="שלח תגובה (Enter)"
                               >
                                 <Send className="w-3 h-3" />
@@ -4136,29 +4121,29 @@ function MainApp() {
           {/* Role-tailored Action Footer */}
           {mode === 'client' ? (
             currentVersion.approved ? (
-              <div className="bg-gradient-to-br from-[#10241b] via-[#142d22] to-[#0c1f17] p-5 rounded-3xl border border-emerald-500/40 shadow-2xl mt-auto flex flex-col gap-3.5 animate-in fade-in duration-300">
+              <div className="bg-emerald-500/5 p-5 rounded-xl border border-emerald-500/20 shadow-sm mt-auto flex flex-col gap-3.5 animate-in fade-in duration-300">
                 <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span className="text-sm">{currentVersion.name} אושרה סופית! 🎉</span>
+                    <span className="text-[13px]">{currentVersion.name} אושרה סופית! 🎉</span>
                   </div>
-                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                     {formatReplyTime(currentVersion.approvedAt)}
                   </span>
                 </div>
 
-                <p className="text-xs text-emerald-200/90 leading-relaxed">
+                <p className="text-[12px] text-emerald-300/90 leading-relaxed">
                   הגרסה אושרה ע"י <strong>{currentVersion.approvedBy || 'הלקוח'}</strong> והיא מוכנה לסגירה סופית ופרסום!
                   {currentVersion.approvalNote && (
-                    <span className="block italic text-emerald-100/80 mt-1">"{currentVersion.approvalNote}"</span>
+                    <span className="block italic text-emerald-200/80 mt-1">"{currentVersion.approvalNote}"</span>
                   )}
                 </p>
 
                 {/* Persistent Reopen Alert for Client if Editor requested it */}
                 {currentVersion.reopenRequested && (
-                  <div className="bg-amber-950/70 border border-amber-500/60 rounded-2xl p-3.5 flex flex-col gap-2.5 animate-pulse shadow-lg shadow-amber-950/40">
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3.5 flex flex-col gap-2.5 animate-pulse">
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+                      <div className="flex items-center gap-1.5 text-amber-400 font-bold">
                         <Bell className="w-4 h-4 text-amber-400" />
                         <span>בקשה מהעורך לפתיחה מחדש</span>
                       </div>
@@ -4178,7 +4163,7 @@ function MainApp() {
                       <button
                         type="button"
                         onClick={() => handleClientApproveReopen(currentVersion.id)}
-                        className="py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-md active:scale-95 cursor-pointer"
+                        className="py-2 px-3 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>אשר פתיחה מחדש ✅</span>
@@ -4186,7 +4171,7 @@ function MainApp() {
                       <button
                         type="button"
                         onClick={() => handleClientRejectReopen(currentVersion.id)}
-                        className="py-2 px-3 rounded-xl bg-[#1c2234] hover:bg-[#252e46] text-gray-300 border border-white/[0.08] font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
+                        className="py-2 px-3 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 font-semibold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
                       >
                         <X className="w-3.5 h-3.5 text-red-400" />
                         <span>השאר מאושר</span>
@@ -4198,7 +4183,7 @@ function MainApp() {
                 <div className="flex flex-col gap-2 pt-1">
                   <button
                     onClick={notifyClientApprovedViaWhatsApp}
-                    className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-95 cursor-pointer"
+                    className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[13px] shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>שלח הודעת "אושר סופית" לעורך ב-WhatsApp 🚀</span>
@@ -4207,7 +4192,7 @@ function MainApp() {
                   <button
                     type="button"
                     onClick={() => handleClientSelfReopen(currentVersion.id)}
-                    className="text-xs text-gray-400 hover:text-amber-300 flex items-center justify-center gap-1.5 py-1 transition-colors cursor-pointer"
+                    className="text-[12px] text-zinc-400 hover:text-amber-400 flex items-center justify-center gap-1.5 py-1 transition-colors cursor-pointer font-medium"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>התחרטת? פתח מחדש להערות נוספות</span>
@@ -4215,10 +4200,10 @@ function MainApp() {
                 </div>
               </div>
             ) : (
-              <div className="bg-gradient-to-br from-[#121624] via-[#101e1a] to-[#0c1815] p-5 rounded-3xl border border-emerald-500/30 shadow-2xl mt-auto flex flex-col gap-3.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-white text-sm">סיימת לעבור על הסרטון? 🙌</span>
-                  <span className="font-mono text-emerald-300 font-bold bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30 text-xs">
+              <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 shadow-sm mt-auto flex flex-col gap-3.5">
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="font-bold text-zinc-100">סיימת לעבור על הסרטון? 🙌</span>
+                  <span className="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 text-[11px]">
                     {comments.length} תיקונים רשומים
                   </span>
                 </div>
@@ -4226,15 +4211,15 @@ function MainApp() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <button
                     onClick={shareViaWhatsApp}
-                    className="py-3 px-3 rounded-2xl bg-[#181e2e] hover:bg-[#20293d] text-gray-200 border border-white/[0.08] font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    className="py-2.5 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <Send className="w-3.5 h-3.5 text-purple-400" />
+                    <Send className="w-3.5 h-3.5 text-indigo-400" />
                     <span>שלח סיכום לוואטסאפ 💬</span>
                   </button>
 
                   <button
                     onClick={() => setShowApprovalModal(true)}
-                    className="py-3 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                    className="py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[13px] shadow-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>אשר גרסה זו סופית! ✅</span>
@@ -4243,20 +4228,20 @@ function MainApp() {
               </div>
             )
           ) : (
-            <div className="bg-[#121624]/90 backdrop-blur-md p-5 rounded-3xl border border-white/[0.07] flex flex-col gap-3 shadow-xl mt-auto">
+            <div className="bg-zinc-950/80 p-5 rounded-xl border border-zinc-800 flex flex-col gap-3 shadow-sm mt-auto">
               {/* Approval status banner for Editor */}
               {currentVersion.approved ? (
                 currentVersion.reopenRequested ? (
-                  <div className="p-3.5 rounded-2xl bg-amber-950/50 border border-amber-500/50 flex flex-col gap-2 mb-1 shadow-lg shadow-amber-950/30">
+                  <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex flex-col gap-2 mb-1">
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 text-amber-300 font-bold">
+                      <div className="flex items-center gap-2 text-amber-400 font-bold">
                         <Clock className="w-4 h-4 text-amber-400 animate-spin" />
                         <span>נשלחה בקשת פתיחה מחדש ללקוח ⏳</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleCancelReopenRequest(currentVersion.id)}
-                        className="text-[11px] text-gray-400 hover:text-red-400 underline transition-colors cursor-pointer"
+                        className="text-[11px] text-zinc-400 hover:text-red-400 underline transition-colors cursor-pointer"
                       >
                         בטל בקשה
                       </button>
@@ -4270,19 +4255,19 @@ function MainApp() {
                     <button
                       type="button"
                       onClick={notifyClientReopenRequestViaWhatsApp}
-                      className="w-full py-2 px-3 rounded-xl bg-[#20273a] hover:bg-[#28324a] text-gray-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="w-full py-2 px-3 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
                       <span>שלח תזכורת ללקוח ב-WhatsApp</span>
                     </button>
                   </div>
                 ) : (
-                  <div className="p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-between text-xs mb-1">
-                    <div className="flex items-center gap-2.5 text-emerald-300">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs mb-1">
+                    <div className="flex items-center gap-2.5 text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                       <div>
                         <span className="font-bold">הלקוח אישר את {currentVersion.name}! 🎉</span>
-                        <div className="text-[10px] text-gray-300">
+                        <div className="text-[10px] text-zinc-400 mt-0.5">
                           אושר ע"י {currentVersion.approvedBy || 'הלקוח'} ({formatReplyTime(currentVersion.approvedAt)})
                         </div>
                       </div>
@@ -4290,7 +4275,7 @@ function MainApp() {
                     <button
                       type="button"
                       onClick={() => setShowEditorReopenModal(true)}
-                      className="text-[10px] text-amber-300 hover:text-amber-200 border border-amber-500/40 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 transition-colors flex items-center gap-1 flex-shrink-0 cursor-pointer font-semibold"
+                      className="text-[10px] text-amber-400 hover:text-amber-300 border border-amber-500/30 px-2 py-1.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 transition-colors flex items-center gap-1 flex-shrink-0 cursor-pointer font-semibold"
                       title="בקש מהלקוח לאשר פתיחה מחדש"
                     >
                       <RotateCcw className="w-3 h-3" />
@@ -4299,7 +4284,7 @@ function MainApp() {
                   </div>
                 )
               ) : (
-                <div className="p-2.5 rounded-2xl bg-[#161a28] border border-white/[0.06] flex items-center justify-between text-xs text-gray-400 mb-1">
+                <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-between text-[12px] text-zinc-400 mb-1 font-medium">
                   <div className="flex items-center gap-2">
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
                     <span>ממתין לאישור סופי מהלקוח ⏳</span>
@@ -4307,7 +4292,7 @@ function MainApp() {
                   <button
                     type="button"
                     onClick={() => handleApproveVersion(currentVersion.id, 'עורך (ידני)')}
-                    className="text-[11px] text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer font-medium"
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer font-semibold"
                   >
                     סמן כאושר ידנית
                   </button>
@@ -4315,11 +4300,11 @@ function MainApp() {
               )}
 
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                <h3 className="text-[13px] font-bold text-zinc-300 flex items-center gap-2">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
                   <span>פעולות עורך וסנכרון</span>
                 </h3>
-                <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
                   {completedCount}/{comments.length} בוצעו
                 </span>
               </div>
@@ -4327,7 +4312,7 @@ function MainApp() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={exportPremiereCSV}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#1d2235] hover:bg-[#272e47] border border-[#2c354e] text-xs font-semibold text-indigo-200 transition-all"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[12px] font-semibold text-indigo-300 transition-colors"
                   title="הורד קובץ מרקרים CSV לפרמייר"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
@@ -4336,7 +4321,7 @@ function MainApp() {
 
                 <button
                   onClick={copyToClipboard}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#1d2235] hover:bg-[#272e47] border border-[#2c354e] text-xs font-semibold text-gray-200 transition-all"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[12px] font-semibold text-zinc-300 transition-colors"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? 'הועתק!' : 'העתק רשימה'}</span>
@@ -4345,7 +4330,7 @@ function MainApp() {
 
               <button
                 onClick={notifyClientDone}
-                className="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-950/40 flex items-center justify-center gap-2 transition-all"
+                className="w-full py-2.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[13px] font-bold shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
                 <span>עדכן לקוח בוואטסאפ: "התיקונים בוצעו!" 🎉</span>
@@ -4357,16 +4342,16 @@ function MainApp() {
       </main>
 
       {/* Studio / App Footer with Creator Credit */}
-      <footer className="mt-auto py-5 border-t border-white/[0.06] bg-[#0a0d16]/80 backdrop-blur-md text-xs text-gray-400">
+      <footer className="mt-auto py-5 border-t border-zinc-800 bg-zinc-950/80 backdrop-blur-md text-[12px] text-zinc-500">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-mono font-bold text-white text-xs">CutSync</span>
-            <span className="text-gray-500">|</span>
-            <span className="text-gray-400 text-[11px]">פלטפורמת התיקונים והביקורת המדויקת לווידאו</span>
+            <span className="font-mono font-bold text-zinc-300 text-[13px]">CutSync</span>
+            <span className="text-zinc-700">|</span>
+            <span className="text-zinc-400">פלטפורמת התיקונים והביקורת המדויקת לווידאו</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-300">
+          <div className="flex items-center gap-1.5 text-zinc-400">
             <span>נוצר ופותח על ידי</span>
-            <span className="text-purple-300 font-black tracking-wide px-2.5 py-0.5 rounded-lg bg-purple-500/15 border border-purple-500/30 shadow-inner">
+            <span className="text-indigo-400 font-bold tracking-wide px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20">
               kaboodi
             </span>
             <span>✨</span>
@@ -4377,34 +4362,34 @@ function MainApp() {
       {/* Version Approval Confirmation Modal */}
       {showApprovalModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#121624] border border-white/[0.1] rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-150 text-right">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-xl flex flex-col gap-4 animate-in zoom-in-95 duration-150 text-right">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-inner">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-[15px] font-bold text-zinc-100">
                     אישור סופי של {currentVersion.name} ✨
                   </h3>
-                  <span className="text-[11px] text-emerald-400">איזה כיף! הגענו לשלב הסופי</span>
+                  <span className="text-[11px] text-emerald-400 font-medium">איזה כיף! הגענו לשלב הסופי</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowApprovalModal(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-xl hover:bg-white/[0.06] transition-colors"
+                className="text-zinc-400 hover:text-white p-1.5 rounded-md hover:bg-zinc-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-gray-300 leading-relaxed">
+            <p className="text-[13px] text-zinc-300 leading-relaxed">
               מרוצה מאיך שהסרטון נראה? באישור הגרסה, העורך יקבל עדכון מיידי שהסבב הושלם בהצלחה וניתן לסגור ולפרסם!
             </p>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-gray-300 font-semibold">
+              <label className="text-[12px] text-zinc-300 font-semibold">
                 שם המאשר:
               </label>
               <input
@@ -4412,12 +4397,12 @@ function MainApp() {
                 value={approverName}
                 onChange={(e) => setApproverName(e.target.value)}
                 placeholder="למשל: דניאל (הלקוח)"
-                className="bg-[#181d2c] border border-white/[0.08] focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+                className="bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg px-3 py-2 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-gray-300 font-semibold">
+              <label className="text-[12px] text-zinc-300 font-semibold">
                 מילה טובה או הערת סיכום לעורך (אופציונלי):
               </label>
               <textarea
@@ -4425,15 +4410,15 @@ function MainApp() {
                 value={approvalNote}
                 onChange={(e) => setApprovalNote(e.target.value)}
                 placeholder="למשל: 'יצא מושלם! תודה רבה על הסבלנות והעבודה המהירה ❤️'"
-                className="bg-[#181d2c] border border-white/[0.08] focus:border-emerald-500 rounded-xl p-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none transition-all leading-relaxed"
+                className="bg-zinc-900 border border-zinc-800 focus:border-emerald-500 rounded-lg p-3 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none transition-colors leading-relaxed"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.08]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
               <button
                 type="button"
                 onClick={() => setShowApprovalModal(false)}
-                className="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-md text-[13px] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer font-medium"
               >
                 ביטול
               </button>
@@ -4445,7 +4430,7 @@ function MainApp() {
                   setShowCelebration(true)
                   setTimeout(() => setShowCelebration(false), 5000)
                 }}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold shadow-lg shadow-emerald-950/50 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="px-5 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 <span>אשר סופית וסגור סבב! 🎉</span>
@@ -4458,20 +4443,17 @@ function MainApp() {
       {/* Client Prompt Modal: Editor requests reopening after approval */}
       {mode === 'client' && currentVersion.approved && currentVersion.reopenRequested && dismissedReopenModalVersionId !== currentVersion.id && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#151a28] border-2 border-amber-500/60 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl shadow-amber-950/70 flex flex-col gap-5 animate-in zoom-in-95 duration-200 text-right relative overflow-hidden">
-            {/* Ambient decorative glow */}
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
-
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-xl flex flex-col gap-5 animate-in zoom-in-95 duration-200 text-right relative overflow-hidden">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 flex-shrink-0 animate-pulse">
-                  <Bell className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 flex-shrink-0 animate-pulse">
+                  <Bell className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                  <div className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">
                     התקבלה בקשה מהעורך
                   </div>
-                  <h3 className="text-base font-bold text-white leading-snug">
+                  <h3 className="text-[15px] font-bold text-zinc-100 leading-snug">
                     העורך מבקש לפתוח מחדש את הסרטון 🔔
                   </h3>
                 </div>
@@ -4479,34 +4461,34 @@ function MainApp() {
               <button
                 type="button"
                 onClick={() => setDismissedReopenModalVersionId(currentVersion.id)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#1f2638] transition-colors"
+                className="text-zinc-400 hover:text-white p-1.5 rounded-md hover:bg-zinc-800 transition-colors"
                 title="סגור חלונית (הבקשה תישאר זמינה בתחתית המסך)"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="bg-[#1c2235] border border-[#2c3752] rounded-2xl p-4 flex flex-col gap-2.5">
-              <p className="text-xs text-gray-200 leading-relaxed">
-                סימנת את <strong className="text-white">{currentVersion.name}</strong> כמאושרת סופית, אך העורך מעוניין לפתוח אותה מחדש לצורך ביצוע שינויים או תיקונים נוספים.
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col gap-2.5">
+              <p className="text-[13px] text-zinc-300 leading-relaxed">
+                סימנת את <strong className="text-zinc-100">{currentVersion.name}</strong> כמאושרת סופית, אך העורך מעוניין לפתוח אותה מחדש לצורך ביצוע שינויים או תיקונים נוספים.
               </p>
               {currentVersion.reopenRequestReason ? (
-                <div className="bg-[#151a28] border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90">
-                  <span className="font-semibold text-amber-300 block mb-1">💬 סיבת הפתיחה מהעורך:</span>
+                <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-[12px] text-zinc-200">
+                  <span className="font-semibold text-amber-400 block mb-1">💬 סיבת הפתיחה מהעורך:</span>
                   "{currentVersion.reopenRequestReason}"
                 </div>
               ) : (
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-zinc-500">
                   העורך לא ציין הערה נוספת, אך ממתין לאישורך במערכת.
                 </p>
               )}
-              <div className="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <div className="text-[11px] text-zinc-500 flex items-center gap-1.5 mt-1 font-medium">
+                <Clock className="w-3.5 h-3.5" />
                 <span>זמן הבקשה: {formatReplyTime(currentVersion.reopenRequestedAt)}</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-gray-400 leading-normal">
+            <p className="text-[12px] text-zinc-400 leading-normal font-medium">
               באישור פתיחה מחדש, הסטטוס יחזור ל"פתוח" וניתן יהיה להמשיך להוסיף הערות ולבצע תיקונים.
             </p>
 
@@ -4514,7 +4496,7 @@ function MainApp() {
               <button
                 type="button"
                 onClick={() => handleClientApproveReopen(currentVersion.id)}
-                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95"
+                className="w-full sm:flex-1 py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>אשר פתיחה מחדש לעריכה ✅</span>
@@ -4523,10 +4505,10 @@ function MainApp() {
               <button
                 type="button"
                 onClick={() => handleClientRejectReopen(currentVersion.id)}
-                className="w-full sm:w-auto py-3 px-4 rounded-xl bg-[#1c2234] hover:bg-[#252e46] text-gray-300 border border-[#2d3752] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full sm:w-auto py-2.5 px-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4 text-red-400" />
-                <span>דחה בקשה (השאר מאושר)</span>
+                <span>דחה בקשה</span>
               </button>
             </div>
           </div>
@@ -4536,31 +4518,31 @@ function MainApp() {
       {/* Editor Reopen Request Dialog Modal */}
       {showEditorReopenModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#151a28] border border-[#2a344e] rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-150 text-right">
-            <div className="flex items-center justify-between border-b border-[#242c42] pb-3">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-xl flex flex-col gap-4 animate-in zoom-in-95 duration-150 text-right">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
                   <RotateCcw className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-[15px] font-bold text-zinc-100">
                   בקשת פתיחה מחדש מהלקוח
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowEditorReopenModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-zinc-400 hover:text-white p-1.5 rounded-md hover:bg-zinc-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-gray-300 leading-relaxed">
+            <p className="text-[13px] text-zinc-300 leading-relaxed">
               גרסה זו אושרה סופית על ידי הלקוח. כדי לשמור על סדר ושקיפות, תופיע ללקוח הודעה בולטת על המסך לאשר את פתיחת הגרסה מחדש לפני שניתן להמשיך.
             </p>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-gray-300 font-semibold">
+              <label className="text-[12px] text-zinc-300 font-semibold">
                 סיבת הפתיחה מחדש ללקוח (אופציונלי):
               </label>
               <textarea
@@ -4568,22 +4550,22 @@ function MainApp() {
                 value={editorReopenReason}
                 onChange={(e) => setEditorReopenReason(e.target.value)}
                 placeholder="למשל: 'נדרש דיוק קל בסאונד בסוף' או 'החלפת שוט בדקה 00:15'..."
-                className="bg-[#1c2234] border border-[#2d3752] focus:border-amber-500 rounded-xl p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                className="bg-zinc-900 border border-zinc-800 focus:border-amber-500 rounded-lg p-2.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none transition-colors"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#242c42]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
               <button
                 type="button"
                 onClick={() => setShowEditorReopenModal(false)}
-                className="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-[#1e2538] transition-colors"
+                className="px-4 py-2 rounded-md text-[13px] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors font-medium cursor-pointer"
               >
                 ביטול
               </button>
               <button
                 type="button"
                 onClick={() => handleEditorRequestReopen(currentVersion.id, editorReopenReason.trim())}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white text-xs font-bold shadow-lg shadow-amber-950/50 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+                className="px-4 py-2 rounded-md bg-amber-600 hover:bg-amber-500 text-white text-[13px] font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>שלח בקשה ללקוח ✉️</span>

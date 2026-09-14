@@ -162,16 +162,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="relative w-full max-w-md bg-[#101422] border border-[#26314f] rounded-3xl p-6 sm:p-8 shadow-2xl shadow-indigo-950/50 text-gray-100 overflow-hidden">
-
-        {/* Ambient glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-purple-600/15 rounded-full blur-3xl pointer-events-none -z-10" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10" />
-
+      <div className="relative w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-xl text-zinc-100 overflow-hidden">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 left-5 w-8 h-8 rounded-full bg-[#182033] hover:bg-[#232e49] border border-gray-700/50 flex items-center justify-center text-gray-400 hover:text-white transition-all cursor-pointer"
+          className="absolute top-5 left-5 w-8 h-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
           title="סגור"
         >
           <X className="w-4 h-4" />
@@ -184,37 +179,37 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             <button
               onClick={() => { setViewMode('main'); setError(null); setSuccess(null) }}
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white mb-5 cursor-pointer"
+              className="flex items-center gap-1.5 text-[12px] text-zinc-400 hover:text-white mb-5 cursor-pointer font-medium transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
               <span>חזרה להתחברות</span>
             </button>
 
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-3">
                 <KeyRound className="w-6 h-6 text-indigo-400" />
               </div>
-              <h3 className="text-xl font-black text-white">איפוס סיסמה</h3>
-              <p className="text-xs text-gray-400 mt-1">נשלח אליך קישור לאיפוס הסיסמה</p>
+              <h3 className="text-xl font-bold text-zinc-100">איפוס סיסמה</h3>
+              <p className="text-[13px] text-zinc-400 mt-1">נשלח אליך קישור לאיפוס הסיסמה</p>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 animate-in fade-in">
+              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] flex items-center gap-2 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                 <span>{error}</span>
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in">
+              <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[13px] flex items-center gap-2 animate-in fade-in">
                 <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
                 <span>{success}</span>
               </div>
             )}
 
             {!success && (
-              <form onSubmit={handleForgotPassword} className="space-y-3">
+              <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">כתובת האימייל שלך</label>
+                  <label className="block text-[12px] font-semibold text-zinc-300 mb-1.5">כתובת האימייל שלך</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -223,15 +218,15 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="editor@studio.com"
-                      className="w-full pr-9 pl-3 py-2.5 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full pr-10 pl-3 py-2.5 text-[13px] bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
-                    <Mail className="w-4 h-4 text-gray-500 absolute right-3 top-3" />
+                    <Mail className="w-4 h-4 text-zinc-500 absolute right-3.5 top-3" />
                   </div>
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-950/60 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[13px] shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? 'שולח...' : 'שלח קישור לאיפוס סיסמה'}
                 </button>
@@ -246,15 +241,15 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
         {viewMode === 'main' && (
           <>
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-semibold mb-2">
+            <div className="text-center mb-6 mt-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[11px] font-semibold mb-3">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>סביבת עבודה אישית לעורכים</span>
               </div>
-              <h2 className="text-2xl font-black text-white">
+              <h2 className="text-2xl font-bold text-zinc-100">
                 {tab === 'login' ? 'התחברות ל-CutSync' : 'הרשמה לחשבון חדש'}
               </h2>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-[13px] text-zinc-400 mt-1.5">
                 {tab === 'login'
                   ? 'התחבר כדי לגשת לדשבורד הפרויקטים האישי שלך'
                   : 'פתח חשבון וקבל דשבורד ייעודי לניהול גרסאות וסרטונים'}
@@ -262,12 +257,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
             </div>
 
             {/* Tab Switcher */}
-            <div className="grid grid-cols-2 p-1 bg-[#0b0e17] rounded-2xl border border-gray-800/80 mb-5">
+            <div className="grid grid-cols-2 p-1 bg-zinc-900 rounded-lg border border-zinc-800 mb-6">
               <button
                 type="button"
                 onClick={() => { setTab('login'); setError(null); setSuccess(null) }}
-                className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                  tab === 'login' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950' : 'text-gray-400 hover:text-white'
+                className={`py-2 text-[13px] font-bold rounded-md transition-colors cursor-pointer ${
+                  tab === 'login' ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/50' : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 התחברות
@@ -275,8 +270,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
               <button
                 type="button"
                 onClick={() => { setTab('register'); setError(null); setSuccess(null) }}
-                className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                  tab === 'register' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950' : 'text-gray-400 hover:text-white'
+                className={`py-2 text-[13px] font-bold rounded-md transition-colors cursor-pointer ${
+                  tab === 'register' ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/50' : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 הרשמה מלאה
@@ -285,29 +280,29 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
 
             {/* Alerts */}
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 animate-in fade-in">
+              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] flex items-center gap-2 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                 <span>{error}</span>
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in">
+              <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[13px] flex items-center gap-2 animate-in fade-in">
                 <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
                 <span>{success}</span>
               </div>
             )}
 
             {/* ── Social Logins ────────────────────────────────── */}
-            <div className="space-y-2.5 mb-5">
+            <div className="space-y-3 mb-6">
               {/* Google */}
               <button
                 type="button"
                 onClick={handleGoogle}
                 disabled={!!oauthLoading}
-                className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 shadow-md cursor-pointer disabled:opacity-60"
+                className="w-full py-2.5 px-4 rounded-lg bg-zinc-100 hover:bg-white text-zinc-900 font-bold text-[13px] flex items-center justify-center gap-3 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
               >
                 {oauthLoading === 'google' ? (
-                  <svg className="w-4 h-4 animate-spin text-gray-500" viewBox="0 0 24 24" fill="none">
+                  <svg className="w-4 h-4 animate-spin text-zinc-500" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                   </svg>
@@ -322,7 +317,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
                 type="button"
                 onClick={handleDiscord}
                 disabled={!!oauthLoading}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-xs flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 shadow-md shadow-[#5865F2]/20 cursor-pointer disabled:opacity-60"
+                className="w-full py-2.5 px-4 rounded-lg bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-[13px] flex items-center justify-center gap-3 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
               >
                 {oauthLoading === 'discord' ? (
                   <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -337,9 +332,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
             </div>
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center my-4">
-              <div className="w-full border-t border-gray-800" />
-              <span className="absolute px-3 bg-[#101422] text-[11px] text-gray-500 font-medium">
+            <div className="relative flex items-center justify-center my-6">
+              <div className="w-full border-t border-zinc-800" />
+              <span className="absolute px-3 bg-zinc-950 text-[11px] text-zinc-500 font-medium">
                 או באמצעות אימייל וסיסמה
               </span>
             </div>
@@ -348,7 +343,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
             <form onSubmit={handleSubmit} className="space-y-3">
               {tab === 'register' && (
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">שם מלא</label>
+                  <label className="block text-[12px] font-semibold text-zinc-300 mb-1.5">שם מלא</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -356,15 +351,15 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="לדוגמה: דניאל כהן"
-                      className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full pr-10 pl-3 py-2 text-[13px] bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
-                    <User className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                    <User className="w-4 h-4 text-zinc-500 absolute right-3.5 top-2.5" />
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-[11px] font-semibold text-gray-300 mb-1">כתובת אימייל</label>
+                <label className="block text-[12px] font-semibold text-zinc-300 mb-1.5">כתובת אימייל</label>
                 <div className="relative">
                   <input
                     type="email"
@@ -372,14 +367,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="editor@studio.com"
-                    className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full pr-10 pl-3 py-2 text-[13px] bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
-                  <Mail className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                  <Mail className="w-4 h-4 text-zinc-500 absolute right-3.5 top-2.5" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-gray-300 mb-1">סיסמה</label>
+                <label className="block text-[12px] font-semibold text-zinc-300 mb-1.5">סיסמה</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -387,13 +382,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="לפחות 6 תווים"
-                    className="w-full pr-9 pl-9 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full pr-10 pl-10 py-2 text-[13px] bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
-                  <Lock className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                  <Lock className="w-4 h-4 text-zinc-500 absolute right-3.5 top-2.5" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-2.5 text-gray-500 hover:text-gray-300"
+                    className="absolute left-3 top-2.5 text-zinc-500 hover:text-zinc-300 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -402,7 +397,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
 
               {tab === 'register' && (
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">אימות סיסמה</label>
+                  <label className="block text-[12px] font-semibold text-zinc-300 mb-1.5">אימות סיסמה</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -410,9 +405,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="הקלד שוב את אותה הסיסמה"
-                      className="w-full pr-9 pl-3 py-2 text-xs bg-[#0b0e17] border border-[#232c45] rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full pr-10 pl-3 py-2 text-[13px] bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
-                    <Lock className="w-4 h-4 text-gray-500 absolute right-3 top-2.5" />
+                    <Lock className="w-4 h-4 text-zinc-500 absolute right-3.5 top-2.5" />
                   </div>
                 </div>
               )}
@@ -420,7 +415,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-950/60 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full mt-4 py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[13px] shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -444,16 +439,16 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialTab =
               <button
                 type="button"
                 onClick={() => { setViewMode('forgot'); setError(null); setSuccess(null) }}
-                className="w-full mt-3 text-center text-[11px] text-gray-500 hover:text-indigo-400 transition-colors cursor-pointer"
+                className="w-full mt-4 text-center text-[12px] text-zinc-500 hover:text-indigo-400 transition-colors cursor-pointer font-medium"
               >
                 שכחתי סיסמה
               </button>
             )}
 
             {/* Security badge */}
-            <div className="mt-4 p-2.5 rounded-xl bg-[#090d16] border border-gray-800 text-[10px] text-gray-400 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>חיבור מאובטח: הנתונים שלך מוצפנים ומאוחסנים בסביבה מבודדת. לא נשמרות סיסמאות גלויות.</span>
+            <div className="mt-5 p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-400 flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="leading-relaxed">חיבור מאובטח: הנתונים שלך מוצפנים ומאוחסנים בסביבה מבודדת. לא נשמרות סיסמאות גלויות.</span>
             </div>
           </>
         )}

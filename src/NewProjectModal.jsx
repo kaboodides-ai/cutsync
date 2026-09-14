@@ -82,27 +82,24 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 rtl" dir="rtl">
-      <div className="bg-[#141826] border border-[#27324c] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl shadow-purple-950/50 flex flex-col gap-5 animate-in zoom-in-95 duration-150 text-right relative overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 rtl" dir="rtl">
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-xl flex flex-col gap-5 animate-in zoom-in-95 duration-150 text-right relative overflow-hidden">
         
-        {/* Glow decoration */}
-        <div className="absolute -top-16 -right-16 w-36 h-36 bg-purple-600/15 rounded-full blur-2xl pointer-events-none" />
-
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#212b42] pb-4">
+        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-purple-950/60">
+            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-inner">
               <Film className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">פרויקט סקירה חדש 🚀</h3>
-              <p className="text-[11px] text-gray-400">העלה סרטון וצור קישור אינטראקטיבי ללקוח</p>
+              <h3 className="text-[15px] font-bold text-zinc-100">פרויקט סקירה חדש 🚀</h3>
+              <p className="text-[12px] text-zinc-400">העלה סרטון וצור קישור אינטראקטיבי ללקוח</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#1e2538] transition-colors"
+            className="text-zinc-400 hover:text-white p-1.5 rounded-md hover:bg-zinc-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -113,7 +110,7 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
           
           {/* Project Title */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-200 flex items-center gap-1.5">
+            <label className="text-[12px] font-semibold text-zinc-300 flex items-center gap-1.5">
               <span>שם הפרויקט:</span>
               <span className="text-red-400">*</span>
             </label>
@@ -123,13 +120,13 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="למשל: סרטון תדמית מוצר - חברת אלפא"
-              className="bg-[#1a2133] border border-[#2c3752] focus:border-purple-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-colors"
+              className="bg-zinc-900 border border-zinc-800 focus:border-indigo-500 rounded-lg px-3.5 py-2.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
             />
           </div>
 
           {/* Client Name */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-200 flex items-center gap-1.5">
+            <label className="text-[12px] font-semibold text-zinc-300 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-indigo-400" />
               <span>שם הלקוח / איש הקשר (אופציונלי):</span>
             </label>
@@ -138,13 +135,13 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               placeholder="למשל: דניאל (מנהל שיווק)"
-              className="bg-[#1a2133] border border-[#2c3752] focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
+              className="bg-zinc-900 border border-zinc-800 focus:border-indigo-500 rounded-lg px-3.5 py-2.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
             />
           </div>
 
           {/* Video Selection Source */}
           <div className="flex flex-col gap-2 pt-1">
-            <label className="text-xs font-semibold text-gray-200">
+            <label className="text-[12px] font-semibold text-zinc-300">
               בחר סרטון לפרויקט:
             </label>
             
@@ -152,10 +149,10 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
               <button
                 type="button"
                 onClick={() => setVideoSourceType('upload')}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                className={`p-2.5 rounded-lg border text-[12px] font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                   videoSourceType === 'upload'
-                    ? 'bg-purple-950/40 border-purple-500 text-purple-200 shadow-md'
-                    : 'bg-[#181f30] border-[#252f48] text-gray-400 hover:text-gray-200'
+                    ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400 shadow-sm'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 <Upload className="w-4 h-4" />
@@ -165,10 +162,10 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
               <button
                 type="button"
                 onClick={() => setVideoSourceType('url')}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                className={`p-2.5 rounded-lg border text-[12px] font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                   videoSourceType === 'url'
-                    ? 'bg-indigo-950/40 border-indigo-500 text-indigo-200 shadow-md'
-                    : 'bg-[#181f30] border-[#252f48] text-gray-400 hover:text-gray-200'
+                    ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400 shadow-sm'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 <Link2 className="w-4 h-4" />
@@ -178,10 +175,10 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
               <button
                 type="button"
                 onClick={() => setVideoSourceType('sample')}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                className={`p-2.5 rounded-lg border text-[12px] font-medium flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                   videoSourceType === 'sample'
-                    ? 'bg-purple-950/40 border-purple-500 text-purple-200 shadow-md'
-                    : 'bg-[#181f30] border-[#252f48] text-gray-400 hover:text-gray-200'
+                    ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400 shadow-sm'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 <Sparkles className="w-4 h-4" />
@@ -193,7 +190,7 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
             {videoSourceType === 'upload' && (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-1 border-2 border-dashed border-[#2d3a5a] hover:border-purple-500/60 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#161c2c] hover:bg-[#1a2236] transition-all text-center"
+                className="mt-1 border border-dashed border-zinc-700 hover:border-indigo-500/50 rounded-lg p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-zinc-900/50 hover:bg-zinc-900 transition-colors text-center"
               >
                 <input
                   type="file"
@@ -202,18 +199,18 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
                   accept="video/*"
                   className="hidden"
                 />
-                <div className="w-10 h-10 rounded-full bg-purple-500/15 text-purple-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
                   <Upload className="w-5 h-5" />
                 </div>
                 {uploadedFile ? (
                   <div>
-                    <span className="text-xs font-bold text-emerald-400 block">{uploadedFile.name}</span>
-                    <span className="text-[10px] text-gray-400">קובץ נבחר ({(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB) — יעלה לענן של Supabase</span>
+                    <span className="text-[13px] font-bold text-emerald-500 block">{uploadedFile.name}</span>
+                    <span className="text-[11px] text-zinc-500">קובץ נבחר ({(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB) — יעלה לענן של Supabase</span>
                   </div>
                 ) : (
                   <div>
-                    <span className="text-xs font-bold text-white block">לחץ כאן לבחירת קובץ וידאו</span>
-                    <span className="text-[10px] text-gray-400">MP4, MOV, WebM — עולה לענן וזמין לכל לקוח</span>
+                    <span className="text-[13px] font-bold text-zinc-200 block">לחץ כאן לבחירת קובץ וידאו</span>
+                    <span className="text-[11px] text-zinc-500">MP4, MOV, WebM — עולה לענן וזמין לכל לקוח</span>
                   </div>
                 )}
               </div>
@@ -227,9 +224,9 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
                   value={directVideoUrl}
                   onChange={(e) => setDirectVideoUrl(e.target.value)}
                   placeholder="https://example.com/video.mp4 או קישור ישיר מ-Drive/Dropbox"
-                  className="bg-[#1a2133] border border-[#2c3752] focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  className="bg-zinc-900 border border-zinc-800 focus:border-indigo-500 rounded-lg px-3.5 py-2.5 text-[13px] text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
                 />
-                <span className="text-[10px] text-gray-400">הדבק קישור ישיר לקובץ וידאו הפתוח לצפייה פומבית ברשת.</span>
+                <span className="text-[11px] text-zinc-500">הדבק קישור ישיר לקובץ וידאו הפתוח לצפייה פומבית ברשת.</span>
               </div>
             )}
 
@@ -239,10 +236,10 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
                 {SAMPLE_TEMPLATES.map((tmpl) => (
                   <label
                     key={tmpl.id}
-                    className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
+                    className={`flex items-center justify-between p-3 rounded-lg border text-[13px] cursor-pointer transition-colors ${
                       selectedSampleUrl === tmpl.url
-                        ? 'bg-purple-950/50 border-purple-500/60 text-white'
-                        : 'bg-[#181f30] border-[#252f48] text-gray-300 hover:bg-[#1e273d]'
+                        ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-100'
+                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -251,11 +248,11 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
                         name="sampleTemplate"
                         checked={selectedSampleUrl === tmpl.url}
                         onChange={() => setSelectedSampleUrl(tmpl.url)}
-                        className="text-purple-600 focus:ring-purple-500"
+                        className="text-indigo-600 focus:ring-indigo-500 bg-zinc-900 border-zinc-700"
                       />
-                      <span className="font-semibold">{tmpl.title}</span>
+                      <span className="font-medium">{tmpl.title}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-gray-400">{tmpl.duration}</span>
+                    <span className="text-[11px] font-mono text-zinc-500">{tmpl.duration}</span>
                   </label>
                 ))}
               </div>
@@ -263,15 +260,15 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
 
             {/* Upload Status indicator */}
             {uploadStatus && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-medium animate-pulse">
-                <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[12px] font-medium animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
                 <span>{uploadStatus}</span>
               </div>
             )}
 
             {/* Upload warning/error */}
             {uploadError && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs">
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[12px]">
                 <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>{uploadError}</span>
               </div>
@@ -279,11 +276,11 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#212b42] mt-2">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-zinc-800 mt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-[#1a2133] transition-colors"
+              className="px-4 py-2 rounded-md text-[13px] text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
             >
               ביטול
             </button>
@@ -291,7 +288,7 @@ export default function NewProjectModal({ isOpen, onClose, onCreateProject }) {
             <button
               type="submit"
               disabled={!title.trim() || isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-purple-950/60 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+              className="px-5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-[13px] font-bold shadow-sm flex items-center gap-1.5 transition-colors"
             >
               <Check className="w-4 h-4" />
               <span>צור פרויקט והתחל לעבוד 🚀</span>

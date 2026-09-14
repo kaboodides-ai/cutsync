@@ -60,73 +60,66 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0d16] text-gray-100 font-sans selection:bg-purple-500 selection:text-white relative overflow-hidden rtl" dir="rtl">
-      {/* Ambient background glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-purple-600/15 via-indigo-600/10 to-transparent blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-1/3 -right-60 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-1/4 -left-60 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
-
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-indigo-500/30 selection:text-white relative overflow-hidden rtl" dir="rtl">
+      
       {/* Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#0a0d16]/80 border-b border-[#1c2336]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-[#09090b]/80 border-b border-zinc-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-emerald-400 p-[2px] shadow-lg shadow-purple-950/60">
-              <div className="w-full h-full bg-[#0d1220] rounded-[14px] flex items-center justify-center">
-                <Scissors className="w-5 h-5 text-purple-400" />
+          <div className="flex items-center gap-2.5 cursor-pointer select-none" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="w-9 h-9 rounded-lg bg-indigo-600 p-[1px] shadow-sm flex-shrink-0">
+              <div className="w-full h-full bg-[#18181b] rounded-[7px] flex items-center justify-center">
+                <Scissors className="w-4 h-4 text-indigo-400" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-tight text-white font-mono">CutSync</span>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                <span className="text-lg font-bold tracking-tight text-white font-mono">CutSync</span>
+                <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
                   by kaboodi
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                  v1.0 בעברית
+                <span className="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+                  v1.0
                 </span>
               </div>
-              <span className="text-[11px] text-gray-400 font-medium block">
-                פלטפורמת התיקונים לווידאו • נוצר ע״י kaboodi
-              </span>
             </div>
           </div>
 
           {/* Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-gray-300">
-            <a href="#why" className="hover:text-purple-300 transition-colors">למה CutSync?</a>
-            <a href="#features" className="hover:text-purple-300 transition-colors">תכונות הדגל</a>
-            <a href="#how-it-works" className="hover:text-purple-300 transition-colors">איך זה עובד?</a>
-            <a href="#roles" className="hover:text-purple-300 transition-colors">חיבור עורך ולקוח</a>
-            <a href="#faq" className="hover:text-purple-300 transition-colors">שאלות נפוצות</a>
+          <nav className="hidden md:flex items-center gap-6 text-[13px] font-medium text-zinc-400">
+            <a href="#why" className="hover:text-zinc-100 transition-colors">למה CutSync?</a>
+            <a href="#features" className="hover:text-zinc-100 transition-colors">תכונות הדגל</a>
+            <a href="#how-it-works" className="hover:text-zinc-100 transition-colors">איך זה עובד?</a>
+            <a href="#roles" className="hover:text-zinc-100 transition-colors">חיבור עורך ולקוח</a>
+            <a href="#faq" className="hover:text-zinc-100 transition-colors">שאלות נפוצות</a>
           </nav>
 
           {/* Quick Auth / CTA */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {currentUser ? (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onEnterStudio('editor')}
-                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#141926] hover:bg-[#1d253a] border border-[#232d44] transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors cursor-pointer"
                   title="כניסה לדשבורד"
                 >
                   <img
                     src={currentUser.avatar}
                     alt={currentUser.name}
-                    className="w-7 h-7 rounded-lg object-cover border border-purple-500/40"
+                    className="w-6 h-6 rounded-md object-cover border border-zinc-700"
                   />
-                  <span className="hidden sm:inline text-xs font-bold text-white">{currentUser.name}</span>
+                  <span className="hidden sm:inline text-xs font-semibold text-zinc-200">{currentUser.name}</span>
                 </button>
                 <button
                   onClick={() => onEnterStudio('editor')}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors cursor-pointer"
                 >
-                  <span>דשבורד פרויקטים 🚀</span>
+                  <span>דשבורד פרויקטים</span>
                 </button>
                 <button
                   onClick={onLogout}
-                  className="p-2 rounded-xl bg-[#141926] hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-[#232d44] transition-all cursor-pointer"
+                  className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                   title="התנתק"
                 >
                   <LogOut className="w-4 h-4" />
@@ -136,15 +129,15 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onOpenAuthModal?.('login')}
-                  className="px-4 py-2.5 rounded-xl bg-[#141926] hover:bg-[#1d253a] border border-[#232d44] text-xs font-bold text-gray-200 hover:text-white transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-zinc-400 hover:text-zinc-100 transition-colors cursor-pointer"
                 >
                   התחברות / הרשמה
                 </button>
                 <button
                   onClick={() => onOpenAuthModal?.('register')}
-                  className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 shadow-lg shadow-purple-950/60 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-colors cursor-pointer"
                 >
-                  <span>התחל בחינם 🚀</span>
+                  <span>התחל בחינם</span>
                 </button>
               </div>
             )}
@@ -153,36 +146,32 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-16 pb-20 lg:pt-24 lg:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center flex flex-col items-center">
+      <section className="relative pt-16 pb-20 lg:pt-24 lg:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center flex flex-col items-center">
         
         {/* Announce Chip */}
-        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#182035]/90 border border-purple-500/30 text-purple-300 text-xs font-medium mb-8 shadow-xl shadow-purple-950/40 animate-in fade-in slide-in-from-top-4 duration-500">
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-[11px] font-medium mb-8 shadow-sm">
+          <span className="flex h-1.5 w-1.5 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500"></span>
           </span>
-          <span>הפלטפורמה הישראלית הראשונה לביקורת ואישור סרטונים</span>
-          <span className="text-gray-400">|</span>
-          <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5" /> 100% RTL
-          </span>
+          <span>פלטפורמת ביקורת הוידאו המובילה בישראל</span>
         </div>
 
         {/* Big Headline */}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.15] max-w-4xl mx-auto">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight max-w-4xl mx-auto">
           להפסיק להתווכח בוואטסאפ על{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-300 to-emerald-400">
+          <span className="text-indigo-400">
             תיקוני וידאו.
           </span>
         </h1>
 
         {/* Subtitle */}
-        <p className="mt-6 text-base sm:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-6 text-[15px] sm:text-base lg:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
           הלקוח שלך מסמן, מצייר ומקליט הערות בדיוק של פיקסל ופריים – והעורך מקבל הכל מסודר ומייצא ישירות ל-Timeline ב-Premiere Pro.
         </p>
 
         {/* CTA Buttons Group */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <div className="mt-10 flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => {
               if (currentUser) {
@@ -191,23 +180,23 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
                 onOpenAuthModal?.('register')
               }
             }}
-            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-black text-base shadow-2xl shadow-purple-950/80 flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 group cursor-pointer"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[15px] shadow-sm flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
           >
-            <span>{currentUser ? 'המשך לדשבורד שלך 🚀' : 'התחל לעבוד עכשיו (חינם בדמו)'}</span>
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span>{currentUser ? 'המשך לדשבורד שלך' : 'התחל לעבוד עכשיו'}</span>
+            <ArrowLeft className="w-4 h-4" />
           </button>
 
           <a
             href="#how-it-works"
-            className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-[#141b2d] hover:bg-[#1c263e] border border-[#273454] text-gray-200 font-bold text-base flex items-center justify-center gap-2.5 transition-all"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-medium text-[15px] flex items-center justify-center gap-2.5 transition-colors"
           >
-            <Play className="w-4 h-4 text-purple-400 fill-purple-400" />
+            <Play className="w-4 h-4 text-zinc-400" />
             <span>איך זה עובד?</span>
           </a>
         </div>
 
         {/* Trust Points */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-y-3 gap-x-6 text-xs text-gray-400 font-medium select-none">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-y-3 gap-x-6 text-[13px] text-zinc-500 font-medium select-none">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>ללא צורך בהתקנה – הכל בדפדפן</span>
@@ -230,73 +219,73 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
         </div>
 
         {/* Hero Interactive Mockup Showcase */}
-        <div className="mt-16 w-full max-w-5xl rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-[#25304c]/80 via-[#161c2d]/90 to-[#0c0f18] border border-[#2d3a5a] shadow-2xl shadow-purple-950/70 relative">
+        <div className="mt-16 w-full max-w-5xl rounded-xl p-1 bg-zinc-900 border border-zinc-800 shadow-xl relative">
           
           {/* Top Mockup Window Controls */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#232d44] text-xs text-gray-400 bg-[#101422] rounded-t-2xl gap-2" dir="ltr">
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 text-[11px] text-zinc-400 bg-zinc-950 rounded-t-lg gap-2" dir="ltr">
+            <div className="flex items-center gap-2 min-w-0">
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80"></span>
-                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/80"></span>
-                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/80"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-700"></span>
               </div>
-              <span className="ml-2 sm:ml-3 font-mono text-[9px] sm:text-[11px] text-gray-300 font-semibold truncate leading-none pt-0.5">
-                CutSync Studio <span className="hidden sm:inline">— סרטון תדמית v1 (גרסה 1)</span>
+              <span className="ml-3 font-mono font-medium truncate leading-none pt-0.5">
+                CutSync Studio <span className="hidden sm:inline text-zinc-500">— סרטון תדמית v1</span>
               </span>
             </div>
             <div className="flex items-center flex-shrink-0" dir="rtl">
-              <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] sm:text-[10px] font-bold flex items-center gap-1 whitespace-nowrap">
-                <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" /> אושר<span className="hidden sm:inline"> ע"י הלקוח</span>
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-medium flex items-center gap-1.5 whitespace-nowrap">
+                <CheckCircle2 className="w-3 h-3 flex-shrink-0" /> אושר<span className="hidden sm:inline"> ע"י הלקוח</span>
               </span>
             </div>
           </div>
 
           {/* Simulated Player View */}
-          <div className="relative aspect-video bg-[#0b0e18] rounded-b-2xl overflow-hidden flex items-center justify-center cursor-pointer group" onClick={() => onEnterStudio('editor')}>
+          <div className="relative aspect-video bg-zinc-950 rounded-b-lg overflow-hidden flex items-center justify-center cursor-pointer group" onClick={() => onEnterStudio('editor')}>
             {/* Background Simulated Frame */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#12182b] via-[#0e1424] to-[#070a12] flex items-center justify-center">
+            <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
               <div className="w-full h-full flex flex-col items-center justify-center text-center p-8 opacity-90">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform shadow-2xl shadow-purple-900/40">
-                  <Play className="w-7 h-7 sm:w-9 sm:h-9 fill-purple-400 ml-1" />
+                <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform shadow-sm">
+                  <Play className="w-7 h-7 text-white ml-1" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">לחץ כאן כדי לפתוח את הסטודיו החי</h3>
-                <p className="hidden sm:block text-xs text-gray-400 max-w-md">התנסה בכל הכלים: סימון וציור, הערות קוליות, אישור גרסאות וייצוא לפרמייר</p>
+                <h3 className="text-lg font-semibold text-zinc-100 mb-1">לחץ כאן כדי לפתוח את הסטודיו החי</h3>
+                <p className="hidden sm:block text-[13px] text-zinc-400 max-w-md">התנסה בכל הכלים: סימון וציור, הערות קוליות, אישור גרסאות וייצוא לפרמייר</p>
               </div>
             </div>
 
             {/* Simulated Annotations Over the Frame */}
-            <div className="absolute top-[10%] right-[10%] sm:top-1/4 sm:right-1/4 pointer-events-none animate-pulse">
-              <div className="w-16 h-16 sm:w-32 sm:h-32 rounded-full border-2 sm:border-4 border-amber-400/80 shadow-lg shadow-amber-400/30 flex items-center justify-center">
-                <span className="text-[8px] sm:text-[11px] font-bold text-amber-300 bg-black/60 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">להחליף שוט</span>
+            <div className="absolute top-[10%] right-[10%] sm:top-1/4 sm:right-1/4 pointer-events-none">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full border-[3px] border-indigo-500 flex items-center justify-center">
+                <span className="text-[10px] font-medium text-white bg-indigo-600 px-2 py-0.5 rounded whitespace-nowrap shadow-sm">להחליף שוט</span>
               </div>
             </div>
 
             {/* Floating Simulated Pin Card */}
-            <div className="absolute top-12 left-12 bg-[#171e30]/95 backdrop-blur-md border border-purple-500/40 rounded-2xl p-3 shadow-2xl max-w-xs text-right hidden sm:block">
-              <div className="flex items-center justify-between gap-2 text-[11px] mb-1.5">
-                <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono font-bold">00:08</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
+            <div className="absolute top-12 left-12 bg-zinc-900 border border-zinc-800 rounded-lg p-3 shadow-md max-w-xs text-right hidden sm:block">
+              <div className="flex items-center justify-between gap-2 text-[11px] mb-2">
+                <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono">00:08</span>
+                <span className="text-indigo-400 font-medium flex items-center gap-1">
                   <Mic className="w-3 h-3" /> הערה קולית
                 </span>
               </div>
-              <p className="text-xs text-gray-200 font-medium">"להגביר כאן מעט את מוזיקת הרקע, זה שקט מדי"</p>
-              <div className="mt-2 text-[10px] text-gray-400 flex items-center gap-1">
-                <span>👤 דניאל (לקוח)</span>
+              <p className="text-[13px] text-zinc-200">"להגביר כאן מעט את מוזיקת הרקע, זה שקט מדי"</p>
+              <div className="mt-2.5 text-[11px] text-zinc-500 flex items-center gap-1.5">
+                <span>דניאל (לקוח)</span>
                 <span>•</span>
-                <span className="text-indigo-300">תגובה מהעורך: "תוקן ב-3dB!"</span>
+                <span className="text-zinc-400">תגובה מהעורך: "תוקן ב-3dB!"</span>
               </div>
             </div>
 
             {/* Bottom Timeline Simulation */}
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 flex flex-col gap-2">
-              <div className="w-full h-2 rounded-full bg-gray-700/60 relative overflow-hidden">
-                <div className="h-full w-2/5 bg-gradient-to-r from-purple-500 to-emerald-400 rounded-full"></div>
-                <div className="absolute top-0 right-[25%] w-2.5 h-2.5 rounded-full bg-amber-400 -translate-y-[1px]"></div>
-                <div className="absolute top-0 right-[60%] w-2.5 h-2.5 rounded-full bg-emerald-400 -translate-y-[1px]"></div>
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-zinc-950 to-transparent p-4 flex flex-col gap-2">
+              <div className="w-full h-1.5 rounded-full bg-zinc-800 relative overflow-hidden">
+                <div className="h-full w-2/5 bg-indigo-500 rounded-full"></div>
+                <div className="absolute top-0 right-[25%] w-2 h-2 rounded-full bg-zinc-300 -translate-y-[1px]"></div>
+                <div className="absolute top-0 right-[60%] w-2 h-2 rounded-full bg-indigo-400 -translate-y-[1px]"></div>
               </div>
-              <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between text-[10px] sm:text-[11px] text-gray-300 gap-1.5 sm:gap-0 mt-1 sm:mt-0">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between text-[11px] text-zinc-400 gap-1.5 sm:gap-0 mt-1 sm:mt-0">
                 <span className="font-mono order-2 sm:order-1" dir="ltr">00:08 / 00:23</span>
-                <span className="text-emerald-400 font-sans font-bold order-1 sm:order-2">3 תיקונים רשומים בציר הזמן</span>
+                <span className="text-zinc-300 font-sans font-medium order-1 sm:order-2">3 תיקונים רשומים בציר הזמן</span>
               </div>
             </div>
           </div>
@@ -304,81 +293,81 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
       </section>
 
       {/* Comparison Section (Before vs After) */}
-      <section id="why" className="py-20 bg-[#0d111d] border-y border-[#1a2236] relative">
+      <section id="why" className="py-20 bg-zinc-950 border-y border-zinc-900 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-3">למה CutSync?</h2>
-            <h3 className="text-3xl sm:text-4xl font-black text-white">
+            <h2 className="text-[11px] font-bold text-indigo-500 tracking-wider uppercase mb-3">למה CutSync?</h2>
+            <h3 className="text-3xl sm:text-4xl font-bold text-white">
               ההבדל בין סיוט התיקונים לבין שקט נפשי
             </h3>
-            <p className="mt-3 text-sm sm:text-base text-gray-400">
+            <p className="mt-4 text-[15px] sm:text-base text-zinc-400">
               למה עשרות עורכי וידאו עוברים מוואטסאפ ואימיילים לניהול תיקונים מקצועי:
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             
             {/* The Old Painful Way */}
-            <div className="bg-[#141824] rounded-3xl p-6 sm:p-8 border border-red-500/20 shadow-xl flex flex-col gap-5 relative overflow-hidden">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-red-500/15 text-red-400 flex items-center justify-center font-bold text-lg">
+            <div className="bg-zinc-900 rounded-xl p-6 sm:p-8 border border-zinc-800 flex flex-col gap-6 relative overflow-hidden">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-500 flex items-center justify-center font-bold">
                   ✕
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-white">הדרך הישנה (וואטסאפ ומיילים)</h4>
-                  <p className="text-xs text-red-400/90 font-medium">בלבול, שעות מבוזבזות וויכוחים</p>
+                  <h4 className="text-[15px] font-semibold text-zinc-100">הדרך הישנה (וואטסאפ)</h4>
+                  <p className="text-[13px] text-zinc-500">בלבול, שעות מבוזבזות וויכוחים</p>
                 </div>
               </div>
 
-              <ul className="space-y-4 text-xs sm:text-sm text-gray-300">
+              <ul className="space-y-4 text-[13px] sm:text-[14px] text-zinc-400">
                 <li className="flex items-start gap-3">
-                  <span className="text-red-400 font-bold mt-0.5">•</span>
-                  <span><strong>הודעות קוליות מבלבלות:</strong> "בדקה שתיים ומשהו יש איזה קטע שצריך לתקן" – לך תנחש על איזה פריים מדובר.</span>
+                  <span className="text-zinc-600 font-bold mt-0.5">•</span>
+                  <span><strong>הודעות קוליות מבלבלות:</strong> "בדקה שתיים ומשהו יש איזה קטע שצריך לתקן" – הניחוש עליך.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-red-400 font-bold mt-0.5">•</span>
-                  <span><strong>הקלדת טיים-קוד ידנית:</strong> לעצור, להעתיק שניות לפרמייר, לבדוק שוב, ולבזבז שעות יקרות.</span>
+                  <span className="text-zinc-600 font-bold mt-0.5">•</span>
+                  <span><strong>הקלדת טיים-קוד ידנית:</strong> לעצור, להעתיק שניות לפרמייר, לבדוק שוב.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-red-400 font-bold mt-0.5">•</span>
-                  <span><strong>הלקוח נזכר בתיקון אחרי הרינדור:</strong> אין שום תיעוד רשמי אם הגרסה אושרה או מה סוכם.</span>
+                  <span className="text-zinc-600 font-bold mt-0.5">•</span>
+                  <span><strong>אין תיעוד רשמי:</strong> הלקוח נזכר בתיקון אחרי הרינדור כי אין אישור.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-red-400 font-bold mt-0.5">•</span>
-                  <span><strong>בלגן בגרסאות:</strong> "שלחתי לך את v2_final_final_3.mp4 בוואטסאפ"...</span>
+                  <span className="text-zinc-600 font-bold mt-0.5">•</span>
+                  <span><strong>בלגן בגרסאות:</strong> "שלחתי לך את v2_final_final_3.mp4".</span>
                 </li>
               </ul>
             </div>
 
             {/* The CutSync Way */}
-            <div className="bg-gradient-to-br from-[#121c2c] via-[#101b2a] to-[#0c1724] rounded-3xl p-6 sm:p-8 border-2 border-emerald-500/40 shadow-2xl shadow-emerald-950/40 flex flex-col gap-5 relative overflow-hidden">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
+            <div className="bg-[#18181b] rounded-xl p-6 sm:p-8 border border-indigo-500/20 shadow-sm flex flex-col gap-6 relative overflow-hidden">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
                   ✓
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-white">חווית CutSync 🚀</h4>
-                  <p className="text-xs text-emerald-400 font-medium">דיוק, מקצועיות וסגירת פרויקטים בחצי זמן</p>
+                  <h4 className="text-[15px] font-semibold text-white">חווית CutSync</h4>
+                  <p className="text-[13px] text-indigo-400">דיוק, מקצועיות וסגירת פרויקטים בחצי זמן</p>
                 </div>
               </div>
 
-              <ul className="space-y-4 text-xs sm:text-sm text-emerald-100">
+              <ul className="space-y-4 text-[13px] sm:text-[14px] text-zinc-300">
                 <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <span><strong>ציור וסימון ישיר על הפריים:</strong> הלקוח מקיף בעיגול או מותח חץ בדיוק לאן שצריך להסתכל.</span>
+                  <Check className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+                  <span><strong>ציור חופשי על הפריים:</strong> הלקוח מקיף או מותח חץ ישירות על האובייקט.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <span><strong>ייצוא ישיר ל-Timeline בפרמייר:</strong> בלחיצה אחת מורידים CSV שנטען כמרקרים צבעוניים על הציר.</span>
+                  <Check className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+                  <span><strong>ייצוא ישיר ל-Premiere Pro:</strong> הורדת CSV שנטען כמרקרים על ציר הזמן.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <span><strong>אישור גרסה חגיגי ומתועד:</strong> נשמר מי אישר, מתי, ונעילת הגרסה לשינויים ללא אישור חוזר.</span>
+                  <Check className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+                  <span><strong>אישור גרסה מתועד:</strong> נשמר מי אישר ומתי, כדי למנוע אי הבנות.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <span><strong>סדר מוחלט בסבבי עבודה:</strong> V1, V2, V3 – כל גרסה עם התיקונים והסרטון שלה.</span>
+                  <Check className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+                  <span><strong>סדר מוחלט:</strong> כל סבב מופרד לגרסה (V1, V2) עם הסרטון שלו.</span>
                 </li>
               </ul>
             </div>
@@ -390,127 +379,126 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
       {/* Core Features Grid */}
       <section id="features" className="py-20 lg:py-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-3">תכונות הדגל</h2>
-          <h3 className="text-3xl sm:text-4xl font-black text-white">
-            כל מה שצריך כדי לסגור סרטון במהירות שיא
+          <h2 className="text-[11px] font-bold text-indigo-500 tracking-wider uppercase mb-3">תכונות הדגל</h2>
+          <h3 className="text-3xl sm:text-4xl font-bold text-white">
+            כל מה שצריך בסביבת עבודה מקצועית
           </h3>
-          <p className="mt-3 text-sm sm:text-base text-gray-400">
-            בנינו את המערכת בדיוק סביב הצרכים האמיתיים של עורכי וידאו ויוצרי תוכן בארץ:
+          <p className="mt-4 text-[15px] sm:text-base text-zinc-400">
+            בנינו את המערכת בדיוק סביב הצרכים של עורכי וידאו בישראל:
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          {/* Feature 1: Drawing on screen */}
-          <div className="bg-[#121624] p-7 rounded-3xl border border-[#20273c] hover:border-purple-500/50 transition-all group shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <PenTool className="w-6 h-6" />
+          {/* Feature 1 */}
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
+            <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center mb-5">
+              <PenTool className="w-5 h-5" />
             </div>
-            <h4 className="text-lg font-bold text-white mb-2">סימון וציור חי על המסך</h4>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              הלקוח יכול לצייר בחופשיות, למתוח חץ שמכוון לאובייקט או להקיף בעיגול עם אנימציית גרירה חיה בזמן אמת.
+            <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">סימון וציור בזמן אמת</h4>
+            <p className="text-[13px] text-zinc-400 leading-relaxed">
+              הלקוח יכול לצייר בחופשיות או למתוח חץ שמכוון לאובייקט עם אנימציית גרירה חיה בזמן אמת.
             </p>
           </div>
 
-          {/* Feature 2: Voice memos */}
-          <div className="bg-[#121624] p-7 rounded-3xl border border-[#20273c] hover:border-indigo-500/50 transition-all group shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <Mic className="w-6 h-6" />
+          {/* Feature 2 */}
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
+            <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center mb-5">
+              <Mic className="w-5 h-5" />
             </div>
-            <h4 className="text-lg font-bold text-white mb-2">הקלטת הערות קוליות</h4>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              לפעמים קשה להסביר בטקסט. בלחיצה אחת הלקוח מקליט הודעה קולית שמוצמדת בדיוק לשנייה המתאימה בסרטון.
+            <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">הקלטת הערות קוליות</h4>
+            <p className="text-[13px] text-zinc-400 leading-relaxed">
+              לפעמים קשה להסביר בטקסט. בלחיצה אחת הלקוח מקליט הודעה קולית שמוצמדת בדיוק לשנייה המתאימה.
             </p>
           </div>
 
-          {/* Feature 3: Premiere Pro CSV Export */}
-          <div className="bg-[#121624] p-7 rounded-3xl border border-emerald-500/50 transition-all group shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <FileSpreadsheet className="w-6 h-6" />
+          {/* Feature 3 */}
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
+            <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center mb-5">
+              <FileSpreadsheet className="w-5 h-5" />
             </div>
-            <h4 className="text-lg font-bold text-white mb-2">ייצוא ל-Premiere Pro</h4>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              הורדת קובץ מרקרים תקני בפורמט CSV שנטען ישר על ציר הזמן של פרמייר. אין צורך להקליד שניות ידנית!
+            <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">ייצוא ל-Premiere Pro</h4>
+            <p className="text-[13px] text-zinc-400 leading-relaxed">
+              הורדת קובץ מרקרים CSV שנטען ישר על ציר הזמן של פרמייר ללא צורך בהקלדת שניות ידנית.
             </p>
           </div>
 
-          {/* Feature 4: Threaded replies */}
-          <div className="bg-[#121624] p-7 rounded-3xl border border-[#20273c] hover:border-pink-500/50 transition-all group shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <MessageCircle className="w-6 h-6" />
+          {/* Feature 4 */}
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
+            <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center mb-5">
+              <MessageCircle className="w-5 h-5" />
             </div>
-            <h4 className="text-lg font-bold text-white mb-2">שרשורי שיחה בתוך כל תיקון</h4>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              העורך והלקוח מתכתבים ישירות בתוך התיקון הספציפי. תגיות צבעוניות מבדילות בין עורך ללקוח עם מענה מהיר.
+            <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">שרשורי שיחה בתיקונים</h4>
+            <p className="text-[13px] text-zinc-400 leading-relaxed">
+              העורך והלקוח מתכתבים ישירות בתוך התיקון הספציפי. תגיות מבדילות בין עורך ללקוח.
             </p>
           </div>
 
-          {/* Feature 5: Version Stacking */}
-          <div className="bg-[#121624] p-7 rounded-3xl border border-[#20273c] hover:border-amber-500/50 transition-all group shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <Layers className="w-6 h-6" />
+          {/* Feature 5 */}
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
+            <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center mb-5">
+              <Layers className="w-5 h-5" />
             </div>
-            <h4 className="text-lg font-bold text-white mb-2">ניהול גרסאות (V1, V2, V3...)</h4>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              כל סבב תיקונים מופרד לגרסה מסודרת. אפשר לעבור בין גרסאות, לראות אילו תיקונים טופלו ולהעלות קובץ חדש.
+            <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">ניהול גרסאות מתקדם</h4>
+            <p className="text-[13px] text-zinc-400 leading-relaxed">
+              כל סבב תיקונים מופרד לגרסה מסודרת. אפשר לעבור בין גרסאות ולהעלות קובץ חדש בקלות.
             </p>
           </div>
 
-          {/* Feature 6: Version Approval & Reopen Guard */}
-          <div className="bg-[#121624] p-7 rounded-3xl border border-[#20273c] hover:border-teal-500/50 transition-all group shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <ShieldCheck className="w-6 h-6" />
+          {/* Feature 6 */}
+          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
+            <div className="w-10 h-10 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center mb-5">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <h4 className="text-lg font-bold text-white mb-2">אישור גרסה ונעילה מאובטחת</h4>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              הלקוח מאשר את הגרסה סופית עם שמו ותאריך. פתיחה מחדש ע"י העורך מקפיצה הודעת אישור על המסך של הלקוח.
+            <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">נעילת פרויקט בסיום</h4>
+            <p className="text-[13px] text-zinc-400 leading-relaxed">
+              לאחר אישור הלקוח, הגרסה ננעלת כדי למנוע הוספת הערות מיותרות או שינויים בדיעבד.
             </p>
           </div>
-
         </div>
       </section>
 
       {/* How It Works (3 Steps) */}
-      <section id="how-it-works" className="py-20 bg-[#0d111d] border-y border-[#1a2236]">
+      <section id="how-it-works" className="py-20 bg-zinc-950 border-y border-zinc-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           
-          <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-3">תהליך העבודה</h2>
-          <h3 className="text-3xl sm:text-4xl font-black text-white mb-16">
-            איך זה עובד? ב-3 צעדים פשוטים
+          <h2 className="text-[11px] font-bold text-indigo-500 tracking-wider uppercase mb-3">תהליך העבודה</h2>
+          <h3 className="text-3xl sm:text-4xl font-bold text-white mb-16">
+            איך זה עובד? ב-3 צעדים
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto relative">
             
             {/* Step 1 */}
-            <div className="bg-[#131726] p-8 rounded-3xl border border-[#222b42] flex flex-col items-center text-center relative">
-              <div className="w-14 h-14 rounded-2xl bg-purple-600/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-black text-xl mb-6 shadow-lg shadow-purple-950/50">
+            <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 flex flex-col items-center text-center relative">
+              <div className="w-12 h-12 rounded-full bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-lg mb-6">
                 1
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">העורך מעלה סרטון</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                טוענים את קובץ הווידאו למערכת (או עובדים עם הדמו) ומקבלים קישור שיתוף ייעודי ששולחים ללקוח.
+              <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">העורך מעלה סרטון</h4>
+              <p className="text-[13px] text-zinc-400 leading-relaxed">
+                טוענים את קובץ הווידאו למערכת ומקבלים קישור שיתוף ייעודי ששולחים ללקוח.
               </p>
             </div>
 
             {/* Step 2 */}
-            <div className="bg-[#131726] p-8 rounded-3xl border border-[#222b42] flex flex-col items-center text-center relative">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black text-xl mb-6 shadow-lg shadow-indigo-950/50">
+            <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 flex flex-col items-center text-center relative">
+              <div className="w-12 h-12 rounded-full bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-lg mb-6">
                 2
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">הלקוח מסמן ומאשר</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                הלקוח צופה, עוצר בכל פריים, מצייר, מקליט הערות, ובסיום מאשר סופית או שולח סיכום בוואטסאפ.
+              <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">הלקוח מסמן ומאשר</h4>
+              <p className="text-[13px] text-zinc-400 leading-relaxed">
+                הלקוח צופה, עוצר בכל פריים, מצייר, מקליט הערות, ובסיום מאשר סופית את הגרסה.
               </p>
             </div>
 
             {/* Step 3 */}
-            <div className="bg-[#131726] p-8 rounded-3xl border border-[#222b42] flex flex-col items-center text-center relative">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black text-xl mb-6 shadow-lg shadow-emerald-950/50">
+            <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 flex flex-col items-center text-center relative">
+              <div className="w-12 h-12 rounded-full bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-lg mb-6">
                 3
               </div>
-              <h4 className="text-lg font-bold text-white mb-2">ייצוא לפרמייר וסגירה</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                העורך מייצא קובץ CSV ישירות ל-Premiere Pro, מתקן את כל הנקודות ברוגע ומספק את התוצר המושלם.
+              <h4 className="text-[15px] font-semibold text-zinc-100 mb-2.5">ייצוא לפרמייר וסגירה</h4>
+              <p className="text-[13px] text-zinc-400 leading-relaxed">
+                העורך מייצא קובץ CSV ישירות ל-Premiere Pro, מתקן את כל הנקודות ברוגע ומספק את התוצר.
               </p>
             </div>
 
@@ -519,9 +507,9 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
           <div className="mt-14">
             <button
               onClick={() => onEnterStudio('editor')}
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-purple-950/80 transition-all hover:scale-105 active:scale-95"
+              className="px-8 py-3 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 font-semibold text-[15px] shadow-sm transition-colors"
             >
-              התנסה בתהליך עכשיו בדמו חי 🎬
+              התנסה בתהליך עכשיו בדמו חי
             </button>
           </div>
 
@@ -531,34 +519,34 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
       {/* Seamless Workflow: Editor Workspace ↔ Client Direct Link */}
       <section id="roles" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-2">איך זה עובד בפועל?</h2>
-          <h3 className="text-3xl font-black text-white">חיבור פשוט ומהיר בין העורך ללקוח</h3>
-          <p className="mt-2 text-xs sm:text-sm text-gray-400">
-            העורך מקבל שליטה מלאה בניהול הפרויקט — והלקוח נכנס ישירות לקישור שלו בלי שום סיבוך:
+          <h2 className="text-[11px] font-bold text-indigo-500 tracking-wider uppercase mb-2">זרימת עבודה</h2>
+          <h3 className="text-3xl font-bold text-white">חיבור פשוט בין העורך ללקוח</h3>
+          <p className="mt-4 text-[15px] text-zinc-400">
+            העורך שולט בניהול הפרויקט — הלקוח מקבל גישה ישירה בלי סיבוכים:
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           
           {/* Card 1: Editor Workspace */}
-          <div className="bg-gradient-to-b from-[#161c2d] to-[#101422] p-8 rounded-3xl border border-indigo-500/30 shadow-2xl flex flex-col justify-between gap-6 hover:border-indigo-500/60 transition-all">
+          <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 shadow-sm flex flex-col justify-between gap-6 transition-colors hover:border-zinc-700">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-                  <Scissors className="w-6 h-6" />
+              <div className="flex items-center gap-3.5 mb-5">
+                <div className="w-10 h-10 rounded-lg bg-indigo-600/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+                  <Scissors className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-white">1. דשבורד העורך 🎬</h4>
-                  <span className="text-xs text-indigo-300">ניהול פרויקטים וסבבי גרסאות</span>
+                  <h4 className="text-[15px] font-semibold text-white">1. דשבורד העורך</h4>
+                  <span className="text-[13px] text-zinc-500">ניהול פרויקטים וגרסאות</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-300 leading-relaxed mb-4">
-                מרכז השליטה שלך: העלה סרטונים, נהל גרסאות (V1, V2, V3), העתק קישור ייעודי לכל לקוח, סמן משימות כבוצעו, וייצא קובץ CSV ישירות ל-Timeline בפרמייר.
+              <p className="text-[13px] text-zinc-400 leading-relaxed mb-5">
+                מרכז השליטה שלך: העלה סרטונים, נהל גרסאות (V1, V2, V3), העתק קישור ייעודי, סמן משימות כבוצעו, וייצא CSV ישירות ל-Premiere.
               </p>
-              <div className="flex flex-wrap gap-2 text-[11px] text-gray-400">
-                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ דשבורד מרובה פרויקטים</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ ייצוא מרקרים ל-Premiere</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#1b2236] border border-[#2b3654]">✓ צ'קליסט משימות לתיקון</span>
+              <div className="flex flex-wrap gap-2 text-[11px] text-zinc-500 font-medium">
+                <span className="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-800">דשבורד מתקדם</span>
+                <span className="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-800">ייצוא ל-Premiere</span>
+                <span className="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-800">צ'קליסט משימות</span>
               </div>
             </div>
 
@@ -570,7 +558,7 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
                   onOpenAuthModal?.('login')
                 }
               }}
-              className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-950/60 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[13px] font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>כניסה לדשבורד הפרויקטים</span>
               <ArrowLeft className="w-4 h-4" />
@@ -578,39 +566,39 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
           </div>
 
           {/* Card 2: Client Direct Experience */}
-          <div className="bg-gradient-to-b from-[#131d27] to-[#0e1720] p-8 rounded-3xl border border-emerald-500/30 shadow-2xl flex flex-col justify-between gap-6 hover:border-emerald-500/60 transition-all">
+          <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 shadow-sm flex flex-col justify-between gap-6 transition-colors hover:border-zinc-700">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <Link2 className="w-6 h-6" />
+              <div className="flex items-center gap-3.5 mb-5">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <Link2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-white">2. קישור ישיר ללקוח 🔗</h4>
-                  <span className="text-xs text-emerald-300">נשלח בוואטסאפ — ללא צורך בהרשמה</span>
+                  <h4 className="text-[15px] font-semibold text-white">2. סביבת הלקוח</h4>
+                  <span className="text-[13px] text-zinc-500">קישור ישיר ומהיר ללא הרשמה</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-300 leading-relaxed mb-4">
-                הלקוח מקבל ממך קישור ישיר לסרטון שלו. הוא פותח אותו בכל דפדפן (במחשב או בנייד), רואה את הברכה האישית, מסמן הערות וציורים, ומאשר את הגרסה הסופית ברגע שהכל מושלם.
+              <p className="text-[13px] text-zinc-400 leading-relaxed mb-5">
+                הלקוח מקבל קישור ישיר, פותח אותו בכל דפדפן, מסמן הערות וציורים, ומאשר את הגרסה הסופית ברגע שהכל מושלם. בלי סיסמאות ובלי הורדות.
               </p>
-              <div className="flex flex-wrap gap-2 text-[11px] text-gray-400">
-                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ 0 הרשמות, 0 סיסמאות</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ קישור ייחודי לכל פרויקט</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#142323] border border-[#203a35]">✓ אישור גרסה רשמי בלחיצה</span>
+              <div className="flex flex-wrap gap-2 text-[11px] text-zinc-500 font-medium">
+                <span className="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-800">ללא הרשמה</span>
+                <span className="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-800">גישה מכל דפדפן</span>
+                <span className="px-2.5 py-1 rounded bg-zinc-950 border border-zinc-800">אישור בלחיצה</span>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[#0b141a] border border-emerald-500/30 flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2 text-emerald-300 font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span>הלקוח מקבל קישור פרטי בוואטסאפ לכל סרטון</span>
+            <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-3 text-[11px]">
+              <div className="flex items-center gap-2 text-zinc-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>הלקוח מקבל קישור פרטי</span>
               </div>
               <button
                 type="button"
                 onClick={() => onEnterStudio('client')}
-                className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 whitespace-nowrap"
+                className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1"
                 title="צפה בדוגמה לאיך הלקוח רואה את הקישור"
               >
-                <span>צפה בדמו לקוח</span>
+                <span>צפה בדמו</span>
                 <ArrowLeft className="w-3 h-3" />
               </button>
             </div>
@@ -620,12 +608,12 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-[#0d111d] border-t border-[#1a2236]">
+      <section id="faq" className="py-20 bg-zinc-950 border-t border-zinc-900">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center mb-12">
-            <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-2">שאלות נפוצות</h2>
-            <h3 className="text-3xl font-black text-white">כל מה שרצית לדעת</h3>
+            <h2 className="text-[11px] font-bold text-indigo-500 tracking-wider uppercase mb-2">שאלות נפוצות</h2>
+            <h3 className="text-3xl font-bold text-white">כל מה שרצית לדעת</h3>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -634,21 +622,21 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
               return (
                 <div
                   key={index}
-                  className="bg-[#131828] border border-[#222b44] rounded-2xl overflow-hidden transition-colors"
+                  className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden transition-colors"
                 >
                   <button
                     type="button"
                     onClick={() => toggleFaq(index)}
-                    className="w-full p-5 text-right flex items-center justify-between gap-4 hover:text-purple-300 transition-colors"
+                    className="w-full p-5 text-right flex items-center justify-between gap-4 hover:bg-zinc-800/50 transition-colors"
                   >
-                    <span className="text-sm font-bold text-white">{faq.q}</span>
-                    <div className={`p-1 rounded-lg bg-[#1a2136] text-gray-400 transition-transform ${isOpen ? 'rotate-180 text-purple-400' : ''}`}>
+                    <span className="text-[14px] font-semibold text-zinc-100">{faq.q}</span>
+                    <div className={`text-zinc-500 transition-transform ${isOpen ? 'rotate-180 text-zinc-300' : ''}`}>
                       <ChevronDown className="w-4 h-4" />
                     </div>
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 pb-5 text-xs sm:text-sm text-gray-300 leading-relaxed border-t border-[#1e263d]/60 pt-3 animate-in fade-in duration-200">
+                    <div className="px-5 pb-5 text-[13px] text-zinc-400 leading-relaxed border-t border-zinc-800/50 pt-4">
                       {faq.a}
                     </div>
                   )}
@@ -661,59 +649,52 @@ export default function LandingPage({ onEnterStudio, currentUser, onOpenAuthModa
       </section>
 
       {/* Final Bottom CTA Banner */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
-        <div className="bg-gradient-to-br from-purple-900/40 via-indigo-900/30 to-emerald-950/40 border border-purple-500/30 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-          
-          <h3 className="text-2xl sm:text-4xl font-black text-white mb-4">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
+        <div className="bg-indigo-600 rounded-2xl p-10 sm:p-14 shadow-sm relative overflow-hidden">
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
             מוכן לייעל את סבב התיקונים הבא שלך?
           </h3>
-          <p className="text-xs sm:text-sm text-gray-300 max-w-xl mx-auto mb-8 leading-relaxed">
+          <p className="text-[14px] sm:text-[15px] text-indigo-100 max-w-xl mx-auto mb-8 leading-relaxed">
             הצטרף לחוויית עבודה מקצועית, שקופה ומסודרת. התחל עכשיו בחינם בדמו החי של CutSync.
           </p>
 
           <button
             onClick={() => onEnterStudio('editor')}
-            className="px-9 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 text-white font-black text-base shadow-2xl shadow-purple-950/80 transition-all hover:scale-105 active:scale-95 inline-flex items-center gap-2.5"
+            className="px-8 py-3.5 rounded-lg bg-white hover:bg-zinc-100 text-indigo-900 font-semibold text-[15px] shadow-sm transition-colors inline-flex items-center gap-2.5 cursor-pointer"
           >
-            <span>פתח את הסטודיו עכשיו (חינם)</span>
-            <ArrowLeft className="w-5 h-5" />
+            <span>פתח את הסטודיו עכשיו</span>
+            <ArrowLeft className="w-4 h-4" />
           </button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#1a2236] bg-[#090c14] py-12 text-xs text-gray-400">
+      <footer className="border-t border-zinc-900 bg-[#09090b] py-10 text-[13px] text-zinc-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-mono font-bold">
+            <div className="w-7 h-7 rounded-md bg-zinc-800 flex items-center justify-center text-zinc-400 font-mono font-bold text-[11px]">
               CS
             </div>
             <div>
-              <span className="text-sm font-bold text-white font-mono">CutSync</span>
-              <p className="text-[11px] text-gray-500">פלטפורמת התיקונים המדויקת לווידאו</p>
+              <span className="font-semibold text-zinc-300 font-mono">CutSync</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-xs text-gray-400 font-medium">
-            <a href="#why" className="hover:text-white transition-colors">יתרונות</a>
-            <a href="#features" className="hover:text-white transition-colors">תכונות</a>
-            <a href="#how-it-works" className="hover:text-white transition-colors">איך זה עובד</a>
-            <a href="#faq" className="hover:text-white transition-colors">שאלות נפוצות</a>
+          <div className="flex items-center gap-6 font-medium">
+            <a href="#why" className="hover:text-zinc-200 transition-colors">יתרונות</a>
+            <a href="#features" className="hover:text-zinc-200 transition-colors">תכונות</a>
+            <a href="#how-it-works" className="hover:text-zinc-200 transition-colors">איך זה עובד</a>
+            <a href="#faq" className="hover:text-zinc-200 transition-colors">שאלות נפוצות</a>
           </div>
 
-          <div className="text-center sm:text-left text-gray-300 text-xs flex flex-col sm:items-end gap-1.5">
+          <div className="text-center sm:text-left text-zinc-400 flex flex-col sm:items-end gap-1">
             <div className="flex items-center gap-1.5 font-medium">
               <span>נוצר ופותח על ידי</span>
-              <span className="text-purple-300 font-black tracking-wide px-2.5 py-0.5 rounded-lg bg-purple-500/15 border border-purple-500/30 shadow-inner">
+              <span className="text-zinc-300 font-bold px-2 py-0.5 rounded bg-zinc-800">
                 kaboodi
               </span>
-              <span>✨</span>
             </div>
-            <span className="text-[11px] text-gray-500">
-              נבנה באהבה עבור עורכי הווידאו ויוצרי התוכן בישראל 🇮🇱
-            </span>
           </div>
 
         </div>

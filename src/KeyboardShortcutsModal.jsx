@@ -29,21 +29,21 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-[#121624] border border-white/[0.1] rounded-3xl max-w-xl w-full p-6 shadow-2xl flex flex-col gap-5 text-right">
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 shadow-xl flex flex-col gap-5 text-right text-zinc-100">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/15 border border-purple-500/30 text-purple-300 flex items-center justify-center shadow-inner">
+            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-inner">
               <Keyboard className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
                 <span>קיצורי מקלדת מקצועיים לעורכים</span>
-                <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-md font-bold">
                   Pro Hotkeys
                 </span>
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-[12px] text-zinc-400 mt-0.5">
                 עבוד במהירות שיא בדיוק כמו ב-Premiere Pro ו-DaVinci Resolve
               </p>
             </div>
@@ -51,7 +51,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="text-zinc-400 hover:text-white p-2 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -60,27 +60,27 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
         {/* Sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-1">
           {shortcutSections.map((section, idx) => (
-            <div key={idx} className="flex flex-col gap-2.5 bg-[#171c2b]/80 border border-white/[0.06] rounded-2xl p-3.5">
-              <h4 className="text-xs font-bold text-gray-200 border-b border-white/[0.06] pb-2">
+            <div key={idx} className="flex flex-col gap-2.5 bg-zinc-900 border border-zinc-800 rounded-xl p-3.5">
+              <h4 className="text-[13px] font-bold text-zinc-200 border-b border-zinc-800 pb-2">
                 {section.title}
               </h4>
               <div className="flex flex-col gap-2">
                 {section.items.map((item, iIdx) => (
-                  <div key={iIdx} className="flex items-start justify-between gap-2 text-xs">
+                  <div key={iIdx} className="flex items-start justify-between gap-2 text-[12px]">
                     <div className="flex flex-col min-w-0">
-                      <span className="text-gray-200 font-medium leading-snug">{item.label}</span>
+                      <span className="text-zinc-200 font-medium leading-snug">{item.label}</span>
                       {item.desc && (
-                        <span className="text-[10px] text-gray-400 mt-0.5">{item.desc}</span>
+                        <span className="text-[11px] text-zinc-400 mt-0.5">{item.desc}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {item.keys.map((k, kIdx) => (
                         k === 'או' ? (
-                          <span key={kIdx} className="text-[10px] text-gray-500 px-0.5">או</span>
+                          <span key={kIdx} className="text-[10px] text-zinc-500 px-0.5">או</span>
                         ) : (
                           <kbd
                             key={kIdx}
-                            className="px-2 py-0.5 rounded-lg bg-[#20273c] border border-white/[0.12] text-purple-200 font-mono text-[11px] font-bold shadow-sm"
+                            className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-200 font-mono text-[11px] font-bold shadow-sm"
                           >
                             {k}
                           </kbd>
@@ -95,15 +95,15 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer tip */}
-        <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-xs text-gray-400">
-          <span className="text-[11px] flex items-center gap-1.5">
+        <div className="pt-3 border-t border-zinc-800 flex items-center justify-between text-[12px] text-zinc-400">
+          <span className="text-[12px] flex items-center gap-1.5">
             <span>💡 טיפ:</span>
             <span>הקיצורים פעילים בכל עת כאשר אינך מקליד בתוך שדה טקסט.</span>
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+            className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[13px] shadow-sm transition-colors cursor-pointer"
           >
             הבנתי, סגור
           </button>

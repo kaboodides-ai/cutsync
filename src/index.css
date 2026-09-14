@@ -33,14 +33,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #12141c;
+  background: #09090b; /* zinc-950 */
 }
 ::-webkit-scrollbar-thumb {
-  background: #262a3b;
+  background: #27272a; /* zinc-800 */
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3e4560;
+  background: #3f3f46; /* zinc-700 */
 }
 
 /* Hide scrollbar utility (used in sticky header on mobile) */
