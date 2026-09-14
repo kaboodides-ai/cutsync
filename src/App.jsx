@@ -1525,8 +1525,7 @@ function MainApp() {
     }
 
     // Enter fullscreen
-    const el = playerContainerRef.current
-    if (!el) { setIsFullscreen(true); return }
+    const el = document.documentElement
 
     if (isMobileSafari) {
       // iOS Safari: only CSS fullscreen works
