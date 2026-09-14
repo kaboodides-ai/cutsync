@@ -205,6 +205,7 @@ function MainApp() {
   const playerContainerRef = useRef(null)
   const canvasSnapshotRef = useRef(null)
   const fsCanvasRef = useRef(null) // canvas inside the fullscreen portal
+  const fsVideoRef = useRef(null) // video inside the fullscreen portal
 
   // Voice Recording State
   const [isRecording, setIsRecording] = useState(false)
@@ -641,6 +642,46 @@ function MainApp() {
     ctx.clearRect(0, 0, dst.width, dst.height)
     ctx.drawImage(src, 0, 0)
   })
+
+  // Sync main video state to portal video
+  useEffect(() => {
+    const main = videoRef.current
+    const fs = fsVideoRef.current
+    if (!isFullscreen || !main || !fs) return
+    
+    fs.currentTime = main.currentTime
+    fs.muted = main.muted
+    fs.volume = main.volume
+    fs.playbackRate = main.playbackRate
+    if (!main.paused) fs.play().catch(() => {})
+    
+    const onTimeUpdate = () => {
+      if (Math.abs(fs.currentTime - main.currentTime) > 0.3) {
+        fs.currentTime = main.currentTime
+      }
+    }
+    const onPlay = () => fs.play().catch(() => {})
+    const onPause = () => fs.pause()
+    const onRateChange = () => { fs.playbackRate = main.playbackRate }
+    const onVolumeChange = () => { fs.volume = main.volume; fs.muted = main.muted }
+    const onSeeked = () => { fs.currentTime = main.currentTime }
+    
+    main.addEventListener('timeupdate', onTimeUpdate)
+    main.addEventListener('play', onPlay)
+    main.addEventListener('pause', onPause)
+    main.addEventListener('ratechange', onRateChange)
+    main.addEventListener('volumechange', onVolumeChange)
+    main.addEventListener('seeked', onSeeked)
+    
+    return () => {
+      main.removeEventListener('timeupdate', onTimeUpdate)
+      main.removeEventListener('play', onPlay)
+      main.removeEventListener('pause', onPause)
+      main.removeEventListener('ratechange', onRateChange)
+      main.removeEventListener('volumechange', onVolumeChange)
+      main.removeEventListener('seeked', onSeeked)
+    }
+  }, [isFullscreen])
 
   // Version Approval & Reopen State
   const [showApprovalModal, setShowApprovalModal] = useState(false)
@@ -1472,8 +1513,13 @@ function MainApp() {
     if (!videoRef.current) return
     if (isPlaying) {
       videoRef.current.pause()
+      if (fsVideoRef.current) fsVideoRef.current.pause()
     } else {
       const playPromise = videoRef.current.play()
+      if (fsVideoRef.current) {
+        const fsPlayPromise = fsVideoRef.current.play()
+        if (fsPlayPromise !== undefined) fsPlayPromise.catch(() => {})
+      }
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
           console.warn('Video play prevented or source issue:', err)
@@ -3649,47 +3695,7 @@ function MainApp() {
                 {/* Hidden real video syncs; this is the display clone */}
                 <video
                   src={videoSrc}
-                  ref={(el) => {
-                    if (!el) {
-                      // Unmount cleanup
-                      if (el?._cleanup) el._cleanup()
-                      return
-                    }
-                    const main = videoRef.current
-                    if (!main) return
-                    // Initial sync
-                    el.currentTime = main.currentTime
-                    el.muted = main.muted
-                    el.volume = main.volume
-                    el.playbackRate = main.playbackRate
-                    if (!main.paused) el.play().catch(() => {})
-                    else el.pause()
-                    // Event listeners
-                    const onTimeUpdate = () => {
-                      if (Math.abs(el.currentTime - main.currentTime) > 0.3) {
-                        el.currentTime = main.currentTime
-                      }
-                    }
-                    const onPlay = () => el.play().catch(() => {})
-                    const onPause = () => el.pause()
-                    const onRateChange = () => { el.playbackRate = main.playbackRate }
-                    const onVolumeChange = () => { el.volume = main.volume; el.muted = main.muted }
-                    const onSeeked = () => { el.currentTime = main.currentTime }
-                    main.addEventListener('timeupdate', onTimeUpdate)
-                    main.addEventListener('play', onPlay)
-                    main.addEventListener('pause', onPause)
-                    main.addEventListener('ratechange', onRateChange)
-                    main.addEventListener('volumechange', onVolumeChange)
-                    main.addEventListener('seeked', onSeeked)
-                    el._cleanup = () => {
-                      main.removeEventListener('timeupdate', onTimeUpdate)
-                      main.removeEventListener('play', onPlay)
-                      main.removeEventListener('pause', onPause)
-                      main.removeEventListener('ratechange', onRateChange)
-                      main.removeEventListener('volumechange', onVolumeChange)
-                      main.removeEventListener('seeked', onSeeked)
-                    }
-                  }}
+                  ref={fsVideoRef}
                   playsInline
                   webkit-playsinline="true"
                   onClick={() => { if (!isDrawingMode) handlePlayPause() }}
