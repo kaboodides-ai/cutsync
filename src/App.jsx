@@ -2393,21 +2393,23 @@ function MainApp() {
 
           {/* Left Side: Avatar & Sound */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Sound FX Toggle */}
-            <button
-              onClick={handleToggleSound}
-              className={`p-2 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
-                soundOn
-                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
-              }`}
-              title={soundOn ? 'צלילי משוב פעילים 🔊 (לחץ להשתקה)' : 'צלילי משוב מושתקים 🔇 (לחץ להפעלה)'}
-            >
-              {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </button>
+            {/* Sound FX Toggle — hidden for clients */}
+            {mode !== 'client' && (
+              <button
+                onClick={handleToggleSound}
+                className={`p-2 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
+                  soundOn
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                }`}
+                title={soundOn ? 'צלילי משוב פעילים 🔊 (לחץ להשתקה)' : 'צלילי משוב מושתקים 🔇 (לחץ להפעלה)'}
+              >
+                {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
+            )}
 
-            {/* User Avatar */}
-            {currentUser && (
+            {/* User Avatar — hidden for clients */}
+            {mode !== 'client' && currentUser && (
               <div
                 onClick={() => {
                   setAuthModalInitialTab('login')
