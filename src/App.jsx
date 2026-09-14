@@ -49,7 +49,8 @@ import {
   Type,
   Camera,
   Keyboard,
-  Pencil
+  Pencil,
+  MoreVertical
 } from 'lucide-react'
 import LandingPage from './LandingPage'
 import ProjectsDashboard from './ProjectsDashboard'
