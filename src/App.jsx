@@ -2450,17 +2450,22 @@ function MainApp() {
         </div>
       ) : (
         /* Mode Guidance Banner for Editor */
-        <div className="bg-zinc-900/50 border-b border-zinc-800/50 px-4 py-2.5 text-xs text-zinc-300">
+        <div className="bg-zinc-900/50 border-b border-zinc-800/50 px-4 py-2 text-xs text-zinc-300">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-zinc-500 flex-shrink-0"></span>
-              <span className="leading-relaxed">
-                <strong>סטודיו עריכה:</strong> פרויקט <strong>"{currentProject.title}"</strong>. כל ההערות והסימונים של הלקוח מסונכרנים כאן לפי פריים. שיהיה סשן עריכה נעים! 🎬
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-zinc-500 flex-shrink-0"></span>
+              <span className="leading-relaxed truncate hidden sm:block">
+                <strong>סטודיו עריכה</strong> — <strong>"{currentProject.title}"</strong>. הושלמו {completedCount}/{comments.length} משימות.
               </span>
             </div>
-            <span className="text-[11px] text-zinc-400 font-medium bg-zinc-800 px-3 py-0.5 rounded-md border border-zinc-700 hidden sm:inline whitespace-nowrap">
-              {completedCount === comments.length && comments.length > 0 ? '✨ כל המשימות הושלמו!' : `הושלמו ${completedCount} מתוך ${comments.length}`}
-            </span>
+            <button
+              onClick={() => copySpecificClientLink(currentProject.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[12px] font-semibold transition-colors cursor-pointer flex-shrink-0 shadow-sm"
+              title="העתק קישור ישיר לשליחה ללקוח"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>שתף ללקוח</span>
+            </button>
           </div>
         </div>
       )}
