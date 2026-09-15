@@ -632,16 +632,7 @@ function MainApp() {
     }
   }, [isFullscreen])
 
-  // Sync drawings from main canvasRef to fsCanvasRef (fullscreen portal canvas)
-  useEffect(() => {
-    if (!isFullscreen) return
-    const src = canvasRef.current
-    const dst = fsCanvasRef.current
-    if (!src || !dst) return
-    const ctx = dst.getContext('2d')
-    ctx.clearRect(0, 0, dst.width, dst.height)
-    ctx.drawImage(src, 0, 0)
-  })
+
 
   // Draw main video to portal canvas to avoid autoplay/sync issues
   useEffect(() => {
@@ -1199,7 +1190,10 @@ function MainApp() {
     if (canvasRef.current && isDrawingMode) {
       renderShapesOnCanvas(canvasRef.current, shapes, selectedShapeId)
     }
-  }, [shapes, selectedShapeId, isDrawingMode, renderShapesOnCanvas])
+    if (fsCanvasRef.current && isDrawingMode && isFullscreen) {
+      renderShapesOnCanvas(fsCanvasRef.current, shapes, selectedShapeId)
+    }
+  }, [shapes, selectedShapeId, isDrawingMode, isFullscreen, renderShapesOnCanvas])
 
   // Commit text input to shapes array
   const commitTextOverlay = () => {
@@ -1263,7 +1257,7 @@ function MainApp() {
   // Handle canvas mouse events (Drawing, Selecting, Dragging & Moving!)
   const handleMouseDown = (e) => {
     if (!isDrawingMode) return
-    const canvas = canvasRef.current
+    const canvas = isFullscreen ? fsCanvasRef.current : canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const { x, y } = getCanvasCoordinates(e, canvas)
@@ -1321,7 +1315,7 @@ function MainApp() {
 
   const handleMouseMove = (e) => {
     if (!isDrawingMode) return
-    const canvas = canvasRef.current
+    const canvas = isFullscreen ? fsCanvasRef.current : canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const { x, y } = getCanvasCoordinates(e, canvas)
@@ -1420,7 +1414,7 @@ function MainApp() {
 
     if (!isDrawing) return
 
-    const canvas = canvasRef.current
+    const canvas = isFullscreen ? fsCanvasRef.current : canvasRef.current
     if (!canvas) return
 
     // Normalize touch events — on touchend, coordinates are in changedTouches
@@ -3718,6 +3712,60 @@ function MainApp() {
                     touchAction: isDrawingMode ? 'none' : 'auto',
                   }}
                 />
+
+                {/* Floating interactive text input overlay when using Text Tool in portal */}
+                {textInputState && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: `${textInputState.pctX}%`,
+                      top: `${textInputState.pctY}%`,
+                      borderColor: drawColor,
+                      transform: 'translate(-10%, -50%)',
+                      zIndex: 40
+                    }}
+                    className="bg-zinc-950/95 backdrop-blur-md border rounded-lg p-2 shadow-lg flex items-center gap-2 animate-in fade-in zoom-in-95 duration-150"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono">
+                        T
+                      </span>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={textInputState.text}
+                        onChange={(e) => setTextInputState((prev) => ({ ...prev, text: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            commitTextOverlay()
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault()
+                            setTextInputState(null)
+                          }
+                        }}
+                        placeholder="הקלד טקסט..."
+                        className="bg-zinc-900 text-zinc-100 text-xs px-2.5 py-1.5 rounded-md border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 min-w-[150px]"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={commitTextOverlay}
+                      className="px-2.5 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition-colors shadow-sm active:scale-95 flex items-center gap-1"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>שמור</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTextInputState(null)}
+                      className="p-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
 
 
                 {/* Big play button overlay when paused */}
