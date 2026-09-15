@@ -665,6 +665,7 @@ function MainApp() {
   const [editorReopenReason, setEditorReopenReason] = useState('')
   const [dismissedReopenModalVersionId, setDismissedReopenModalVersionId] = useState(null)
   const [toast, setToast] = useState(null)
+  const [videoDimensions, setVideoDimensions] = useState({ width: 960, height: 540 })
   const toastTimeoutRef = useRef(null)
 
   const showToast = useCallback((message, type = 'info') => {
@@ -936,9 +937,9 @@ function MainApp() {
     let boxX = x - boxWidth / 2
     let boxY = y - boxHeight / 2
     if (boxX < 10) boxX = 10
-    if (boxX + boxWidth > 950) boxX = 950 - boxWidth
+    if (boxX + boxWidth > ctx.canvas.width - 10) boxX = ctx.canvas.width - 10 - boxWidth
     if (boxY < 10) boxY = 10
-    if (boxY + boxHeight > 530) boxY = 530 - boxHeight
+    if (boxY + boxHeight > ctx.canvas.height - 10) boxY = ctx.canvas.height - 10 - boxHeight
 
     ctx.fillStyle = 'rgba(10, 14, 24, 0.94)'
     ctx.strokeStyle = color
@@ -988,9 +989,9 @@ function MainApp() {
       let boxX = shape.x - boxWidth / 2
       let boxY = shape.y - boxHeight / 2
       if (boxX < 10) boxX = 10
-      if (boxX + boxWidth > 950) boxX = 950 - boxWidth
+      if (boxX + boxWidth > ctx.canvas.width - 10) boxX = ctx.canvas.width - 10 - boxWidth
       if (boxY < 10) boxY = 10
-      if (boxY + boxHeight > 530) boxY = 530 - boxHeight
+      if (boxY + boxHeight > ctx.canvas.height - 10) boxY = ctx.canvas.height - 10 - boxHeight
       return x >= boxX - 6 && x <= boxX + boxWidth + 6 && y >= boxY - 6 && y <= boxY + boxHeight + 6
     }
     if (shape.type === 'pen') {
@@ -1088,9 +1089,9 @@ function MainApp() {
         let boxX = s.x - boxWidth / 2
         let boxY = s.y - boxHeight / 2
         if (boxX < 10) boxX = 10
-        if (boxX + boxWidth > 950) boxX = 950 - boxWidth
+        if (boxX + boxWidth > ctx.canvas.width - 10) boxX = ctx.canvas.width - 10 - boxWidth
         if (boxY < 10) boxY = 10
-        if (boxY + boxHeight > 530) boxY = 530 - boxHeight
+        if (boxY + boxHeight > ctx.canvas.height - 10) boxY = ctx.canvas.height - 10 - boxHeight
 
         ctx.strokeStyle = '#ffffff'
         ctx.lineWidth = 1.5
@@ -1331,32 +1332,32 @@ function MainApp() {
             if (s.type === 'circle') {
               return {
                 ...s,
-                cx: Math.max(10, Math.min(950, s.cx + dx)),
-                cy: Math.max(10, Math.min(530, s.cy + dy))
+                cx: Math.max(10, Math.min(canvas.width - 10, s.cx + dx)),
+                cy: Math.max(10, Math.min(canvas.height - 10, s.cy + dy))
               }
             }
             if (s.type === 'arrow') {
               return {
                 ...s,
-                fromX: Math.max(10, Math.min(950, s.fromX + dx)),
-                fromY: Math.max(10, Math.min(530, s.fromY + dy)),
-                toX: Math.max(10, Math.min(950, s.toX + dx)),
-                toY: Math.max(10, Math.min(530, s.toY + dy))
+                fromX: Math.max(10, Math.min(canvas.width - 10, s.fromX + dx)),
+                fromY: Math.max(10, Math.min(canvas.height - 10, s.fromY + dy)),
+                toX: Math.max(10, Math.min(canvas.width - 10, s.toX + dx)),
+                toY: Math.max(10, Math.min(canvas.height - 10, s.toY + dy))
               }
             }
             if (s.type === 'text') {
               return {
                 ...s,
-                x: Math.max(10, Math.min(950, s.x + dx)),
-                y: Math.max(10, Math.min(530, s.y + dy))
+                x: Math.max(10, Math.min(canvas.width - 10, s.x + dx)),
+                y: Math.max(10, Math.min(canvas.height - 10, s.y + dy))
               }
             }
             if (s.type === 'pen') {
               return {
                 ...s,
                 points: s.points.map(p => ({
-                  x: Math.max(10, Math.min(950, p.x + dx)),
-                  y: Math.max(10, Math.min(530, p.y + dy))
+                  x: Math.max(10, Math.min(canvas.width - 10, p.x + dx)),
+                  y: Math.max(10, Math.min(canvas.height - 10, p.y + dy))
                 }))
               }
             }
@@ -1688,6 +1689,12 @@ function MainApp() {
       setDuration(videoRef.current.duration)
       videoRef.current.volume = isMuted ? 0 : volume
       videoRef.current.muted = isMuted
+      if (videoRef.current.videoWidth && videoRef.current.videoHeight) {
+        setVideoDimensions({
+          width: videoRef.current.videoWidth,
+          height: videoRef.current.videoHeight
+        })
+      }
     }
   }
 
@@ -2842,8 +2849,8 @@ function MainApp() {
               {/* Overlay Canvas for Visual Annotations */}
               <canvas
                 ref={canvasRef}
-                width={960}
-                height={540}
+                width={videoDimensions.width}
+                height={videoDimensions.height}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -3678,8 +3685,8 @@ function MainApp() {
                 {/* Drawing Canvas overlay */}
                 <canvas
                   ref={fsCanvasRef}
-                  width={960}
-                  height={540}
+                  width={videoDimensions.width}
+                  height={videoDimensions.height}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
