@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import SiteFeedback from './SiteFeedback'
 import {
   Play,
   Pause,
@@ -5012,6 +5013,9 @@ function MainApp() {
         onClose={() => setShowAuthModal(false)}
         onAuthSuccess={handleAuthSuccess}
       />
+      
+      {/* Universal floating feedback button */}
+      <SiteFeedback />
     </div>
   )
 }
